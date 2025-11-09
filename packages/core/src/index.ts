@@ -1,7 +1,14 @@
-// Export all types first
+// Export types
 export * from './types';
 
-// Export services
-export { TelegramService } from './services/telegram.service';
-export { RateAggregatorService } from './services/rate-aggregator.service';
-export { FragmentService } from './services/fragment.service';
+// Export errors  
+export * from './errors';
+
+// Export config
+export * from './config';
+
+// Export server base
+export { default as ServerBase } from './server';
+
+// Package version
+export const VERSION = '0.1.0';

@@ -18,19 +18,19 @@ export class ServerBase {
     const missing = requiredEnvVars.filter(varName => !process.env[varName]);
     
     if (missing.length > 0) {
-      throw new Error(\`Missing required environment variables: \${missing.join(', ')}\`);
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
   }
 
   protected logServerStart(): void {
-    console.log(\`🚀 Server started in \${this.environment} mode\`);
-    console.log(\`📡 Listening on port \${this.port}\`);
-    console.log(\`🔗 API URL: http://localhost:\${this.port}\`);
+    console.log(`🚀 Server started in ${this.environment} mode`);
+    console.log(`📡 Listening on port ${this.port}`);
+    console.log(`🔗 API URL: http://localhost:${this.port}`);
   }
 
   protected setupGracefulShutdown(cleanup: () => Promise<void>): void {
     const shutdown = async (signal: string) => {
-      console.log(\`\\n\${signal} received. Starting graceful shutdown...\`);
+      console.log(`\n${signal} received. Starting graceful shutdown...`);
       await cleanup();
       process.exit(0);
     };
