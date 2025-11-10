@@ -1,13 +1,26 @@
 import { Router } from 'express';
-import { paymentRouter } from '../controllers/payment.controller';
-import { conversionRouter } from '../controllers/conversion.controller';
-import { healthRouter } from '../controllers/health.controller';
+import PaymentController from '../controllers/payment.controller';
+import ConversionController from '../controllers/conversion.controller';
+
+// Initialize controllers with required configuration (provide real values!)
+PaymentController.initialize(process.env.TELEGRAM_BOT_TOKEN || 'TEST_BOT_TOKEN');
+ConversionController.initialize(process.env.TON_WALLET_ADDRESS || 'TEST_TON_WALLET');
 
 const router = Router();
 
-// Mount routes
-router.use('/payments', paymentRouter);
-router.use('/conversions', conversionRouter);
-router.use('/health', healthRouter);
+// Payment endpoints
+router.post('/payments/webhook', PaymentController.handleTelegramWebhook);
+router.get('/payments/:id', PaymentController.getPayment);
+router.get('/payments', PaymentController.listPayments);
+router.get('/payments/stats', PaymentController.getPaymentStats);
+
+// Conversion endpoints
+router.post('/conversions/estimate', ConversionController.estimateConversion);
+router.post('/conversions/create', ConversionController.createConversion);
+router.post('/conversions/lock-rate', ConversionController.lockRate);
+router.get('/conversions/:id/status', ConversionController.getStatus);
+router.get('/conversions', ConversionController.listConversions);
+
+// Add settlement endpoints as needed
 
 export default router;
