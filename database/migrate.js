@@ -1,17 +1,22 @@
 require('dotenv').config();
-
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-// Database connection from environment or defaults
-const client = new Client({
+// Build connection config
+const config = {
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
+  port: parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME || 'payment_gateway',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-});
+};
+
+// Only add password if it exists in env
+if (process.env.DB_PASSWORD) {
+  config.password = process.env.DB_PASSWORD;
+}
+
+const client = new Client(config);
 
 // Run migrations
 async function runMigrations() {
