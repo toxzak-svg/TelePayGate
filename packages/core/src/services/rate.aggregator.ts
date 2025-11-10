@@ -1,11 +1,288 @@
+import axios from 'axios';
+
+export interface RateSource {
+  source: string;
+  value: number;
+  timestamp: number;
+}
+
+export interface AggregatedRate {
+  bestRate: number;
+  averageRate: number;
+  rates: RateSource[];
+  sourceCurrency: string;
+  targetCurrency: string;
+  timestamp: number;
+}
+
+/**
+ * Rate Aggregator Service
+ * 
+ * Fetches exchange rates from multiple sources and calculates weighted average
+ * Sources: CoinGecko, Binance, DexScreener, CoinMarketCap
+ */
 export class RateAggregatorService {
-  async getRate(from: string, to: string): Promise<number> {
-    // Stub rates
-    const rates: any = {
-      'STARS-USD': 0.015,
-      'TON-USD': 2.5,
-      'USDT-USD': 1,
+  private sources = {
+    coingecko: 'https://api.coingecko.com/api/v3',
+    binance: 'https://api.binance.com/api/v3',
+    dexscreener: 'https://api.dexscreener.com/latest/dex/tokens',
+    coinmarketcap: process.env.CMC_API_KEY
+      ? 'https://pro-api.coinmarketcap.com/v1'
+      : null,
+  };
+
+  // Weighted average configuration (favors more liquid sources)
+  private weights = {
+    binance: 0.4, // Most liquid
+    dexscreener: 0.3, // Real DEX prices
+    coingecko: 0.2, // Aggregated
+    coinmarketcap: 0.1, // Reference
+  };
+
+  /**
+   * Get aggregated exchange rate from multiple sources
+   * 
+   * @param sourceCurrency - Source currency (e.g., "TON", "STARS")
+   * @param targetCurrency - Target currency (e.g., "USD", "EUR")
+   * @returns AggregatedRate with weighted average and individual sources
+   */
+  async getAggregatedRate(
+    sourceCurrency: string,
+    targetCurrency: string
+  ): Promise<AggregatedRate> {
+    console.log(`📊 Fetching rates: ${sourceCurrency} → ${targetCurrency}`);
+
+    try {
+      // Fetch from all sources in parallel
+      const [cgRate, binanceRate, dexRate, cmcRate] = await Promise.all([
+        this.getCoinGeckoRate(sourceCurrency, targetCurrency),
+        this.getBinanceRate(sourceCurrency, targetCurrency),
+        this.getDexScreenerRate(sourceCurrency, targetCurrency),
+        this.getCoinMarketCapRate(sourceCurrency, targetCurrency),
+      ]);
+
+      // Filter out null results
+      const rates: RateSource[] = [cgRate, binanceRate, dexRate, cmcRate].filter(
+        (r): r is RateSource => r !== null
+      );
+
+      if (rates.length === 0) {
+        throw new Error('No rate data available from any source');
+      }
+
+      console.log('✅ Rates fetched:', rates);
+
+      // Calculate weighted average
+      const weightedSum = rates.reduce((sum, rate) => {
+        const weight = this.weights[rate.source as keyof typeof this.weights] || 0.1;
+        return sum + rate.value * weight;
+      }, 0);
+
+      // Calculate best (minimum) rate
+      const bestRate = Math.min(...rates.map((r) => r.value));
+
+      return {
+        bestRate,
+        averageRate: weightedSum,
+        rates,
+        sourceCurrency,
+        targetCurrency,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch aggregated rate:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch rate from CoinGecko API
+   */
+  private async getCoinGeckoRate(
+    source: string,
+    target: string
+  ): Promise<RateSource | null> {
+    try {
+      const sourceId = this.getCoinGeckoId(source);
+      const targetId = target.toLowerCase();
+
+      const url = `${this.sources.coingecko}/simple/price?ids=${sourceId}&vs_currencies=${targetId}`;
+      const response = await axios.get(url, { timeout: 5000 });
+
+      const rate = response.data[sourceId]?.[targetId];
+      
+      if (!rate) {
+        console.warn('⚠️ CoinGecko: No rate data');
+        return null;
+      }
+
+      return {
+        source: 'coingecko',
+        value: rate,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      console.error('❌ CoinGecko fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch rate from Binance API
+   */
+  private async getBinanceRate(
+    source: string,
+    target: string
+  ): Promise<RateSource | null> {
+    try {
+      const symbol = `${source.toUpperCase()}${target.toUpperCase()}`;
+      const url = `${this.sources.binance}/ticker/price?symbol=${symbol}`;
+      
+      const response = await axios.get(url, { timeout: 5000 });
+      const rate = parseFloat(response.data.price);
+
+      if (!rate || isNaN(rate)) {
+        console.warn('⚠️ Binance: No rate data');
+        return null;
+      }
+
+      return {
+        source: 'binance',
+        value: rate,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      console.error('❌ Binance fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch rate from DexScreener API
+   */
+  private async getDexScreenerRate(
+    source: string,
+    target: string
+  ): Promise<RateSource | null> {
+    try {
+      // DexScreener requires token address - this is a simplified implementation
+      // In production, map currency codes to actual token addresses
+      const tokenAddress = this.getDexScreenerAddress(source);
+      
+      if (!tokenAddress) {
+        console.warn('⚠️ DexScreener: No token address mapping');
+        return null;
+      }
+
+      const url = `${this.sources.dexscreener}/${tokenAddress}`;
+      const response = await axios.get(url, { timeout: 5000 });
+
+      const pair = response.data.pairs?.[0];
+      const rate = parseFloat(pair?.priceUsd);
+
+      if (!rate || isNaN(rate)) {
+        console.warn('⚠️ DexScreener: No rate data');
+        return null;
+      }
+
+      // Convert to target currency if needed (simplified)
+      const finalRate = target.toUpperCase() === 'USD' ? rate : rate;
+
+      return {
+        source: 'dexscreener',
+        value: finalRate,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      console.error('❌ DexScreener fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch rate from CoinMarketCap API (requires API key)
+   */
+  private async getCoinMarketCapRate(
+    source: string,
+    target: string
+  ): Promise<RateSource | null> {
+    if (!this.sources.coinmarketcap) {
+      console.warn('⚠️ CoinMarketCap: API key not configured');
+      return null;
+    }
+
+    try {
+      const url = `${this.sources.coinmarketcap}/cryptocurrency/quotes/latest`;
+      const response = await axios.get(url, {
+        params: {
+          symbol: source.toUpperCase(),
+          convert: target.toUpperCase(),
+        },
+        headers: {
+          'X-CMC_PRO_API_KEY': process.env.CMC_API_KEY!,
+        },
+        timeout: 5000,
+      });
+
+      const data = response.data.data[source.toUpperCase()];
+      const rate = data?.quote[target.toUpperCase()]?.price;
+
+      if (!rate) {
+        console.warn('⚠️ CoinMarketCap: No rate data');
+        return null;
+      }
+
+      return {
+        source: 'coinmarketcap',
+        value: rate,
+        timestamp: Date.now(),
+      };
+    } catch (error) {
+      console.error('❌ CoinMarketCap fetch failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Map currency codes to CoinGecko IDs
+   */
+  private getCoinGeckoId(currency: string): string {
+    const mapping: Record<string, string> = {
+      TON: 'the-open-network',
+      BTC: 'bitcoin',
+      ETH: 'ethereum',
+      USDT: 'tether',
+      // Add more as needed
     };
-    return rates[`${from}-${to}`] || 1;
+
+    return mapping[currency.toUpperCase()] || currency.toLowerCase();
+  }
+
+  /**
+   * Map currency codes to DexScreener token addresses
+   */
+  private getDexScreenerAddress(currency: string): string | null {
+    const mapping: Record<string, string> = {
+      // TON mainnet addresses - update with actual addresses
+      TON: 'EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT', // Placeholder
+      // Add more token addresses
+    };
+
+    return mapping[currency.toUpperCase()] || null;
+  }
+
+  /**
+   * Get rate for specific currency pair with caching
+   */
+  async getRateWithCache(
+    source: string,
+    target: string,
+    cacheDuration: number = 60000 // 1 minute default
+  ): Promise<number> {
+    // TODO: Implement Redis caching for production
+    const rate = await this.getAggregatedRate(source, target);
+    return rate.averageRate;
   }
 }
+
+export default RateAggregatorService;
