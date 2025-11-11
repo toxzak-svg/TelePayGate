@@ -1,184 +1,228 @@
-import { Request, Response, NextFunction } from 'express';
-import { FragmentService } from '../../../core/src/services/fragment.service';
-import { RateAggregatorService } from '../../../core/src/services/rate.aggregator';
+import { Request, Response } from 'express';
+import { v4 as uuid } from 'uuid';
+import { pool } from '../db/connection';
+import { ConversionService } from '../../../core/src/services/conversion.service';
+
+// Initialize service
+const conversionService = new ConversionService(
+  pool,
+  process.env.TON_WALLET_ADDRESS || 'EQDtFpEwcFAEcRe5mLVh2N6C0x-_hJEM7W61_JLnSF74p4q2'
+);
 
 export class ConversionController {
-  private static fragmentService: FragmentService;
-  private static rateAggregator: RateAggregatorService;
-
   /**
-   * Initialize controller with services
-   */
-  static initialize(walletAddress: string) {
-    this.fragmentService = new FragmentService(walletAddress);
-    this.rateAggregator = new RateAggregatorService();
-  }
-
-  /**
-   * Estimate conversion cost
    * POST /api/v1/conversions/estimate
+   * Get conversion rate estimate
    */
-  static async estimateConversion(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { starsAmount, targetCurrency = 'USD', lockedRate = false } = req.body;
+  static async estimateConversion(req: Request, res: Response) {
+    const requestId = uuid();
 
-      if (!starsAmount || starsAmount < 1000) {
-        res.status(400).json({
+    try {
+      const { sourceAmount, sourceCurrency = 'STARS', targetCurrency = 'TON' } = req.body;
+
+      if (!sourceAmount || sourceAmount <= 0) {
+        return res.status(400).json({
           success: false,
-          error: 'Minimum 1,000 Stars required for conversion',
+          error: { code: 'INVALID_AMOUNT', message: 'Valid source amount required' },
+          requestId,
         });
-        return;
       }
 
-      // Get current rates
-      const tonRate = await ConversionController.rateAggregator.getAggregatedRate('TON', targetCurrency);
-      const starsToTonRate = 0.001; // Mock: 1 Star = 0.001 TON
+      const quote = await conversionService.getQuote(
+        sourceAmount,
+        sourceCurrency,
+        targetCurrency
+      );
 
-      const tonEquivalent = starsAmount * starsToTonRate;
-      const estimatedFiat = tonEquivalent * tonRate.averageRate;
-
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        starsAmount,
-        tonEquivalent,
-        estimatedFiat,
-        targetCurrency,
-        exchangeRate: tonRate.averageRate,
-        lockedUntil: lockedRate ? Date.now() + 60000 : null,
-        fees: {
-          telegram: starsAmount * 0.01, // 1%
-          fragment: tonEquivalent * 0.005, // 0.5%
-          total: (starsAmount * 0.01) + (tonEquivalent * 0.005),
-        },
+        quote,
+        requestId,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error('❌ Estimate error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'ESTIMATE_FAILED', message: error.message },
+        requestId,
+      });
     }
   }
 
   /**
-   * Create conversion order
-   * POST /api/v1/conversions/create
+   * POST /api/v1/conversions/lock-rate
+   * Lock conversion rate
    */
-  static async createConversion(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { paymentIds, targetCurrency = 'TON', rateLockId } = req.body;
+  static async lockRate(req: Request, res: Response) {
+    const requestId = uuid();
+    const userId = req.headers['x-user-id'] as string;
 
-      if (!paymentIds || paymentIds.length === 0) {
-        res.status(400).json({
+    try {
+      const {
+        sourceAmount,
+        sourceCurrency = 'STARS',
+        targetCurrency = 'TON',
+        durationSeconds = 300,
+      } = req.body;
+
+      if (!sourceAmount) {
+        return res.status(400).json({
           success: false,
-          error: 'Payment IDs required',
+          error: { code: 'INVALID_AMOUNT', message: 'Source amount required' },
+          requestId,
         });
-        return;
       }
 
-      const conversion = await ConversionController.fragmentService.convertStarsToTON(
-        paymentIds,
-        { lockedRateDuration: 60 }
+      const lockedRate = await conversionService.lockRate(
+        userId,
+        sourceAmount,
+        sourceCurrency,
+        targetCurrency,
+        durationSeconds
       );
 
-      res.status(201).json({
+      return res.status(200).json({
+        success: true,
+        data: lockedRate,
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Lock rate error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'LOCK_FAILED', message: error.message },
+        requestId,
+      });
+    }
+  }
+
+  /**
+   * POST /api/v1/conversions/create
+   * Create new conversion
+   */
+  static async createConversion(req: Request, res: Response) {
+    const requestId = uuid();
+    const userId = req.headers['x-user-id'] as string;
+
+    try {
+      const { paymentIds, targetCurrency = 'TON' } = req.body;
+
+      if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_PAYMENTS', message: 'Payment IDs required' },
+          requestId,
+        });
+      }
+
+      const conversion = await conversionService.createConversion(
+        userId,
+        paymentIds,
+        targetCurrency
+      );
+
+      return res.status(201).json({
+        success: true,
+        conversion: {
+          id: conversion.id,
+          sourceAmount: conversion.source_amount,
+          targetAmount: conversion.target_amount,
+          exchangeRate: conversion.exchange_rate,
+          status: conversion.status,
+          createdAt: conversion.created_at,
+        },
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Create conversion error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'CONVERSION_FAILED', message: error.message },
+        requestId,
+      });
+    }
+  }
+
+  /**
+   * GET /api/v1/conversions/:id/status
+   * Get conversion status
+   */
+  static async getStatus(req: Request, res: Response) {
+    const requestId = uuid();
+
+    try {
+      const { id } = req.params;
+      const conversion = await conversionService.getConversionById(id);
+
+      if (!conversion) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Conversion not found' },
+          requestId,
+        });
+      }
+
+      return res.status(200).json({
         success: true,
         conversion: {
           id: conversion.id,
           status: conversion.status,
-          starsAmount: conversion.starsAmount,
-          tonAmount: conversion.tonAmount,
-          exchangeRate: conversion.exchangeRate,
-          rateLockedUntil: conversion.rateLockedUntil,
-          createdAt: conversion.createdAt,
+          sourceAmount: conversion.source_amount,
+          targetAmount: conversion.target_amount,
+          exchangeRate: conversion.exchange_rate,
+          fragmentTxId: conversion.fragment_tx_id,
+          tonTxHash: conversion.ton_tx_hash,
+          createdAt: conversion.created_at,
+          completedAt: conversion.completed_at,
         },
+        requestId,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error('❌ Get status error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'STATUS_FAILED', message: error.message },
+        requestId,
+      });
     }
   }
 
   /**
-   * Lock exchange rate
-   * POST /api/v1/conversions/lock-rate
-   */
-  static async lockRate(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { starsAmount, targetCurrency, duration = 60 } = req.body;
-
-      const rate = await ConversionController.rateAggregator.getAggregatedRate('TON', targetCurrency);
-
-      res.status(200).json({
-        success: true,
-        rateLockId: `lock_${Date.now()}`,
-        rate: rate.averageRate,
-        lockedUntil: Date.now() + duration * 1000,
-        duration,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get conversion status
-   * GET /api/v1/conversions/:id/status
-   */
-  static async getStatus(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      const status = await ConversionController.fragmentService.pollConversionStatus(id);
-
-      res.status(200).json({
-        success: true,
-        conversionId: id,
-        status: status.status,
-        tonAmount: status.tonAmount,
-        tonTxHash: status.tonTxHash,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * List conversions
    * GET /api/v1/conversions
+   * List user conversions
    */
-  static async listConversions(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { page = 1, limit = 20 } = req.query;
+  static async listConversions(req: Request, res: Response) {
+    const requestId = uuid();
+    const userId = req.headers['x-user-id'] as string;
 
-      // TODO: Fetch from database
-      res.status(200).json({
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+
+      const conversions = await conversionService.getUserConversions(
+        userId,
+        limit,
+        offset
+      );
+
+      return res.status(200).json({
         success: true,
-        data: [],
+        data: conversions,
         pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total: 0,
-          pages: 0,
+          page,
+          limit,
+          total: conversions.length,
         },
+        requestId,
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error('❌ List conversions error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'LIST_FAILED', message: error.message },
+        requestId,
+      });
     }
   }
 }
