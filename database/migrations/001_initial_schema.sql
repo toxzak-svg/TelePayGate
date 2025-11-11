@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS conversions (
   ton_tx_hash VARCHAR(255),
   ton_block_height BIGINT,
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN (
-    'pending', 'rate_locked', 'phase1_prepared', 'phase2_committed', 
+    'pending', 'rate_locked', 'phase1_prepared', 'phase2_committed',
     'phase3_confirmed', 'completed', 'failed', 'rolled_back'
   )),
   fees JSONB DEFAULT '{}'::JSONB,
@@ -204,8 +204,8 @@ CREATE INDEX idx_settlements_status ON settlements(status);
 CREATE INDEX idx_settlements_conversion_id ON settlements(conversion_id);
 CREATE INDEX idx_settlements_created_at ON settlements(created_at DESC);
 
--- Exchange Rates
-CREATE INDEX idx_exchange_rates_currency_pair ON exchange_rates(source_currency, target_currency, created_at DESC);
+-- Exchange Rates (FIXED: changed created_at to timestamp)
+CREATE INDEX idx_exchange_rates_currency_pair ON exchange_rates(source_currency, target_currency, timestamp DESC);
 CREATE INDEX idx_exchange_rates_provider ON exchange_rates(source_provider);
 
 -- Webhook Events
@@ -252,7 +252,7 @@ CREATE TRIGGER update_webhook_events_updated_at BEFORE UPDATE ON webhook_events
 
 -- User Summary
 CREATE OR REPLACE VIEW user_summaries AS
-SELECT 
+SELECT
   u.id,
   u.app_name,
   COUNT(DISTINCT p.id) as total_payments,
@@ -267,7 +267,7 @@ GROUP BY u.id, u.app_name;
 
 -- Conversion Funnel
 CREATE OR REPLACE VIEW conversion_funnels AS
-SELECT 
+SELECT
   u.id,
   COUNT(DISTINCT CASE WHEN p.status = 'received' THEN p.id END) as payments_received,
   COUNT(DISTINCT CASE WHEN c.status != 'failed' THEN c.id END) as conversions_started,
