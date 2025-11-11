@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { FragmentService } from './fragment.service';
+import { FeeService } from './fee.service';
 
 export interface ConversionRecord {
   id: string;
@@ -15,6 +16,8 @@ export interface ConversionRecord {
   ton_tx_hash: string | null;
   status: string;
   fees: any;
+  platform_fee_amount: number;
+  platform_fee_percentage: number;
   created_at: Date;
   updated_at: Date;
   completed_at: Date | null;
@@ -31,7 +34,9 @@ export interface RateQuote {
     network: number;
     platform: number;
     total: number;
+    platformPercentage: number;
   };
+  platformWallet: string;
   estimatedArrival: string;
   validUntil: Date;
 }
@@ -39,29 +44,26 @@ export interface RateQuote {
 export class ConversionService {
   private pool: Pool;
   private fragmentService: FragmentService;
+  private feeService: FeeService;
 
   constructor(pool: Pool, tonWalletAddress: string) {
     this.pool = pool;
     this.fragmentService = new FragmentService(tonWalletAddress);
+    this.feeService = new FeeService(pool);
   }
 
   /**
-   * Get a rate quote for conversion
+   * Get a rate quote for conversion with platform fees
    */
   async getQuote(
     sourceAmount: number,
     sourceCurrency: string = 'STARS',
     targetCurrency: string = 'TON'
   ): Promise<RateQuote> {
-    // Get current rate (in production, this would call multiple sources)
     const baseRate = await this.getCurrentRate(sourceCurrency, targetCurrency);
-
-    // Calculate fees (example: 1% platform, 0.5% fragment, 0.1% network)
-    const platformFee = sourceAmount * 0.01;
-    const fragmentFee = sourceAmount * 0.005;
-    const networkFee = sourceAmount * 0.001;
-    const totalFees = platformFee + fragmentFee + networkFee;
-
+    const feeBreakdown = await this.feeService.calculateFees(sourceAmount);
+    const platformWallet = await this.feeService.getPlatformWallet();
+    const totalFees = feeBreakdown.total;
     const targetAmount = (sourceAmount - totalFees) * baseRate;
 
     return {
@@ -71,13 +73,15 @@ export class ConversionService {
       targetAmount,
       exchangeRate: baseRate,
       fees: {
-        fragment: fragmentFee,
-        network: networkFee,
-        platform: platformFee,
+        fragment: feeBreakdown.fragment,
+        network: feeBreakdown.network,
+        platform: feeBreakdown.platform,
         total: totalFees,
+        platformPercentage: feeBreakdown.platformPercentage,
       },
+      platformWallet,
       estimatedArrival: '5-10 minutes',
-      validUntil: new Date(Date.now() + 60000), // 60 seconds
+      validUntil: new Date(Date.now() + 60000),
     };
   }
 
@@ -95,6 +99,7 @@ export class ConversionService {
     rate: number;
     lockedUntil: Date;
     targetAmount: number;
+    platformFee: number;
   }> {
     const quote = await this.getQuote(sourceAmount, sourceCurrency, targetCurrency);
     const lockedUntil = Date.now() + durationSeconds * 1000;
@@ -103,9 +108,9 @@ export class ConversionService {
       `INSERT INTO conversions (
         user_id, source_currency, target_currency, source_amount,
         target_amount, exchange_rate, rate_locked_until, status,
-        fee_breakdown
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'rate_locked', $8)
-      RETURNING id, exchange_rate, target_amount`,
+        fee_breakdown, platform_fee_amount, platform_fee_percentage
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'rate_locked', $8, $9, $10)
+      RETURNING id, exchange_rate, target_amount, platform_fee_amount`,
       [
         userId,
         sourceCurrency,
@@ -115,14 +120,17 @@ export class ConversionService {
         quote.exchangeRate,
         lockedUntil,
         JSON.stringify(quote.fees),
+        quote.fees.platform,
+        quote.fees.platformPercentage / 100,
       ]
     );
 
     const conversion = result.rows[0];
 
-    console.log('🔒 Rate locked:', {
+    console.log('🔒 Rate locked with fees:', {
       conversionId: conversion.id,
       rate: quote.exchangeRate,
+      platformFee: quote.fees.platform,
       lockedUntil: new Date(lockedUntil),
     });
 
@@ -131,11 +139,12 @@ export class ConversionService {
       rate: quote.exchangeRate,
       lockedUntil: new Date(lockedUntil),
       targetAmount: conversion.target_amount,
+      platformFee: conversion.platform_fee_amount,
     };
   }
 
   /**
-   * Create and execute conversion
+   * Create and execute conversion with fee tracking
    */
   async createConversion(
     userId: string,
@@ -161,11 +170,13 @@ export class ConversionService {
         throw new Error('No valid payments found for conversion');
       }
 
-      if (totalStars < 1000) {
-        throw new Error('Minimum 1000 Stars required for conversion');
+      // Check minimum amount
+      const config = await this.feeService.getConfig();
+      if (totalStars < config.minConversionAmount) {
+        throw new Error(`Minimum ${config.minConversionAmount} Stars required for conversion`);
       }
 
-      // Get quote
+      // Get quote with fees
       const quote = await this.getQuote(totalStars, 'STARS', targetCurrency);
 
       // Create conversion record
@@ -173,8 +184,8 @@ export class ConversionService {
         `INSERT INTO conversions (
           user_id, payment_ids, source_currency, target_currency,
           source_amount, target_amount, exchange_rate, status,
-          fee_breakdown
-        ) VALUES ($1, $2, 'STARS', $3, $4, $5, $6, 'pending', $7)
+          fee_breakdown, platform_fee_amount, platform_fee_percentage
+        ) VALUES ($1, $2, 'STARS', $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING *`,
         [
           userId,
@@ -184,6 +195,8 @@ export class ConversionService {
           quote.targetAmount,
           quote.exchangeRate,
           JSON.stringify(quote.fees),
+          quote.fees.platform,
+          quote.fees.platformPercentage / 100,
         ]
       );
 
@@ -197,18 +210,31 @@ export class ConversionService {
         [paymentIds]
       );
 
-      // Start conversion with Fragment (async, don't await)
-      this.executeFragmentConversion(conversion.id, paymentIds).catch((err) =>
-        console.error('Fragment conversion error:', err)
-      );
-
+      // COMMIT TRANSACTION BEFORE recording fee
       await client.query('COMMIT');
 
-      console.log('✅ Conversion created:', {
+      // NOW record platform fee (after conversion exists in DB)
+      const feeAmountTon = quote.fees.platform * quote.exchangeRate;
+      await this.feeService.recordFee(
+        conversion.id,
+        userId,
+        quote.fees.platform,
+        feeAmountTon,
+        5.5 // Mock TON/USD rate
+      );
+
+      console.log('✅ Conversion created with fees:', {
         id: conversion.id,
         stars: totalStars,
         ton: quote.targetAmount,
+        platformFee: quote.fees.platform,
+        platformFeeTon: feeAmountTon,
       });
+
+      // Start conversion with Fragment (async)
+      this.executeFragmentConversion(conversion.id, paymentIds).catch((err) =>
+        console.error('Fragment conversion error:', err)
+      );
 
       return conversion;
     } catch (error) {
@@ -228,19 +254,16 @@ export class ConversionService {
     paymentIds: string[]
   ): Promise<void> {
     try {
-      // Update status
       await this.pool.query(
         `UPDATE conversions SET status = 'phase1_prepared' WHERE id = $1`,
         [conversionId]
       );
 
-      // Call Fragment service
       const fragmentResult = await this.fragmentService.convertStarsToTON(
         paymentIds,
         { lockedRateDuration: 300 }
       );
 
-      // Update with Fragment transaction ID
       await this.pool.query(
         `UPDATE conversions 
          SET fragment_tx_id = $1, status = 'phase2_committed', updated_at = NOW()
@@ -253,7 +276,6 @@ export class ConversionService {
         fragmentTxId: fragmentResult.fragmentTxId,
       });
 
-      // Poll for completion (in production, use webhooks)
       this.pollFragmentStatus(conversionId, fragmentResult.fragmentTxId!);
     } catch (error) {
       console.error('❌ Fragment conversion error:', error);
@@ -273,7 +295,6 @@ export class ConversionService {
     conversionId: string,
     fragmentTxId: string
   ): Promise<void> {
-    // Simulate polling (in production, Fragment would webhook you)
     setTimeout(async () => {
       const status = await this.fragmentService.pollConversionStatus(fragmentTxId);
 
@@ -287,6 +308,18 @@ export class ConversionService {
         );
 
         console.log('✅ Conversion completed:', { conversionId, txHash: status.tonTxHash });
+
+        const feeResult = await this.pool.query(
+          'SELECT id FROM platform_fees WHERE conversion_id = $1',
+          [conversionId]
+        );
+        
+        if (feeResult.rows.length > 0) {
+          await this.feeService.markFeeCollected(
+            feeResult.rows[0].id,
+            status.tonTxHash || 'pending'
+          );
+        }
       } else if (status.status === 'failed') {
         await this.pool.query(
           `UPDATE conversions 
@@ -295,10 +328,9 @@ export class ConversionService {
           [status.errorMessage, conversionId]
         );
       } else {
-        // Keep polling
         this.pollFragmentStatus(conversionId, fragmentTxId);
       }
-    }, 5000); // Poll every 5 seconds
+    }, 5000);
   }
 
   /**
@@ -309,7 +341,6 @@ export class ConversionService {
       'SELECT * FROM conversions WHERE id = $1',
       [conversionId]
     );
-
     return result.rows[0] || null;
   }
 
@@ -328,7 +359,6 @@ export class ConversionService {
        LIMIT $2 OFFSET $3`,
       [userId, limit, offset]
     );
-
     return result.rows;
   }
 
@@ -339,14 +369,11 @@ export class ConversionService {
     sourceCurrency: string,
     targetCurrency: string
   ): Promise<number> {
-    // In production, aggregate from multiple sources
-    // For now, return mock rate
     const rates: Record<string, number> = {
-      'STARS-TON': 0.001, // 1 Star = 0.001 TON
-      'TON-USD': 5.5, // 1 TON = $5.50
-      'STARS-USD': 0.0055, // 1 Star = $0.0055
+      'STARS-TON': 0.001,
+      'TON-USD': 5.5,
+      'STARS-USD': 0.0055,
     };
-
     const rateKey = `${sourceCurrency}-${targetCurrency}`;
     return rates[rateKey] || 0.001;
   }

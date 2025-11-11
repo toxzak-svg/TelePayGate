@@ -1,0 +1,182 @@
+import { Request, Response } from 'express';
+import { v4 as uuid } from 'uuid';
+import { pool } from '../db/connection';
+import { FeeService } from '../../../core/src/services/fee.service';
+
+const feeService = new FeeService(pool);
+
+export class AdminController {
+  /**
+   * GET /api/v1/admin/revenue
+   * Get total platform revenue
+   */
+  static async getRevenue(req: Request, res: Response) {
+    const requestId = uuid();
+
+    try {
+      const revenue = await feeService.getTotalRevenue();
+
+      return res.status(200).json({
+        success: true,
+        revenue,
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Get revenue error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'REVENUE_ERROR', message: error.message },
+        requestId,
+      });
+    }
+  }
+
+  /**
+   * GET /api/v1/admin/revenue/summary
+   * Get revenue summary by date range
+   */
+  static async getRevenueSummary(req: Request, res: Response) {
+    const requestId = uuid();
+
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate 
+        ? new Date(startDate as string) 
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      
+      const end = endDate 
+        ? new Date(endDate as string) 
+        : new Date();
+
+      const summary = await feeService.getRevenueSummary(start, end);
+
+      return res.status(200).json({
+        success: true,
+        summary,
+        dateRange: {
+          start: start.toISOString(),
+          end: end.toISOString(),
+        },
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Get revenue summary error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'SUMMARY_ERROR', message: error.message },
+        requestId,
+      });
+    }
+  }
+
+  /**
+   * GET /api/v1/admin/config
+   * Get platform configuration
+   */
+  static async getConfig(req: Request, res: Response) {
+    const requestId = uuid();
+
+    try {
+      const config = await feeService.getConfig();
+
+      return res.status(200).json({
+        success: true,
+        config: {
+          platformFeePercentage: `${(config.platformFeePercentage * 100).toFixed(2)}%`,
+          fragmentFeePercentage: `${(config.fragmentFeePercentage * 100).toFixed(2)}%`,
+          networkFeePercentage: `${(config.networkFeePercentage * 100).toFixed(2)}%`,
+          platformTonWallet: config.platformTonWallet,
+          minConversionAmount: config.minConversionAmount,
+        },
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Get config error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'CONFIG_ERROR', message: error.message },
+        requestId,
+      });
+    }
+  }
+
+  /**
+   * PUT /api/v1/admin/config
+   * Update platform configuration
+   */
+  static async updateConfig(req: Request, res: Response) {
+    const requestId = uuid();
+
+    try {
+      const {
+        platformFeePercentage,
+        fragmentFeePercentage,
+        networkFeePercentage,
+        platformTonWallet,
+        minConversionAmount,
+      } = req.body;
+
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (platformFeePercentage !== undefined) {
+        updates.push(`platform_fee_percentage = $${paramIndex++}`);
+        values.push(parseFloat(platformFeePercentage) / 100);
+      }
+
+      if (fragmentFeePercentage !== undefined) {
+        updates.push(`fragment_fee_percentage = $${paramIndex++}`);
+        values.push(parseFloat(fragmentFeePercentage) / 100);
+      }
+
+      if (networkFeePercentage !== undefined) {
+        updates.push(`network_fee_percentage = $${paramIndex++}`);
+        values.push(parseFloat(networkFeePercentage) / 100);
+      }
+
+      if (platformTonWallet) {
+        updates.push(`platform_ton_wallet = $${paramIndex++}`);
+        values.push(platformTonWallet);
+      }
+
+      if (minConversionAmount !== undefined) {
+        updates.push(`min_conversion_amount = $${paramIndex++}`);
+        values.push(parseInt(minConversionAmount));
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'NO_UPDATES', message: 'No configuration updates provided' },
+          requestId,
+        });
+      }
+
+      updates.push(`updated_at = NOW()`);
+
+      await pool.query(
+        `UPDATE platform_config SET ${updates.join(', ')} WHERE is_active = true`,
+        values
+      );
+
+      console.log('✅ Platform config updated:', req.body);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Configuration updated successfully',
+        requestId,
+      });
+    } catch (error: any) {
+      console.error('❌ Update config error:', error);
+      return res.status(500).json({
+        success: false,
+        error: { code: 'UPDATE_ERROR', message: error.message },
+        requestId,
+      });
+    }
+  }
+}
+
+export default AdminController;
