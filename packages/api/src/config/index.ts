@@ -1,10 +1,14 @@
 import { config } from 'dotenv';
-import path from 'path';
+import * as path from 'path';
 
-// Load .env from project root (two levels up from api/src/config)
-config({ path: path.resolve(__dirname, '../../../.env') });
+// CRITICAL: Load .env from project root
+// In development with ts-node-dev, __dirname points to packages/api/src/config
+// We need to go up 4 levels: config -> src -> api -> packages -> root
+const envPath = path.resolve(__dirname, '../../../../.env');
+console.log('🔍 Looking for .env at:', envPath);
+config({ path: envPath });
 
-console.log('🔍 DEBUG - DATABASE_URL from env:', process.env.DATABASE_URL);
+console.log('🔍 DATABASE_URL loaded:', process.env.DATABASE_URL);
 
 export default {
   app: {
@@ -13,7 +17,7 @@ export default {
     apiUrl: process.env.API_URL || 'http://localhost:3000'
   },
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev',
+    url: process.env.DATABASE_URL || 'postgresql://postgres@localhost:5433/payment_gateway',
     poolMin: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
     poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10)
   },
