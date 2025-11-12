@@ -50,8 +50,8 @@ export class FeeService {
         network_fee_percentage,
         platform_ton_wallet,
         min_conversion_amount
-       FROM platform_config 
-       WHERE is_active = true 
+       FROM platform_config
+       WHERE is_active = true
        LIMIT 1`
     );
 
@@ -146,7 +146,7 @@ export class FeeService {
     pendingTon: number;
   }> {
     const result = await this.pool.query(`
-      SELECT
+      SELECT 
         SUM(fee_amount_stars) as total_fees_stars,
         SUM(fee_amount_ton) as total_fees_ton,
         SUM(fee_amount_usd) as total_fees_usd,
@@ -171,14 +171,9 @@ export class FeeService {
   async getRevenueSummary(
     startDate: Date,
     endDate: Date
-  ): Promise<Array<{
-    date: string;
-    totalFees: number;
-    totalStarsFees: number;
-    totalTonFees: number;
-  }>> {
+  ): Promise<Array<any>> {
     const result = await this.pool.query(
-      `SELECT
+      `SELECT 
         DATE(created_at) as date,
         COUNT(*) as total_fees,
         SUM(fee_amount_stars) as total_stars_fees,
@@ -190,7 +185,8 @@ export class FeeService {
       [startDate, endDate]
     );
 
-    return result.rows.map((row) => ({
+    // FIXED: Added type annotation to row parameter
+    return result.rows.map((row: any) => ({
       date: row.date,
       totalFees: parseInt(row.total_fees),
       totalStarsFees: parseFloat(row.total_stars_fees),
@@ -203,8 +199,8 @@ export class FeeService {
    */
   async markFeeCollected(feeId: string, txHash: string): Promise<void> {
     await this.pool.query(
-      `UPDATE platform_fees 
-       SET status = 'collected', 
+      `UPDATE platform_fees
+       SET status = 'collected',
            collection_tx_hash = $1,
            collected_at = NOW(),
            updated_at = NOW()
