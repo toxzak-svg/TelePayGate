@@ -1,16 +1,30 @@
 {
   "name": "@tg-payment/sdk",
   "version": "0.1.0",
-  "description": "Client SDK",
+  "description": "TypeScript SDK for Telegram Payment Gateway",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
+  "keywords": [
+    "telegram",
+    "payment",
+    "stars",
+    "ton",
+    "crypto",
+    "gateway"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.13.2"
   },
   "devDependencies": {
+    "@types/node": "^20.9.0",
     "typescript": "^5.2.2"
   }
 }
