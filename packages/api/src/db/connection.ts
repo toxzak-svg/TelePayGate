@@ -1,39 +1,13 @@
-import { Pool, PoolConfig } from 'pg';
+import { initDatabase, getDatabase } from '@tg-payment/core';
 
-// Create pool configuration
-const poolConfig: PoolConfig = {
-  connectionString: process.env.DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-};
+// Initialize database connection
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev';
 
-// Export pool for use in services
-export const pool = new Pool(poolConfig);
+// Initialize the connection from core
+initDatabase(DATABASE_URL);
 
-// Database connection wrapper for backward compatibility
-export const dbConnection = {
-  pool,
-  
-  async initialize(): Promise<void> {
-    try {
-      const client = await pool.connect();
-      console.log('[INFO] ✅ Database connected successfully');
-      client.release();
-    } catch (error) {
-      console.error('[ERROR] ❌ Database connection failed', error);
-      throw error;
-    }
-  },
+// Export the database instance
+export const db = getDatabase();
 
-  async close(): Promise<void> {
-    await pool.end();
-    console.log('Database connection closed');
-  },
-
-  async query(text: string, params?: any[]): Promise<any> {
-    return pool.query(text, params);
-  },
-};
-
-export default dbConnection;
+// For backwards compatibility with pg Pool
+export const pool = db as any;

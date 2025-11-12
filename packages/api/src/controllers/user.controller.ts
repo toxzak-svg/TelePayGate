@@ -1,7 +1,10 @@
 import { Response, Request } from 'express';
 import { v4 as uuid } from 'uuid';
-import { pool } from '../db/connection';
 import crypto from 'crypto';
+import { getDatabase, PaymentModel } from '@tg-payment/core';
+
+const db = getDatabase();
+const paymentModel = new PaymentModel(db);
 
 interface UserRecord {
   id: string;
@@ -23,7 +26,6 @@ export class UserController {
    */
   static async register(req: Request, res: Response) {
     const requestId = uuid();
-
     try {
       const { appName, description, webhookUrl } = req.body;
 
@@ -40,15 +42,14 @@ export class UserController {
       const apiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
       const apiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
 
-      // Insert user
-      const result = await pool.query<UserRecord>(
-        `INSERT INTO users (api_key, api_secret, app_name, description, webhook_url, kyc_status, is_active)
-         VALUES ($1, $2, $3, $4, $5, 'pending', true)
-         RETURNING *`,
+      // Insert user (using database model)
+      const userResult = await db.one<UserRecord>(
+        `INSERT INTO users (api_key, api_secret, app_name, description, webhook_url, kyc_status, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, 'pending', true, NOW(), NOW()) RETURNING *`,
         [apiKey, apiSecret, appName, description || null, webhookUrl || null]
       );
 
-      const user = result.rows[0];
+      const user = userResult;
 
       console.log('✅ User registered:', { requestId, userId: user.id, appName });
 
@@ -83,7 +84,7 @@ export class UserController {
    */
   static async getMe(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = (req as any).user?.id; // From auth middleware
+    const userId = req.headers['x-user-id'] as string; // Or decode from auth middleware
 
     try {
       if (!userId) {
@@ -94,20 +95,18 @@ export class UserController {
         });
       }
 
-      const result = await pool.query<UserRecord>(
+      const user = await db.oneOrNone<UserRecord>(
         'SELECT * FROM users WHERE id = $1',
         [userId]
       );
 
-      if (result.rows.length === 0) {
+      if (!user) {
         return res.status(404).json({
           success: false,
           error: { code: 'USER_NOT_FOUND', message: 'User not found' },
           requestId,
         });
       }
-
-      const user = result.rows[0];
 
       return res.status(200).json({
         success: true,
@@ -138,7 +137,7 @@ export class UserController {
    */
   static async regenerateApiKey(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = (req as any).user?.id;
+    const userId = req.headers['x-user-id'] as string;
 
     try {
       if (!userId) {
@@ -152,14 +151,14 @@ export class UserController {
       const newApiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
       const newApiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
 
-      const result = await pool.query(
+      const updatedUser = await db.oneOrNone<UserRecord>(
         `UPDATE users SET api_key = $1, api_secret = $2, updated_at = NOW()
          WHERE id = $3
          RETURNING api_key, api_secret`,
         [newApiKey, newApiSecret, userId]
       );
 
-      if (result.rows.length === 0) {
+      if (!updatedUser) {
         return res.status(404).json({
           success: false,
           error: { code: 'USER_NOT_FOUND', message: 'User not found' },
@@ -169,11 +168,9 @@ export class UserController {
 
       return res.status(200).json({
         success: true,
-        data: {
-          apiKey: result.rows[0].api_key,
-          apiSecret: result.rows[0].api_secret,
-          message: 'API keys regenerated successfully',
-        },
+        apiKey: updatedUser.api_key,
+        apiSecret: updatedUser.api_secret,
+        message: 'API keys regenerated successfully',
         requestId,
       });
     } catch (error) {
@@ -192,7 +189,7 @@ export class UserController {
    */
   static async getStats(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = (req as any).user?.id;
+    const userId = req.headers['x-user-id'] as string;
 
     try {
       if (!userId) {
@@ -203,23 +200,15 @@ export class UserController {
         });
       }
 
-      // Get stats
-      const statsResult = await pool.query(
-        `SELECT 
-          COUNT(*) as total_payments,
-          COALESCE(SUM(stars_amount), 0) as total_stars,
-          COUNT(CASE WHEN status = 'received' THEN 1 END) as successful_payments
-         FROM payments 
-         WHERE user_id = $1`,
-        [userId]
-      );
+      // Get stats from payment model
+      const stats = await paymentModel.getStatsByUser(userId);
 
       return res.status(200).json({
         success: true,
         stats: {
-          totalPayments: parseInt(statsResult.rows[0].total_payments),
-          totalStars: parseFloat(statsResult.rows[0].total_stars),
-          successfulPayments: parseInt(statsResult.rows[0].successful_payments),
+          totalPayments: stats.totalPayments,
+          totalStars: stats.totalStars,
+          byStatus: stats.byStatus,
         },
         requestId,
       });

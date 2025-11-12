@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { pool } from '../db/connection';
-import { FeeService } from '../../../core/src/services/fee.service';
+import { FeeService } from '@tg-payment/core'; // FIXED: Use @tg-payment/core import
 
 const feeService = new FeeService(pool);
 
@@ -40,13 +40,13 @@ export class AdminController {
 
     try {
       const { startDate, endDate } = req.query;
-      
-      const start = startDate 
-        ? new Date(startDate as string) 
+
+      const start = startDate
+        ? new Date(startDate as string)
         : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      
-      const end = endDate 
-        ? new Date(endDate as string) 
+
+      const end = endDate
+        ? new Date(endDate as string)
         : new Date();
 
       const summary = await feeService.getRevenueSummary(start, end);

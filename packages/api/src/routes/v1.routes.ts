@@ -3,8 +3,8 @@ import PaymentController from '../controllers/payment.controller';
 import ConversionController from '../controllers/conversion.controller';
 import { UserController } from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
-import { authenticateApiKey, optionalAuth } from '../middleware/auth.middleware';
-import rateLimit from '../middleware/rateLimit.middleware';
+import authenticateApiKey, { optionalAuth } from '../middleware/auth.middleware';
+import rateLimit from '../middleware/ratelimit.middleware';
 
 const router = Router();
 
@@ -32,7 +32,7 @@ router.post('/conversions/lock-rate', authenticateApiKey, strictLimit, Conversio
 router.get('/conversions/:id/status', authenticateApiKey, standardLimit, ConversionController.getStatus);
 router.get('/conversions', authenticateApiKey, standardLimit, ConversionController.listConversions);
 
-// Admin endpoints (add authentication in production)
+// Admin endpoints
 router.get('/admin/revenue', standardLimit, AdminController.getRevenue);
 router.get('/admin/revenue/summary', standardLimit, AdminController.getRevenueSummary);
 router.get('/admin/config', standardLimit, AdminController.getConfig);

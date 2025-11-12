@@ -11,17 +11,13 @@ export interface AuthenticatedRequest extends Request {
   requestId?: string;
 }
 
-/**
- * Middleware to validate API key and attach user to request
- */
 export async function authenticateApiKey(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    // Get API key from header or query param
-    const apiKey = 
+    const apiKey =
       req.headers['x-api-key'] as string ||
       req.headers['authorization']?.replace('Bearer ', '') ||
       req.query.api_key as string;
@@ -37,7 +33,6 @@ export async function authenticateApiKey(
       return;
     }
 
-    // Validate API key format
     if (!apiKey.startsWith('pk_') && !apiKey.startsWith('sk_')) {
       res.status(401).json({
         success: false,
@@ -49,10 +44,9 @@ export async function authenticateApiKey(
       return;
     }
 
-    // Look up user by API key
     const result = await pool.query(
-      `SELECT id, api_key, app_name, is_active 
-       FROM users 
+      `SELECT id, api_key, app_name, is_active
+       FROM users
        WHERE api_key = $1`,
       [apiKey]
     );
@@ -70,7 +64,6 @@ export async function authenticateApiKey(
 
     const user = result.rows[0];
 
-    // Check if user is active
     if (!user.is_active) {
       res.status(403).json({
         success: false,
@@ -82,13 +75,11 @@ export async function authenticateApiKey(
       return;
     }
 
-    // Update last activity
     pool.query(
       'UPDATE users SET last_activity_at = NOW() WHERE id = $1',
       [user.id]
-    ).catch(err => console.error('Failed to update last_activity:', err));
+    ).catch((err: any) => console.error('Failed to update last_activity:', err));
 
-    // Attach user to request
     req.user = {
       id: user.id,
       apiKey: user.api_key,
@@ -96,7 +87,6 @@ export async function authenticateApiKey(
       isActive: user.is_active,
     };
 
-    // Also set X-User-Id header for backward compatibility
     req.headers['x-user-id'] = user.id;
 
     next();
@@ -112,31 +102,23 @@ export async function authenticateApiKey(
   }
 }
 
-/**
- * Optional auth - allows both authenticated and unauthenticated requests
- */
 export async function optionalAuth(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const apiKey = 
+  const apiKey =
     req.headers['x-api-key'] as string ||
     req.headers['authorization']?.replace('Bearer ', '');
 
   if (!apiKey) {
-    // No API key provided, continue without auth
     next();
     return;
   }
 
-  // If API key provided, validate it
   authenticateApiKey(req, res, next);
 }
 
-/**
- * Webhook authentication (validates webhook secret)
- */
 export function authenticateWebhook(
   req: Request,
   res: Response,
@@ -170,8 +152,4 @@ export function authenticateWebhook(
   next();
 }
 
-export default {
-  authenticateApiKey,
-  optionalAuth,
-  authenticateWebhook,
-};
+export default authenticateApiKey;
