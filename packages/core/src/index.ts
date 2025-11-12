@@ -1,11 +1,68 @@
-// Export types
-export * from './types';
+// Models
+export { 
+  PaymentModel, 
+  Payment, 
+  PaymentStatus 
+} from './models/payment.model';
 
-// Export config
-export * from './config';
+export { 
+  ConversionModel, 
+  Conversion as ConversionRecord,
+  ConversionStatus, 
+  Currency, 
+  ConversionFees 
+} from './models/conversion.model';
 
-// Export server base
-export { default as ServerBase } from './server';
+export { 
+  SettlementModel, 
+  Settlement, 
+  SettlementStatus, 
+  FiatCurrency, 
+  SettlementRecipient 
+} from './models/settlement.model';
 
-// Package version
-export const VERSION = '0.1.0';
+// Services
+export { TelegramService } from './services/telegram.service';
+export { FragmentService } from './services/fragment.service';
+export { FeeService } from './services/fee.service';
+export { TonPaymentService } from './services/ton-payment.service';
+export { ReconciliationService } from './services/reconciliation.service';
+export { WebhookService } from './services/webhook.service';
+
+// Utils
+export { 
+  RateLock, 
+  RateLockManager, 
+  rateLockManager 
+} from './utils/rate-locking';
+
+export { 
+  ConversionState, 
+  StateTransition, 
+  ConversionStateMachine 
+} from './utils/state-machine';
+
+export { 
+  ErrorCode,
+  AppError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  RateLimitError,
+  ExternalServiceError,
+  ConversionError,
+  ErrorHandler
+} from './utils/error-handler';
+
+// Database
+export { 
+  Database, 
+  initDatabase, 
+  getDatabase, 
+  closeDatabase 
+} from './db/connection';
+
+// Types (if you have a types file, otherwise remove this line)
+// export * from './types';

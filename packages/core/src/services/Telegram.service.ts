@@ -39,7 +39,7 @@ export interface PaymentRecord {
 
 export class TelegramService {
   private bot: Telegraf;
-  private webhookUrl: string;
+  private webhookUrl?: string; // FIXED: Made optional
 
   constructor(botToken: string) {
     this.bot = new Telegraf(botToken);
@@ -81,7 +81,9 @@ export class TelegramService {
     // Handle pre-checkout queries
     this.bot.on('pre_checkout_query', async (ctx) => {
       try {
+        // FIXED: Added update_id to payload
         const isValid = await this.verifyPreCheckout({
+          update_id: ctx.update.update_id,
           pre_checkout_query: ctx.preCheckoutQuery,
         });
 
@@ -102,7 +104,6 @@ export class TelegramService {
    */
   async processSuccessfulPayment(payload: TelegramPaymentPayload): Promise<PaymentRecord> {
     const payment = payload.message?.successful_payment;
-
     if (!payment) {
       throw new Error('Invalid payment payload');
     }
@@ -128,7 +129,6 @@ export class TelegramService {
 
     // TODO: Save to database
     // await PaymentModel.create(paymentRecord);
-
     return paymentRecord;
   }
 
@@ -137,7 +137,6 @@ export class TelegramService {
    */
   async verifyPreCheckout(query: TelegramPaymentPayload): Promise<boolean> {
     const preCheckout = query.pre_checkout_query;
-
     if (!preCheckout) {
       return false;
     }
@@ -152,7 +151,6 @@ export class TelegramService {
     // - Check user eligibility
     // - Verify amount limits
     // - Check for fraud patterns
-
     return true;
   }
 
