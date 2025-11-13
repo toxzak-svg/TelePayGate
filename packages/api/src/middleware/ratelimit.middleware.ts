@@ -1,12 +1,12 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
 
 /**
  * Create configurable rate limiter
  */
-export default function createRateLimiter(options?: {
+function createRateLimiter(options?: {
   windowMs?: number;
   maxRequests?: number;
-}) {
+}): RateLimitRequestHandler {
   const { windowMs = 60000, maxRequests = 60 } = options || {};
 
   return rateLimit({
@@ -24,8 +24,11 @@ export default function createRateLimiter(options?: {
   });
 }
 
-// Default global rate limiter
-export const globalLimiter = createRateLimiter({
+// Default global rate limiter - created once
+const globalLimiter = createRateLimiter({
   windowMs: 60000,
   maxRequests: 60
 });
+
+export default globalLimiter;
+export { createRateLimiter };

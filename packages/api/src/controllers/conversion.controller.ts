@@ -6,33 +6,32 @@ import {
   Currency,
   PaymentModel,
   PaymentStatus,
-  getDatabase
+  getDatabase,
+  rateLockManager,
+  ConversionStateMachine,
+  ConversionState,
+  WebhookService
 } from '@tg-payment/core';
-import { rateLockManager } from '@tg-payment/core';
-import { ConversionStateMachine, ConversionState } from '@tg-payment/core';
-import { WebhookService } from '@tg-payment/core';
-
-// Initialize services
-const db = getDatabase();
-const conversionModel = new ConversionModel(db);
-const paymentModel = new PaymentModel(db);
-
-// Webhook service (if configured)
-let webhookService: WebhookService | null = null;
-if (process.env.WEBHOOK_SECRET) {
-  webhookService = new WebhookService(
-    db as any,
-    process.env.WEBHOOK_SECRET
-  );
-}
 
 // Mock exchange rate (replace with real rate aggregator)
 const STARS_TO_TON_RATE = 0.00099;
 
 export class ConversionController {
+  private static getServices() {
+    const db = getDatabase();
+    const conversionModel = new ConversionModel(db);
+    const paymentModel = new PaymentModel(db);
+    
+    let webhookService: WebhookService | null = null;
+    if (process.env.WEBHOOK_SECRET) {
+      webhookService = new WebhookService(db as any, process.env.WEBHOOK_SECRET);
+    }
+    
+    return { db, conversionModel, paymentModel, webhookService };
+  }
+
   /**
    * POST /api/v1/conversions/estimate
-   * Get conversion rate estimate
    */
   static async estimateConversion(req: Request, res: Response) {
     const requestId = uuid();
@@ -48,7 +47,6 @@ export class ConversionController {
         });
       }
 
-      // Minimum amount check
       if (sourceAmount < 1000) {
         return res.status(400).json({
           success: false,
@@ -60,11 +58,8 @@ export class ConversionController {
         });
       }
 
-      // Calculate estimate
       const exchangeRate = STARS_TO_TON_RATE;
       const targetAmount = sourceAmount * exchangeRate;
-      
-      // Calculate fees (2% platform fee)
       const platformFee = sourceAmount * 0.02;
       const netAmount = targetAmount - (platformFee * exchangeRate);
 
@@ -80,7 +75,7 @@ export class ConversionController {
             platform: platformFee,
             total: platformFee
           },
-          validUntil: Date.now() + 60000 // 1 minute
+          validUntil: Date.now() + 60000
         },
         requestId,
       });
@@ -96,7 +91,6 @@ export class ConversionController {
 
   /**
    * POST /api/v1/conversions/lock-rate
-   * Lock conversion rate
    */
   static async lockRate(req: Request, res: Response) {
     const requestId = uuid();
@@ -117,7 +111,6 @@ export class ConversionController {
         });
       }
 
-      // Create rate lock
       const rateLock = rateLockManager.createLock(
         STARS_TO_TON_RATE,
         sourceCurrency,
@@ -150,13 +143,14 @@ export class ConversionController {
 
   /**
    * POST /api/v1/conversions/create
-   * Create new conversion
    */
   static async createConversion(req: Request, res: Response) {
     const requestId = uuid();
     const userId = req.headers['x-user-id'] as string;
 
     try {
+      const { paymentModel, conversionModel, webhookService, db } = ConversionController.getServices();
+
       if (!userId) {
         return res.status(400).json({
           success: false,
@@ -175,7 +169,6 @@ export class ConversionController {
         });
       }
 
-      // Verify all payments exist and belong to user
       const payments = await paymentModel.findByIds(paymentIds);
 
       if (payments.length !== paymentIds.length) {
@@ -186,7 +179,6 @@ export class ConversionController {
         });
       }
 
-      // Verify all payments belong to user and are in received status
       const invalidPayments = payments.filter(
         p => p.userId !== userId || p.status !== PaymentStatus.RECEIVED
       );
@@ -202,7 +194,6 @@ export class ConversionController {
         });
       }
 
-      // Calculate total amount
       const totalStars = payments.reduce((sum, p) => sum + p.starsAmount, 0);
 
       if (totalStars < 1000) {
@@ -216,7 +207,6 @@ export class ConversionController {
         });
       }
 
-      // Get exchange rate (from lock or current)
       let exchangeRate = STARS_TO_TON_RATE;
       if (rateLockId) {
         const lock = rateLockManager.getLock(rateLockId);
@@ -230,9 +220,8 @@ export class ConversionController {
         exchangeRate = lock.exchangeRate;
       }
 
-      const targetAmount = totalStars * exchangeRate * 0.98; // 2% fee
+      const targetAmount = totalStars * exchangeRate * 0.98;
 
-      // Create conversion
       const conversion = await conversionModel.create({
         paymentIds,
         sourceCurrency: Currency.STARS,
@@ -241,14 +230,12 @@ export class ConversionController {
         status: ConversionStatus.PENDING
       });
 
-      // Update conversion with exchange rate and target amount
       await conversionModel.update(conversion.id, {
         exchangeRate,
         targetAmount,
         status: ConversionStatus.PHASE1_PREPARED
       });
 
-      // Update payment statuses
       await paymentModel.updateMany(
         { id: { in: paymentIds } },
         { status: PaymentStatus.CONVERTING }
@@ -256,7 +243,6 @@ export class ConversionController {
 
       console.log('✅ Conversion created:', conversion.id);
 
-      // Send webhook if configured
       if (webhookService) {
         const userProfile = await db.one(
           'SELECT webhook_url FROM users WHERE id = $1',
@@ -302,12 +288,12 @@ export class ConversionController {
 
   /**
    * GET /api/v1/conversions/:id/status
-   * Get conversion status
    */
   static async getStatus(req: Request, res: Response) {
     const requestId = uuid();
 
     try {
+      const { conversionModel } = ConversionController.getServices();
       const { id } = req.params;
       const conversion = await conversionModel.findById(id);
 
@@ -319,7 +305,6 @@ export class ConversionController {
         });
       }
 
-      // Create state machine to calculate progress
       const stateMachine = new ConversionStateMachine(
         conversion.status as unknown as ConversionState
       );
@@ -358,13 +343,14 @@ export class ConversionController {
 
   /**
    * GET /api/v1/conversions
-   * List user conversions
    */
   static async listConversions(req: Request, res: Response) {
     const requestId = uuid();
     const userId = req.headers['x-user-id'] as string;
 
     try {
+      const { conversionModel } = ConversionController.getServices();
+
       if (!userId) {
         return res.status(400).json({
           success: false,

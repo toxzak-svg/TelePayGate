@@ -1,19 +1,22 @@
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
-import { pool } from '../db/connection';
-import { FeeService } from '@tg-payment/core'; // FIXED: Use @tg-payment/core import
-
-const feeService = new FeeService(pool);
+import { getDatabase, FeeService } from '@tg-payment/core';
 
 export class AdminController {
+  private static getServices() {
+    const db = getDatabase();
+    const feeService = new FeeService(db as any);
+    return { db, feeService };
+  }
+
   /**
    * GET /api/v1/admin/revenue
-   * Get total platform revenue
    */
   static async getRevenue(req: Request, res: Response) {
     const requestId = uuid();
 
     try {
+      const { feeService } = AdminController.getServices();
       const revenue = await feeService.getTotalRevenue();
 
       return res.status(200).json({
@@ -33,12 +36,12 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/revenue/summary
-   * Get revenue summary by date range
    */
   static async getRevenueSummary(req: Request, res: Response) {
     const requestId = uuid();
 
     try {
+      const { feeService } = AdminController.getServices();
       const { startDate, endDate } = req.query;
 
       const start = startDate
@@ -72,12 +75,12 @@ export class AdminController {
 
   /**
    * GET /api/v1/admin/config
-   * Get platform configuration
    */
   static async getConfig(req: Request, res: Response) {
     const requestId = uuid();
 
     try {
+      const { feeService } = AdminController.getServices();
       const config = await feeService.getConfig();
 
       return res.status(200).json({
@@ -103,12 +106,12 @@ export class AdminController {
 
   /**
    * PUT /api/v1/admin/config
-   * Update platform configuration
    */
   static async updateConfig(req: Request, res: Response) {
     const requestId = uuid();
 
     try {
+      const { db } = AdminController.getServices();
       const {
         platformFeePercentage,
         fragmentFeePercentage,
@@ -156,7 +159,7 @@ export class AdminController {
 
       updates.push(`updated_at = NOW()`);
 
-      await pool.query(
+      await db.query(
         `UPDATE platform_config SET ${updates.join(', ')} WHERE is_active = true`,
         values
       );

@@ -3,30 +3,20 @@ import { v4 as uuid } from 'uuid';
 import crypto from 'crypto';
 import { getDatabase, PaymentModel } from '@tg-payment/core';
 
-const db = getDatabase();
-const paymentModel = new PaymentModel(db);
-
-interface UserRecord {
-  id: string;
-  api_key: string;
-  api_secret: string;
-  app_name: string;
-  description?: string;
-  webhook_url?: string;
-  kyc_status: string;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
 export class UserController {
+  private static getServices() {
+    const db = getDatabase();
+    const paymentModel = new PaymentModel(db);
+    return { db, paymentModel };
+  }
+
   /**
    * POST /api/v1/users/register
-   * Register new user/application
    */
   static async register(req: Request, res: Response) {
     const requestId = uuid();
     try {
+      const { db } = UserController.getServices();
       const { appName, description, webhookUrl } = req.body;
 
       if (!appName) {
@@ -38,18 +28,14 @@ export class UserController {
         });
       }
 
-      // Generate API keys
       const apiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
       const apiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
 
-      // Insert user (using database model)
-      const userResult = await db.one<UserRecord>(
+      const user = await db.one(
         `INSERT INTO users (api_key, api_secret, app_name, description, webhook_url, kyc_status, is_active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, 'pending', true, NOW(), NOW()) RETURNING *`,
         [apiKey, apiSecret, appName, description || null, webhookUrl || null]
       );
-
-      const user = userResult;
 
       console.log('✅ User registered:', { requestId, userId: user.id, appName });
 
@@ -80,13 +66,14 @@ export class UserController {
 
   /**
    * GET /api/v1/users/me
-   * Get current user profile
    */
   static async getMe(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = req.headers['x-user-id'] as string; // Or decode from auth middleware
+    const userId = req.headers['x-user-id'] as string;
 
     try {
+      const { db } = UserController.getServices();
+
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -95,7 +82,7 @@ export class UserController {
         });
       }
 
-      const user = await db.oneOrNone<UserRecord>(
+      const user = await db.oneOrNone(
         'SELECT * FROM users WHERE id = $1',
         [userId]
       );
@@ -133,13 +120,14 @@ export class UserController {
 
   /**
    * POST /api/v1/users/api-keys/regenerate
-   * Regenerate API key
    */
   static async regenerateApiKey(req: Request, res: Response) {
     const requestId = uuid();
     const userId = req.headers['x-user-id'] as string;
 
     try {
+      const { db } = UserController.getServices();
+
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -151,7 +139,7 @@ export class UserController {
       const newApiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
       const newApiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
 
-      const updatedUser = await db.oneOrNone<UserRecord>(
+      const updatedUser = await db.oneOrNone(
         `UPDATE users SET api_key = $1, api_secret = $2, updated_at = NOW()
          WHERE id = $3
          RETURNING api_key, api_secret`,
@@ -185,13 +173,14 @@ export class UserController {
 
   /**
    * GET /api/v1/users/stats
-   * Get user statistics
    */
   static async getStats(req: Request, res: Response) {
     const requestId = uuid();
     const userId = req.headers['x-user-id'] as string;
 
     try {
+      const { paymentModel } = UserController.getServices();
+
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -200,7 +189,6 @@ export class UserController {
         });
       }
 
-      // Get stats from payment model
       const stats = await paymentModel.getStatsByUser(userId);
 
       return res.status(200).json({
@@ -222,3 +210,5 @@ export class UserController {
     }
   }
 }
+
+export default UserController;

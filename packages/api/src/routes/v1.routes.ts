@@ -4,14 +4,14 @@ import ConversionController from '../controllers/conversion.controller';
 import { UserController } from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
 import authenticateApiKey, { optionalAuth } from '../middleware/auth.middleware';
-import rateLimit from '../middleware/ratelimit.middleware';
+import { createRateLimiter } from '../middleware/ratelimit.middleware';
 
 const router = Router();
 
-// Rate limit configurations
-const strictLimit = rateLimit({ windowMs: 60000, maxRequests: 10 });
-const standardLimit = rateLimit({ windowMs: 60000, maxRequests: 60 });
-const relaxedLimit = rateLimit({ windowMs: 60000, maxRequests: 100 });
+// Create rate limit instances ONCE at module load
+const strictLimit = createRateLimiter({ windowMs: 60000, maxRequests: 10 });
+const standardLimit = createRateLimiter({ windowMs: 60000, maxRequests: 60 });
+const relaxedLimit = createRateLimiter({ windowMs: 60000, maxRequests: 100 });
 
 // User endpoints
 router.post('/users/register', strictLimit, UserController.register);

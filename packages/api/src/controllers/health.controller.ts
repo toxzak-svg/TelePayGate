@@ -1,11 +1,17 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 
-export const healthRouter = Router();
+export class HealthController {
+  /**
+   * GET /health
+   */
+  static async check(req: Request, res: Response) {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  }
+}
 
-healthRouter.get('/', async (req: Request, res: Response) => {
-  res.json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+export default HealthController;

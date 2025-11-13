@@ -1,24 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import { PaymentModel, PaymentStatus } from '@tg-payment/core';
-import { getDatabase } from '@tg-payment/core';
-import { TelegramService } from '@tg-payment/core';
-import { WebhookService } from '@tg-payment/core';
-
-// Initialize services
-const db = getDatabase();
-const paymentModel = new PaymentModel(db);
-const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN!);
-
-// Webhook service (if configured)
-let webhookService: WebhookService | null = null;
-if (process.env.WEBHOOK_SECRET) {
-  webhookService = new WebhookService(
-    db as any, // Type conversion for pg Pool compatibility
-    process.env.WEBHOOK_SECRET
-  );
-}
+import { PaymentModel, PaymentStatus, getDatabase, TelegramService, WebhookService } from '@tg-payment/core';
 
 export class PaymentController {
+  private static getServices() {
+    const db = getDatabase();
+    const paymentModel = new PaymentModel(db);
+    const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN!);
+    
+    let webhookService: WebhookService | null = null;
+    if (process.env.WEBHOOK_SECRET) {
+      webhookService = new WebhookService(db as any, process.env.WEBHOOK_SECRET);
+    }
+    
+    return { db, paymentModel, telegramService, webhookService };
+  }
+
   /**
    * Handle Telegram payment webhook
    * POST /api/v1/payments/webhook
@@ -29,6 +25,7 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const { paymentModel, telegramService, webhookService, db } = PaymentController.getServices();
       const payload = req.body;
       const userId = req.headers['x-user-id'] as string;
 
@@ -53,7 +50,6 @@ export class PaymentController {
       if (payload.message?.successful_payment) {
         const successfulPayment = payload.message.successful_payment;
 
-        // Create payment record
         const payment = await paymentModel.create({
           userId,
           telegramInvoiceId: successfulPayment.invoice_payload || 'unknown',
@@ -101,7 +97,6 @@ export class PaymentController {
 
       // Process pre-checkout query
       if (payload.pre_checkout_query) {
-        // Verify pre-checkout with Telegram service
         const isValid = await telegramService.verifyPreCheckout(payload);
 
         res.status(200).json({
@@ -111,7 +106,7 @@ export class PaymentController {
         return;
       }
 
-      // Unknown webhook type - acknowledge but don't process
+      // Unknown webhook type
       res.status(200).json({
         success: true,
         message: 'Webhook acknowledged',
@@ -138,6 +133,7 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const { paymentModel } = PaymentController.getServices();
       const { id } = req.params;
       const payment = await paymentModel.findById(id);
 
@@ -179,6 +175,7 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const { paymentModel } = PaymentController.getServices();
       const userId = req.headers['x-user-id'] as string;
 
       if (!userId) {
@@ -234,6 +231,7 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
+      const { paymentModel } = PaymentController.getServices();
       const userId = req.headers['x-user-id'] as string;
 
       if (!userId) {
