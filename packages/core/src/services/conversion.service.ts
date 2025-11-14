@@ -61,7 +61,7 @@ export class ConversionService {
     targetCurrency: string = 'TON'
   ): Promise<RateQuote> {
     const baseRate = await this.getCurrentRate(sourceCurrency, targetCurrency);
-    const feeBreakdown = await this.feeService.calculateFees(sourceAmount);
+    const feeBreakdown = await this.feeService.calculateFeeBreakdown(sourceAmount);
     const platformWallet = await this.feeService.getPlatformWallet();
     const totalFees = feeBreakdown.total;
     const targetAmount = (sourceAmount - totalFees) * baseRate;

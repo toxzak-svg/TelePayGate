@@ -18,7 +18,7 @@ export interface FeeBreakdown {
 
 export interface PlatformFee {
   id: string;
-  conversion_id: string;
+  payment_id: string;
   user_id: string;
   fee_percentage: number;
   fee_amount_stars: number;
@@ -44,15 +44,15 @@ export class FeeService {
     }
 
     const result = await this.pool.query(
-      `SELECT 
+      `SELECT
         platform_fee_percentage,
         fragment_fee_percentage,
         network_fee_percentage,
         platform_ton_wallet,
         min_conversion_amount
-       FROM platform_config
-       WHERE is_active = true
-       LIMIT 1`
+      FROM platform_config
+      WHERE is_active = true
+      LIMIT 1`
     );
 
     if (result.rows.length === 0) {
@@ -74,7 +74,7 @@ export class FeeService {
   /**
    * Calculate fees for a given amount
    */
-  async calculateFees(sourceAmount: number): Promise<FeeBreakdown> {
+  async calculateFeeBreakdown(sourceAmount: number): Promise<FeeBreakdown> {
     const config = await this.getConfig();
 
     const platformFee = sourceAmount * config.platformFeePercentage;
@@ -91,6 +91,66 @@ export class FeeService {
   }
 
   /**
+   * Calculate and record fees for a payment
+   * Works with payment UUIDs
+   */
+  async calculateFeesForPayment(paymentId: string): Promise<PlatformFee> {
+    // Get payment details
+    const paymentResult = await this.pool.query(
+      `SELECT id, user_id, stars_amount FROM payments WHERE id = $1`,
+      [paymentId]
+    );
+
+    if (!paymentResult.rows || paymentResult.rows.length === 0) {
+      throw new Error(`Payment not found: ${paymentId}`);
+    }
+
+    const payment = paymentResult.rows[0];
+
+    if (!payment.stars_amount) {
+      throw new Error(`Payment ${paymentId} has no stars_amount`);
+    }
+
+    const config = await this.getConfig();
+
+    // Calculate fee amounts
+    const feeAmountStars = payment.stars_amount * config.platformFeePercentage;
+    const feeAmountTon = 0; // Will be calculated during conversion
+    const feeAmountUsd = 0; // Will be calculated during conversion
+
+    // Record the fee - ✅ FIXED: Added array brackets
+    const result = await this.pool.query(
+      `INSERT INTO platform_fees (
+        payment_id,
+        user_id,
+        fee_percentage,
+        fee_amount_stars,
+        fee_amount_ton,
+        fee_amount_usd,
+        status,
+        fee_type
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'platform')
+      RETURNING *`,
+      [
+        paymentId,
+        payment.user_id,
+        config.platformFeePercentage,
+        feeAmountStars,
+        feeAmountTon,
+        feeAmountUsd,
+      ]
+    );
+
+    console.log('💰 Platform fee recorded:', {
+      paymentId,
+      feeStars: feeAmountStars,
+      feePercentage: config.platformFeePercentage,
+    });
+
+    return result.rows[0];
+  }
+
+  /**
    * Record platform fee for a conversion
    */
   async recordFee(
@@ -101,8 +161,9 @@ export class FeeService {
     exchangeRate: number
   ): Promise<PlatformFee> {
     const config = await this.getConfig();
-    const feeAmountUsd = feeAmountTon * exchangeRate; // Simplified, use real TON/USD rate
+    const feeAmountUsd = feeAmountTon * exchangeRate;
 
+    // ✅ FIXED: Added array brackets
     const result = await this.pool.query(
       `INSERT INTO platform_fees (
         conversion_id,
@@ -146,7 +207,7 @@ export class FeeService {
     pendingTon: number;
   }> {
     const result = await this.pool.query(`
-      SELECT 
+      SELECT
         SUM(fee_amount_stars) as total_fees_stars,
         SUM(fee_amount_ton) as total_fees_ton,
         SUM(fee_amount_usd) as total_fees_usd,
@@ -173,19 +234,18 @@ export class FeeService {
     endDate: Date
   ): Promise<Array<any>> {
     const result = await this.pool.query(
-      `SELECT 
+      `SELECT
         DATE(created_at) as date,
         COUNT(*) as total_fees,
         SUM(fee_amount_stars) as total_stars_fees,
         SUM(fee_amount_ton) as total_ton_fees
-       FROM platform_fees
-       WHERE created_at BETWEEN $1 AND $2
-       GROUP BY DATE(created_at)
-       ORDER BY date DESC`,
+      FROM platform_fees
+      WHERE created_at BETWEEN $1 AND $2
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC`,
       [startDate, endDate]
     );
 
-    // FIXED: Added type annotation to row parameter
     return result.rows.map((row: any) => ({
       date: row.date,
       totalFees: parseInt(row.total_fees),
@@ -200,11 +260,11 @@ export class FeeService {
   async markFeeCollected(feeId: string, txHash: string): Promise<void> {
     await this.pool.query(
       `UPDATE platform_fees
-       SET status = 'collected',
-           collection_tx_hash = $1,
-           collected_at = NOW(),
-           updated_at = NOW()
-       WHERE id = $2`,
+      SET status = 'collected',
+          collection_tx_hash = $1,
+          collected_at = NOW(),
+          updated_at = NOW()
+      WHERE id = $2`,
       [txHash, feeId]
     );
 

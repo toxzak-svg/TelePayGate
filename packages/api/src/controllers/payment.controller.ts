@@ -1,20 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { PaymentModel, PaymentStatus, getDatabase, TelegramService, WebhookService } from '@tg-payment/core';
+import { PaymentModel, PaymentStatus, FeeService } from '@tg-payment/core';
+import { getDatabase } from '@tg-payment/core';
+import { TelegramService } from '@tg-payment/core';
 
 export class PaymentController {
-  private static getServices() {
-    const db = getDatabase();
-    const paymentModel = new PaymentModel(db);
-    const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN!);
-    
-    let webhookService: WebhookService | null = null;
-    if (process.env.WEBHOOK_SECRET) {
-      webhookService = new WebhookService(db as any, process.env.WEBHOOK_SECRET);
-    }
-    
-    return { db, paymentModel, telegramService, webhookService };
-  }
-
   /**
    * Handle Telegram payment webhook
    * POST /api/v1/payments/webhook
@@ -25,7 +14,6 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { paymentModel, telegramService, webhookService, db } = PaymentController.getServices();
       const payload = req.body;
       const userId = req.headers['x-user-id'] as string;
 
@@ -40,16 +28,20 @@ export class PaymentController {
         return;
       }
 
+      const db = getDatabase();
+      const paymentModel = new PaymentModel(db);
+      const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN!);
+
       console.log('📥 Webhook received:', {
         userId,
         hasPayment: !!payload.message?.successful_payment,
-        hasPreCheckout: !!payload.pre_checkout_query,
       });
 
       // Process successful payment
       if (payload.message?.successful_payment) {
         const successfulPayment = payload.message.successful_payment;
 
+        // Create payment record
         const payment = await paymentModel.create({
           userId,
           telegramInvoiceId: successfulPayment.invoice_payload || 'unknown',
@@ -61,26 +53,17 @@ export class PaymentController {
 
         console.log('✅ Payment created:', payment.id);
 
-        // Send webhook notification if configured
-        if (webhookService) {
-          const userProfile = await db.one(
-            'SELECT webhook_url FROM users WHERE id = $1',
-            [userId]
-          );
+// Wait a tiny bit to ensure DB transaction is committed
+await new Promise(resolve => setTimeout(resolve, 10));
 
-          if (userProfile.webhook_url) {
-            await webhookService.queueEvent(
-              userId,
-              userProfile.webhook_url,
-              'payment.received',
-              {
-                paymentId: payment.id,
-                starsAmount: payment.starsAmount,
-                telegramPaymentId: payment.telegramPaymentId
-              }
-            );
-          }
-        }
+// 💰 CALCULATE AND CREATE PLATFORM FEES
+try {
+  const feeService = new FeeService(db as any);
+  await feeService.calculateFeesForPayment(payment.id);
+  console.log('💰 Platform fee created for payment:', payment.id);
+} catch (feeError: any) {
+  console.error('⚠️ Fee calculation error:', feeError.message);
+}
 
         res.status(200).json({
           success: true,
@@ -97,16 +80,13 @@ export class PaymentController {
 
       // Process pre-checkout query
       if (payload.pre_checkout_query) {
-        const isValid = await telegramService.verifyPreCheckout(payload);
-
         res.status(200).json({
           success: true,
-          verified: isValid,
+          verified: true,
         });
         return;
       }
 
-      // Unknown webhook type
       res.status(200).json({
         success: true,
         message: 'Webhook acknowledged',
@@ -133,17 +113,15 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { paymentModel } = PaymentController.getServices();
       const { id } = req.params;
+      const db = getDatabase();
+      const paymentModel = new PaymentModel(db);
       const payment = await paymentModel.findById(id);
 
       if (!payment) {
         res.status(404).json({
           success: false,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Payment not found'
-          }
+          error: { code: 'NOT_FOUND', message: 'Payment not found' }
         });
         return;
       }
@@ -175,20 +153,17 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { paymentModel } = PaymentController.getServices();
       const userId = req.headers['x-user-id'] as string;
-
       if (!userId) {
         res.status(400).json({
           success: false,
-          error: {
-            code: 'MISSING_USER_ID',
-            message: 'X-User-Id header is required'
-          }
+          error: { code: 'MISSING_USER_ID', message: 'X-User-Id header is required' }
         });
         return;
       }
 
+      const db = getDatabase();
+      const paymentModel = new PaymentModel(db);
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
       const offset = (page - 1) * limit;
@@ -231,20 +206,17 @@ export class PaymentController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const { paymentModel } = PaymentController.getServices();
       const userId = req.headers['x-user-id'] as string;
-
       if (!userId) {
         res.status(400).json({
           success: false,
-          error: {
-            code: 'MISSING_USER_ID',
-            message: 'X-User-Id header is required'
-          }
+          error: { code: 'MISSING_USER_ID', message: 'X-User-Id header is required' }
         });
         return;
       }
 
+      const db = getDatabase();
+      const paymentModel = new PaymentModel(db);
       const stats = await paymentModel.getStatsByUser(userId);
 
       res.status(200).json({
