@@ -1,3 +1,25 @@
+/**
+ * @tg-payment/core
+ * Core business logic for Telegram Payment Gateway
+ * 
+ * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
+ * Updated: November 14, 2025
+ */
+
+// ============================================
+// SERVICES (Updated - No Fragment)
+// ============================================
+export { TelegramService } from './services/telegram.service';
+export { DirectConversionService } from './services/direct-conversion.service';
+export { TonPaymentService } from './services/ton-payment.service';
+export { FeeService } from './services/fee.service';
+export { FeeCollectionService } from './services/fee-collection.service';
+export { RateAggregatorService } from './services/rate.aggregator';
+export { PaymentService } from './services/payment.service';
+export { WebhookService } from './services/webhook.service';
+export { ReconciliationService } from './services/reconciliation.service';
+export { WithdrawalService } from './services/withdrawal.service';
+
 // ============================================
 // MODELS
 // ============================================
@@ -24,18 +46,7 @@ export {
 } from './models/settlement.model';
 
 // ============================================
-// SERVICES
-// ============================================
-export { TelegramService } from './services/telegram.service';
-export { FragmentService } from './services/fragment.service';
-export { FeeService } from './services/fee.service';
-export { TonPaymentService } from './services/ton-payment.service';
-export { ReconciliationService } from './services/reconciliation.service';
-export { WebhookService } from './services/webhook.service';
-export { FeeCollectionService } from './services/fee-collection.service';
-
-// ============================================
-// UTILS
+// UTILITIES
 // ============================================
 export {
   RateLock,
@@ -72,3 +83,24 @@ export {
   getDatabase,
   closeDatabase
 } from './db/connection';
+
+// ============================================
+// CONFIGURATION
+// ============================================
+export { config } from './config/index';
+
+// ============================================
+// SERVER
+// ============================================
+export { ServerBase } from './server';
+
+// ============================================
+// VERSION INFO
+// ============================================
+export const VERSION = '2.0.0';
+export const API_VERSION = 'v1';
+export const INTEGRATION_METHOD = 'DIRECT_TON'; // No Fragment
+
+console.log('✅ @tg-payment/core v2.0.0 initialized');
+console.log('🔗 Integration: Direct TON Blockchain (No Fragment API)');
+console.log('📦 Features: No KYC | No Holding Period | Instant Withdrawals');

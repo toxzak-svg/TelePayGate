@@ -3,24 +3,25 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@core/*": ["packages/core/src/*"],
-      "@api/*": ["packages/api/src/*"],
-      "@sdk/*": ["packages/sdk/src/*"],
-      "@types/*": ["packages/core/src/types/*"]
+      "@tg-payment/core": ["./packages/core/src"],
+      "@tg-payment/api": ["./packages/api/src"],
+      "@tg-payment/bot": ["./packages/bot/src"],
+      "@tg-payment/sdk": ["./packages/sdk/src"]
     }
   },
-  "include": ["packages/*/src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "packages/dashboard"]
 }

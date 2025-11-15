@@ -20,7 +20,8 @@ export const config = {
   
   ton: {
     apiKey: process.env.TON_API_KEY || '',
-    apiUrl: process.env.TON_API_URL || 'https://tonx.space/api',
+    // Prefer `TON_API_ENDPOINT` (used by docker-compose) but fall back to `TON_API_URL` if present
+    apiUrl: process.env.TON_API_ENDPOINT || process.env.TON_API_URL || 'https://tonx.space/api',
     mainnet: process.env.TON_MAINNET === 'true',
   },
   
