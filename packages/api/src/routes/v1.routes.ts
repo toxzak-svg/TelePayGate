@@ -71,3 +71,28 @@ router.get('/health', (req, res) => {
 // router.post('/fees/collect', authenticate, requireAdmin, feeCollectionController.collectFees);
 
 export default router;
+
+// P2P Routes
+import { P2POrdersController } from '../controllers/p2p-orders.controller';
+
+const p2pController = new P2POrdersController(p2pService);
+
+router.post('/p2p/sell', authenticateApiKey, (req, res, next) => 
+  p2pController.createSellOrder(req, res, next)
+);
+
+router.post('/p2p/buy', authenticateApiKey, (req, res, next) => 
+  p2pController.createBuyOrder(req, res, next)
+);
+
+router.get('/p2p/orders', authenticateApiKey, (req, res, next) => 
+  p2pController.listOpenOrders(req, res, next)
+);
+
+router.get('/p2p/orders/:orderId', authenticateApiKey, (req, res, next) => 
+  p2pController.getOrder(req, res, next)
+);
+
+router.post('/p2p/match', authenticateApiKey, adminOnly, (req, res, next) => 
+  p2pController.triggerMatching(req, res, next)
+);
