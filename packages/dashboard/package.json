@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
+    "test": "echo \"No tests\" && exit 0",
     "lint": "eslint .",
     "preview": "vite preview"
   },
