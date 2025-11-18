@@ -1,0 +1,203 @@
+import { apiClient } from './client';
+import {
+  Payment,
+  Conversion,
+  User,
+  Stats,
+  P2POrder,
+  DexQuote,
+  LiquiditySource,
+  WebhookEvent,
+  ChartData,
+  ApiResponse,
+} from '../types';
+
+export const paymentService = {
+  async getPayments(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  }): Promise<Payment[]> {
+    const { data } = await apiClient.get<ApiResponse<Payment[]>>('/payments', {
+      params,
+    });
+    return data.data;
+  },
+
+  async getPayment(id: string): Promise<Payment> {
+    const { data } = await apiClient.get<ApiResponse<Payment>>(
+      `/payments/${id}`
+    );
+    return data.data;
+  },
+};
+
+export const conversionService = {
+  async getConversions(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  }): Promise<Conversion[]> {
+    const { data } = await apiClient.get<ApiResponse<Conversion[]>>(
+      '/conversions',
+      { params }
+    );
+    return data.data;
+  },
+
+  async getConversion(id: string): Promise<Conversion> {
+    const { data } = await apiClient.get<ApiResponse<Conversion>>(
+      `/conversions/${id}`
+    );
+    return data.data;
+  },
+
+  async createConversion(params: {
+    sourceAmount: number;
+    sourceCurrency: string;
+    targetCurrency: string;
+  }): Promise<Conversion> {
+    const { data } = await apiClient.post<ApiResponse<Conversion>>(
+      '/conversions',
+      params
+    );
+    return data.data;
+  },
+};
+
+export const userService = {
+  async getProfile(): Promise<User> {
+    const { data } = await apiClient.get<ApiResponse<User>>('/user/profile');
+    return data.data;
+  },
+
+  async updateWebhookUrl(webhookUrl: string): Promise<User> {
+    const { data } = await apiClient.patch<ApiResponse<User>>(
+      '/user/webhook',
+      { webhookUrl }
+    );
+    return data.data;
+  },
+
+  async regenerateApiKey(): Promise<{ apiKey: string }> {
+    const { data } = await apiClient.post<ApiResponse<{ apiKey: string }>>(
+      '/user/regenerate-key'
+    );
+    return data.data;
+  },
+
+  async testWebhook(): Promise<{ success: boolean; message: string }> {
+    const { data } = await apiClient.post('/user/test-webhook');
+    return data.data;
+  },
+};
+
+export const statsService = {
+  async getDashboardStats(): Promise<Stats> {
+    const { data } = await apiClient.get<ApiResponse<Stats>>('/admin/stats');
+    return data.data;
+  },
+
+  async getRevenueChart(days: number = 7): Promise<ChartData[]> {
+    const { data } = await apiClient.get<ApiResponse<ChartData[]>>(
+      '/admin/charts/revenue',
+      { params: { days } }
+    );
+    return data.data;
+  },
+
+  async getTransactionChart(days: number = 7): Promise<ChartData[]> {
+    const { data } = await apiClient.get<ApiResponse<ChartData[]>>(
+      '/admin/charts/transactions',
+      { params: { days } }
+    );
+    return data.data;
+  },
+};
+
+export const p2pService = {
+  async getOrders(params?: {
+    type?: 'buy' | 'sell';
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<P2POrder[]> {
+    const { data } = await apiClient.get<ApiResponse<P2POrder[]>>(
+      '/p2p/orders',
+      { params }
+    );
+    return data.data;
+  },
+
+  async createOrder(order: {
+    type: 'buy' | 'sell';
+    starsAmount: number;
+    rate: string;
+  }): Promise<P2POrder> {
+    const { data } = await apiClient.post<ApiResponse<P2POrder>>(
+      '/p2p/orders',
+      order
+    );
+    return data.data;
+  },
+
+  async cancelOrder(orderId: string): Promise<void> {
+    await apiClient.delete(`/p2p/orders/${orderId}`);
+  },
+};
+
+export const dexService = {
+  async getQuote(
+    fromCurrency: string,
+    toCurrency: string,
+    amount: number
+  ): Promise<DexQuote> {
+    const { data } = await apiClient.get<ApiResponse<DexQuote>>('/dex/quote', {
+      params: { fromCurrency, toCurrency, amount },
+    });
+    return data.data;
+  },
+
+  async getLiquidity(
+    fromCurrency: string,
+    toCurrency: string,
+    amount: number
+  ): Promise<{ sources: LiquiditySource[] }> {
+    const { data } = await apiClient.get<
+      ApiResponse<{ sources: LiquiditySource[] }>
+    >('/dex/liquidity', {
+      params: { fromCurrency, toCurrency, amount },
+    });
+    return data.data;
+  },
+
+  async getBestRoute(
+    fromCurrency: string,
+    toCurrency: string,
+    amount: number
+  ): Promise<{
+    sources: LiquiditySource[];
+    totalRate: number;
+    totalFee: number;
+    estimatedTime: number;
+  }> {
+    const { data } = await apiClient.get('/dex/best-route', {
+      params: { fromCurrency, toCurrency, amount },
+    });
+    return data.data;
+  },
+};
+
+export const webhookService = {
+  async getWebhookEvents(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  }): Promise<WebhookEvent[]> {
+    const { data} = await apiClient.get<ApiResponse<WebhookEvent[]>>(
+      '/webhooks/events',
+      { params }
+    );
+    return data.data;
+  },
+};
