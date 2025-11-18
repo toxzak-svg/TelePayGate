@@ -1,81 +1,75 @@
 import { Request, Response, NextFunction } from 'express';
-import { StarsP2PService } from '@tg-payment/core';
+import { getDatabase, StarsOrderModel, StarsP2PService } from '@tg-payment/core';
 
 export class P2POrdersController {
-  constructor(private p2pService: StarsP2PService) {}
-
-  async createSellOrder(req: Request, res: Response, next: NextFunction) {
+  static async createOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const { starsAmount, rate } = req.body;
-      const userId = (req as any).user.id;
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(400).json({ success: false, error: { code: 'MISSING_USER_ID', message: 'X-User-Id header required' } });
 
-      if (!starsAmount || !rate) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'INVALID_INPUT', message: 'starsAmount and rate required' }
-        });
+      const { type, starsAmount, tonAmount, rate } = req.body;
+      if (!type || (type !== 'sell' && type !== 'buy')) return res.status(400).json({ success: false, error: { code: 'INVALID_TYPE', message: 'type must be "sell" or "buy"' } });
+      if (!rate) return res.status(400).json({ success: false, error: { code: 'MISSING_RATE', message: 'rate is required' } });
+
+      const db = getDatabase();
+      const service = new StarsP2PService(db);
+
+      let result: any;
+      if (type === 'sell') {
+        if (!starsAmount) return res.status(400).json({ success: false, error: { code: 'MISSING_STARS', message: 'starsAmount is required for sell orders' } });
+        result = await service.createSellOrder(userId, Number(starsAmount), String(rate));
+      } else {
+        if (!tonAmount) return res.status(400).json({ success: false, error: { code: 'MISSING_TON', message: 'tonAmount is required for buy orders' } });
+        result = await service.createBuyOrder(userId, String(tonAmount), String(rate));
       }
 
-      const order = await this.p2pService.createSellOrder(userId, starsAmount, rate);
-      res.json({ success: true, data: order });
-    } catch (error) {
-      next(error);
+      res.status(201).json({ success: true, order: result });
+    } catch (err) {
+      next(err);
     }
   }
 
-  async createBuyOrder(req: Request, res: Response, next: NextFunction) {
+  static async listOpenOrders(req: Request, res: Response, next: NextFunction) {
     try {
-      const { tonAmount, maxRate } = req.body;
-      const userId = (req as any).user.id;
-
-      if (!tonAmount || !maxRate) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'INVALID_INPUT', message: 'tonAmount and maxRate required' }
-        });
-      }
-
-      const order = await this.p2pService.createBuyOrder(userId, tonAmount, maxRate);
-      res.json({ success: true, data: order });
-    } catch (error) {
-      next(error);
+      const type = req.query.type as 'sell' | 'buy' | undefined;
+      const db = getDatabase();
+      const model = new StarsOrderModel(db);
+      const orders = await model.listOpenOrders(type, 100);
+      res.status(200).json({ success: true, orders });
+    } catch (err) {
+      next(err);
     }
   }
 
-  async listOpenOrders(req: Request, res: Response, next: NextFunction) {
+  static async getOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const { type } = req.query;
-      const orders = await this.p2pService.getOpenOrders(type as any);
-      res.json({ success: true, data: orders, count: orders.length });
-    } catch (error) {
-      next(error);
+      const { id } = req.params;
+      const db = getDatabase();
+      const model = new StarsOrderModel(db);
+      const order = await model.getById(id);
+      if (!order) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
+      res.status(200).json({ success: true, order });
+    } catch (err) {
+      next(err);
     }
   }
 
-  async getOrder(req: Request, res: Response, next: NextFunction) {
+  static async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const { orderId } = req.params;
-      const order = await this.p2pService.getOrderById(orderId);
-      
-      if (!order) {
-        return res.status(404).json({
-          success: false,
-          error: { code: 'ORDER_NOT_FOUND', message: 'Order not found' }
-        });
-      }
-
-      res.json({ success: true, data: order });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async triggerMatching(req: Request, res: Response, next: NextFunction) {
-    try {
-      const matchesCount = await this.p2pService.matchOrders();
-      res.json({ success: true, data: { matchesCount } });
-    } catch (error) {
-      next(error);
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(400).json({ success: false, error: { code: 'MISSING_USER_ID', message: 'X-User-Id header required' } });
+      const { id } = req.params;
+      const db = getDatabase();
+      const model = new StarsOrderModel(db);
+      const order = await model.getById(id);
+      if (!order) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
+      if (order.user_id !== userId) return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Not order owner' } });
+      await model.cancelOrder(id);
+      res.status(200).json({ success: true, message: 'Order cancelled' });
+    } catch (err) {
+      next(err);
     }
   }
 }
+
+export default P2POrdersController;

@@ -5,6 +5,7 @@ import UserController from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
 import FeeCollectionController from '../controllers/fee-collection.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import P2POrdersController from '../controllers/p2p-orders.controller';
 
 const router = Router();
 

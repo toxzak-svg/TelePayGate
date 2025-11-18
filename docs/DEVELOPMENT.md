@@ -71,7 +71,8 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 
 TON (optional for development)
 TON_WALLET_ADDRESS=EQDtFpEwcFAEcRe5mLVh2N6C0x-_hJEM7W61_JLnSF74p4q2
-FRAGMENT_API_KEY=your_key
+DEDUST_API_URL=https://api.dedust.io
+STONFI_API_URL=https://api.ston.fi
 
 Security
 WEBHOOK_SECRET=dev_secret_change_in_production

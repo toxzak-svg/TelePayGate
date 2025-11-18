@@ -1,136 +1,133 @@
-import { IDatabase } from 'pg-promise';
-import { Logger } from '../utils/logger.util';
+import { initDatabase, Database } from '../db/connection';
+import StarsOrderModel, { StarsOrder, AtomicSwap } from '../models/stars-order.model';
 
-export interface StarsOrder {
-  id: string;
-  user_id: string;
-  type: 'sell' | 'buy';
-  stars_amount: number;
-  ton_amount: number;
-  rate: number;
-  status: 'open' | 'matched' | 'locked' | 'completed' | 'failed' | 'cancelled';
-  locked_until?: number;
-  counter_order_id?: string;
-  created_at: Date;
-  completed_at?: Date;
-  telegram_escrow_tx?: string;
-  ton_wallet_tx?: string;
-}
-
+/**
+ * Simple P2P matching service for Stars <-> TON orders.
+ * - Immediate-match strategy: when an order is created, attempt to find a counter-order.
+ * - Background loop periodically scans open orders and attempts matches.
+ */
 export class StarsP2PService {
-  private logger: Logger;
+  private db: Database;
+  private model: StarsOrderModel;
+  private loopHandle: NodeJS.Timeout | null = null;
 
-  constructor(private db: IDatabase<any>) {
-    this.logger = new Logger('StarsP2PService');
-  }
-
-  async createSellOrder(userId: string, starsAmount: number, rate: number): Promise<StarsOrder> {
-    const tonAmount = starsAmount * rate;
-    
-    try {
-      const order = await this.db.one(
-        `INSERT INTO stars_orders (user_id, type, stars_amount, ton_amount, rate, status)
-         VALUES ($1, 'sell', $2, $3, $4, 'open')
-         RETURNING *`,
-        [userId, starsAmount, tonAmount, rate]
-      );
-      
-      this.logger.info(`Sell order created: ${order.id}`, { userId, starsAmount, rate });
-      return order;
-    } catch (error) {
-      this.logger.error('Failed to create sell order', error);
-      throw error;
+  constructor(connOrConnString?: Database | string) {
+    if (!connOrConnString) {
+      const conn = process.env.DATABASE_URL ?? '';
+      if (!conn) throw new Error('DATABASE_URL is required for StarsP2PService');
+      this.db = initDatabase(conn);
+    } else if (typeof (connOrConnString as any).any === 'function') {
+      // assume this is a pg-promise Database instance
+      this.db = connOrConnString as Database;
+    } else {
+      this.db = initDatabase(connOrConnString as string);
     }
+    this.model = new StarsOrderModel(this.db);
   }
 
-  async createBuyOrder(userId: string, tonAmount: number, maxRate: number): Promise<StarsOrder> {
-    const starsAmount = tonAmount / maxRate;
-    
-    try {
-      const order = await this.db.one(
-        `INSERT INTO stars_orders (user_id, type, stars_amount, ton_amount, rate, status)
-         VALUES ($1, 'buy', $2, $3, $4, 'open')
-         RETURNING *`,
-        [userId, starsAmount, tonAmount, maxRate]
-      );
-      
-      this.logger.info(`Buy order created: ${order.id}`, { userId, tonAmount, maxRate });
-      return order;
-    } catch (error) {
-      this.logger.error('Failed to create buy order', error);
-      throw error;
-    }
+  async createSellOrder(userId: string, starsAmount: number, rate: string) {
+    const order: StarsOrder = {
+      user_id: userId,
+      type: 'sell',
+      stars_amount: starsAmount,
+      rate,
+      status: 'open',
+    };
+    const created = await this.model.createOrder(order);
+    // Try to match immediately
+    await this.tryMatchOrder(created);
+    return created;
   }
 
-  async matchOrders(): Promise<number> {
+  async createBuyOrder(userId: string, tonAmount: string, rate: string) {
+    const order: StarsOrder = {
+      user_id: userId,
+      type: 'buy',
+      ton_amount: tonAmount,
+      rate,
+      status: 'open',
+    };
+    const created = await this.model.createOrder(order);
+    await this.tryMatchOrder(created);
+    return created;
+  }
+
+  private async tryMatchOrder(order: any) {
     try {
-      const sellOrders = await this.db.manyOrNone(
-        `SELECT * FROM stars_orders 
-         WHERE status = 'open' AND type = 'sell'
-         ORDER BY rate ASC, created_at ASC
-         LIMIT 100`
-      );
-
-      const buyOrders = await this.db.manyOrNone(
-        `SELECT * FROM stars_orders 
-         WHERE status = 'open' AND type = 'buy'
-         ORDER BY rate DESC, created_at ASC
-         LIMIT 100`
-      );
-
-      let matchesCount = 0;
-
-      for (const sell of sellOrders) {
-        for (const buy of buyOrders) {
-          if (buy.rate >= sell.rate && buy.stars_amount >= sell.stars_amount) {
-            await this.executeMatch(sell, buy);
-            matchesCount++;
-            break;
-          }
-        }
+      if (!order || !order.id) return null;
+      if (order.type === 'sell') {
+        // find buy orders with rate >= sell.rate
+        const candidates = await this.model.findOpenOrders('buy', undefined, order.rate, 5);
+        if (candidates.length === 0) return null;
+        const buyer = candidates[0];
+        return await this.createSwapAndLock(order, buyer);
+      } else {
+        // order.type === 'buy'
+        // find sell orders with rate <= buy.rate
+        const candidates = await this.model.findOpenOrders('sell', order.rate, undefined, 5);
+        if (candidates.length === 0) return null;
+        const seller = candidates[0];
+        return await this.createSwapAndLock(seller, order);
       }
-
-      if (matchesCount > 0) {
-        this.logger.info(`Matched ${matchesCount} orders`);
-      }
-
-      return matchesCount;
-    } catch (error) {
-      this.logger.error('Failed to match orders', error);
-      throw error;
+    } catch (err) {
+      console.error('Error trying to match order:', err);
+      return null;
     }
   }
 
-  private async executeMatch(sellOrder: StarsOrder, buyOrder: StarsOrder): Promise<void> {
-    await this.db.tx(async (t) => {
-      await t.none(
-        `UPDATE stars_orders SET status = 'matched', counter_order_id = $1 WHERE id = $2`,
-        [buyOrder.id, sellOrder.id]
-      );
-
-      await t.none(
-        `UPDATE stars_orders SET status = 'matched', counter_order_id = $1 WHERE id = $2`,
-        [sellOrder.id, buyOrder.id]
-      );
-
-      await t.none(
-        `INSERT INTO atomic_swaps (sell_order_id, buy_order_id, status)
-         VALUES ($1, $2, 'pending')`,
-        [sellOrder.id, buyOrder.id]
-      );
-
-      this.logger.info('Orders matched', { sellOrderId: sellOrder.id, buyOrderId: buyOrder.id });
+  private async createSwapAndLock(sell: any, buy: any) {
+    // Mark both orders as matched (transactionally) and create atomic swap record
+    return this.db.tx(async t => {
+      const m = new StarsOrderModel(t as any);
+      await m.markOrdersMatched(sell.id, buy.id);
+      const swap: AtomicSwap = {
+        sell_order_id: sell.id,
+        buy_order_id: buy.id,
+        status: 'initiated',
+      };
+      const createdSwap = await m.createAtomicSwap(swap);
+      // In a real implementation we would now coordinate escrow and TON transfer
+      // For MVP mark swap as in_progress
+      await t.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['in_progress', createdSwap.id]);
+      return createdSwap;
     });
   }
 
-  async getOpenOrders(type?: 'buy' | 'sell'): Promise<StarsOrder[]> {
-    let query = `SELECT * FROM stars_orders WHERE status = 'open'`;
-    if (type) query += ` AND type = '${type}'`;
-    query += ` ORDER BY created_at DESC LIMIT 50`;
-    return this.db.manyOrNone(query);
+  /**
+   * Background matching loop: scan open sells and attempt to match against buys
+   */
+  startLoop(intervalMs = 5000) {
+    if (this.loopHandle) return;
+    this.loopHandle = setInterval(async () => {
+      try {
+        const sells = await this.model.listOpenOrders('sell', 20);
+        for (const s of sells) {
+          // attempt match for each sell
+          await this.tryMatchOrder(s);
+        }
+      } catch (err) {
+        console.error('P2P matching loop error:', err);
+      }
+    }, intervalMs);
   }
 
-  async getOrderById(orderId: string): Promise<StarsOrder | null> {
-    return this.db.oneOrNone(`SELECT * FROM stars_orders WHERE id = $1`, [orderId]);
+  stopLoop() {
+    if (this.loopHandle) {
+      clearInterval(this.loopHandle as NodeJS.Timeout);
+      this.loopHandle = null;
+    }
+  }
+
+  async executeAtomicSwap(swapId: string) {
+    // Placeholder: run the settlement steps and mark swap completed
+    const swap = await this.db.oneOrNone('SELECT * FROM atomic_swaps WHERE id = $1', [swapId]);
+    if (!swap) throw new Error('Swap not found');
+    // TODO: orchestrate TON transfer + Telegram escrow confirmation
+    await this.db.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['completed', swapId]);
+    // Mark orders completed
+    await this.db.none('UPDATE stars_orders SET status = $1, completed_at = NOW() WHERE id IN ($1, $2)', ['completed', swap.sell_order_id, swap.buy_order_id]);
+    return { success: true };
   }
 }
+
+export default StarsP2PService;

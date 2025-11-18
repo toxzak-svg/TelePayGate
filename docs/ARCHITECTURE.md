@@ -1,6 +1,6 @@
 # Architecture Guide
 
-System architecture and design decisions for the Telegram Payment Gateway.
+System architecture and design decisions for the Telegram Payment Gateway with decentralized P2P liquidity pools.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ System architecture and design decisions for the Telegram Payment Gateway.
 
 ## Overview
 
-The Telegram Payment Gateway is a monorepo-based microservices architecture built with TypeScript, designed to process Telegram Stars payments and convert them to TON cryptocurrency and fiat currencies.
+The Telegram Payment Gateway is a monorepo-based microservices architecture built with TypeScript, designed to process Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** on TON blockchain DEXes (DeDust, Ston.fi).
 
 ### Technology Stack
 
@@ -58,7 +58,7 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 └───┬────┘ └────┬─────┘
 │ │
 │ ┌────▼────┐
-│ │Fragment │
+│ │P2P Pool│
 │ │ Service │
 │ └────┬────┘
 │ │
@@ -88,7 +88,8 @@ telegram-payment-gateway/
 │ │ └── services/ # Core services
 │ │ ├── payment.service.ts
 │ │ ├── conversion.service.ts
-│ │ └── fragment.service.ts
+│ │ ├── p2p-liquidity.service.ts
+│ │ └── dex-aggregator.service.ts
 │ │
 │ └── shared/ # Shared utilities
 │ └── src/
@@ -147,10 +148,10 @@ ConversionService.createConversion()
 ├─> Validate payments
 ├─> Create conversion record
 ├─> Update payment status
-└─> Start Fragment conversion
+└─> Start P2P pool conversion
 │
-├─> FragmentService.convertStarsToTON()
-├─> Poll for completion
+├─> P2PLiquidityService.executeSwap()
+├─> Query DEX pools for best rate
 └─> Update conversion status
 
 text
@@ -232,7 +233,7 @@ source_amount, target_amount
 
 exchange_rate
 
-fragment_tx_id
+dex_pool_id
 
 ton_tx_hash
 
@@ -395,7 +396,7 @@ text
 | API instances | 1 | Load balancer + multiple instances |
 | Database connections | 20 | Increase pool size, add replicas |
 | Rate limiting | In-memory | Migrate to Redis |
-| Fragment API | Single client | Implement queue with retries |
+| DEX APIs | Rate limiting | Implement caching & fallback pools |
 
 ---
 

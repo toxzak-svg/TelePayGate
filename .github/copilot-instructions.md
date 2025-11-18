@@ -1,14 +1,14 @@
 # Copilot Instructions for Telegram Payment Gateway
 
-**Status**: Fragment-free payment processor | Telegram Stars → TON blockchain → Fiat conversions | Direct blockchain integration (no KYC dependencies)
+**Status**: Decentralized P2P payment processor | Telegram Stars → TON → Fiat conversions | P2P liquidity pools (no intermediaries)
 
-This codebase is a **monorepo payment gateway** converting Telegram Stars to TON blockchain with direct integration (no Fragment API). Built with TypeScript, Express, PostgreSQL, and npm workspaces for solo developer productivity with AI assistance.
+This codebase is a **monorepo payment gateway** converting Telegram Stars to TON cryptocurrency through **decentralized P2P liquidity pools**. No centralized exchanges, no KYC, truly permissionless. Built with TypeScript, Express, PostgreSQL, and npm workspaces for solo developer productivity with AI assistance.
 
 ## Quick Context
 
 - **Tech Stack**: TypeScript 5.x, Node.js 20.x, Express 4.x, PostgreSQL 16.x, TonWeb/TON SDK
 - **Architecture**: Microservices with npm workspaces (monorepo)
-- **Key Constraint**: No Fragment.com API—handles payment flow without KYC
+- **Key Constraint**: No centralized exchanges—P2P liquidity pools only (DeDust, Ston.fi)
 - **Deployment**: Docker + Docker Compose for local dev; Render/Railway for production
 - **Development Timeline**: 16-week phased rollout (see Development Timeline below)
 
@@ -21,23 +21,28 @@ This codebase is a **monorepo payment gateway** converting Telegram Stars to TON
 - `packages/worker`: Background jobs (deposit monitoring, rate updates, webhook dispatch)
 - `dashboard`: (Optional) Developer dashboard for API management
 
-**Key architectural principle**: Services are stateless handlers; API layer is thin (validation + response formatting); database operations flow through models; background workers handle async tasks.
+**Key architectural principle**: Services are stateless handlers; API layer is thin (validation + response formatting); database operations flow through models; background workers handle async tasks; P2P liquidity pools provide decentralized conversion rates.
 
 **Critical data flows:**
 1. **Payment webhook** → `PaymentController.handleTelegramWebhook()` → `PaymentModel.create()` + `TelegramService` → database
 2. **Deposit monitoring** → `TonBlockchainService.monitorDeposits()` → `WalletManagerService` verifies confirmations → triggers conversion
-3. **Manual TON withdrawal** → User sends Stars via Telegram app → receives deposit address → transfers TON manually → gateway confirms on-chain → triggers conversion
-4. **Rate aggregation** → `DexAggregator` + `RateAggregator` pull from CoinGecko/Binance/DeDust → cached in memory with TTL
+3. **P2P rate discovery** → `P2PLiquidityService` queries DeDust & Ston.fi → best rate selected → conversion executed
+4. **Manual TON withdrawal** → User sends Stars via Telegram app → receives deposit address → transfers TON manually → gateway confirms on-chain → triggers P2P swap
+5. **Rate aggregation** → `DexAggregator` + `RateAggregator` pull from CoinGecko/Binance/DeDust/Ston.fi → cached in memory with TTL
 
 ## Payment Flow Details
 
-**Manual TON Withdrawal Flow (Fragment-Free):**
+**P2P Liquidity Pool Flow:**
 ```
 User pays with Telegram Stars ($10 USD value)
 ↓
 PaymentController receives webhook with successful_payment
 ↓
 PaymentService validates & creates payment record (status: received)
+↓
+P2PLiquidityService queries DEX pools (DeDust, Ston.fi)
+↓
+Best rate selected from decentralized liquidity sources
 ↓
 Generate deposit address using TonBlockchainService.createCustodyWallet()
 ↓
@@ -51,11 +56,13 @@ WalletManagerService verifies 10+ blockchain confirmations
 ↓
 Payment status: ton_confirmed (manual withdrawal verified)
 ↓
-RateAggregator fetches current TON/USD rate from DEX pools
+P2PLiquidityService executes swap through best DEX pool
 ↓
-Settlement triggered → Fiat conversion processed
+Conversion processed via smart contract interaction
 ↓
 Developer webhook sent with conversion result
+↓
+Settlement triggered → funds available for withdrawal
 ```
 
 **Status State Machine:**
@@ -94,12 +101,17 @@ DATABASE_POOL_MAX=10
 TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
 
-# TON Blockchain (Direct Integration - No Fragment API)
+# TON Blockchain (Direct P2P Integration)
 TON_WALLET_MNEMONIC=your 24 word mnemonic phrase
 TON_API_KEY=your_tonx_key
 TON_API_URL=https://toncenter.com/api/v2/jsonRPC
 TON_MAINNET=true
 TON_WORKCHAIN=0
+
+# P2P DEX Integration
+DEDUST_API_URL=https://api.dedust.io
+STONFI_API_URL=https://api.ston.fi
+DEX_SLIPPAGE_TOLERANCE=0.5
 
 # Exchange Rates
 COINGECKO_API_KEY=optional
@@ -110,10 +122,11 @@ API_SECRET_KEY=random_secret
 JWT_SECRET=jwt_secret
 WALLET_ENCRYPTION_KEY=256_bit_hex_key
 
-# Conversion Settings (No Fragment restrictions)
+# Conversion Settings (P2P Liquidity Pools)
 MIN_CONVERSION_STARS=100
 RATE_LOCK_DURATION_SECONDS=300
 MAX_PENDING_CONVERSIONS=10
+P2P_POOL_REFRESH_INTERVAL=30
 ```
 
 ## Code Patterns & Conventions
@@ -201,16 +214,17 @@ static async createPayment(req: Request, res: Response, next: NextFunction) {
    const isRateLocked = conversion.rate_locked_until > Date.now() / 1000;
    ```
 
-3. **Fee Structure**: Always calculate using `FeeService`. Fees have four components (Telegram, Fragment/Platform, TON, Exchange)
+3. **Fee Structure**: Always calculate using `FeeService`. Fees have four components (Telegram, Platform, TON, Exchange)
    ```typescript
    const fees = await FeeService.calculate(starsAmount, targetCurrency);
    // Returns: { platform: X, telegram: Y, ton: Z, exchange: W, total: X+Y+Z+W }
    ```
 
-4. **TON Integration**: Direct blockchain transfers via `DirectConversionService`. Requires `TON_WALLET_MNEMONIC` (24-word seed)
-   - Walletversion: TON wallet v4 or higher
+4. **TON Integration**: Direct blockchain transfers via P2P liquidity pools. Requires `TON_WALLET_MNEMONIC` (24-word seed)
+   - Wallet version: TON wallet v4 or higher
    - Network: Mainnet/testnet (configured by `TON_MAINNET`)
    - Always verify on-chain with block height confirmation
+   - P2P DEX integration: DeDust, Ston.fi smart contracts
 
 5. **Reconciliation**: `ReconciliationService` validates state consistency. Run periodically to catch stuck payments/conversions
    ```typescript

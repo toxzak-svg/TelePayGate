@@ -281,7 +281,7 @@ text
 "exchangeRate": 0.00099,
 "fees": {
 "telegram": 10,
-"fragment": 5,
+"dex": 5,
 "network": 2,
 "total": 17
 },
@@ -362,7 +362,7 @@ text
 "status": "pending",
 "fees": {
 "telegram": 50,
-"fragment": 25,
+"dex": 25,
 "total": 75
 },
 "createdAt": "2025-11-12T18:00:00Z"
@@ -394,7 +394,7 @@ Check the status of an ongoing conversion.
 "status": "phase2_committed",
 "sourceAmount": 5000,
 "targetAmount": 4.95,
-"fragmentTxId": "frag_tx_123",
+"dexPoolId": "dedust_pool_123",
 "tonTxHash": "ton_hash_456"
 },
 "progress": {
@@ -411,7 +411,7 @@ text
 - `pending` - Conversion created
 - `rate_locked` - Rate locked
 - `phase1_prepared` - Payments verified
-- `phase2_committed` - Submitted to Fragment
+- `phase2_committed` - Submitted to DEX pool
 - `phase3_confirmed` - TON received
 - `completed` - Conversion complete
 - `failed` - Conversion failed
