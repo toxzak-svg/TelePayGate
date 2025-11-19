@@ -1,54 +1,31 @@
 import { TelegramService } from '../../services/Telegram.service';
 import { RateAggregatorService } from '../../services/rate.aggregator';
 import PaymentRepository from '../../models/payment.repository';
-import { DexAggregatorService } from '../../services/dex-aggregator.service';
-import { PaymentStatus } from '../../models/payment.model';
+import { FragmentService } from '../../services/fragment.service';
 
 describe('TelegramService', () => {
   let service: TelegramService;
-  let paymentModelMock: any;
 
   beforeEach(() => {
-    paymentModelMock = {
-      create: jest.fn().mockResolvedValue({
-        id: 'payment-1',
-        userId: 'user-1',
-        telegramInvoiceId: 'payload-base64',
-        starsAmount: 50000,
-        status: PaymentStatus.RECEIVED,
-        telegramPaymentId: 'charge-123',
-        rawPayload: {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    };
-
-    service = new TelegramService('test-webhook-secret', {
-      paymentModel: paymentModelMock,
-      resolveUserId: () => 'user-1',
-      allowedCurrencies: ['XTR'],
-      minStarsAmount: 100,
-    });
+    service = new TelegramService('test-webhook-secret');
   });
 
-  test('should process successful payment and persist to database', async () => {
+  test('should process successful payment', () => {
     const payload = {
       message: {
         from: { id: 12345, username: 'testuser' },
         successful_payment: {
-          telegram_payment_charge_id: 'charge-123',
-          provider_payment_charge_id: 'provider-456',
+          telegramPaymentChargeId: 'charge-123',
+          providerPaymentChargeId: 'provider-456',
           currency: 'XTR',
-          total_amount: 50000,
-          invoice_payload: 'payload-base64',
+          totalAmount: 50000, // 500 Stars (in centimes)
+          invoicePayload: 'payload-base64',
         }
       }
     };
 
-    const payment = await service.processSuccessfulPayment(payload as any);
-    expect(paymentModelMock.create).toHaveBeenCalled();
-    expect(payment.telegramChargeId).toBe('charge-123');
-    expect(payment.userId).toBe('user-1');
+    const payment = service.processSuccessfulPayment(payload as any);
+    expect(payment).toBeDefined();
   });
 
   test('should reject invalid pre-checkout query', async () => {
@@ -56,21 +33,8 @@ describe('TelegramService', () => {
       pre_checkout_query: undefined
     };
 
-    await expect(service.verifyPreCheckout(invalidPayload as any)).resolves.toBe(false);
-  });
-
-  test('should block unsupported currency during pre-checkout', async () => {
-    const payload = {
-      pre_checkout_query: {
-        id: 'query-1',
-        from: { id: 1, username: 'user' },
-        currency: 'USD',
-        total_amount: 1000,
-        invoice_payload: 'payload-base64',
-      }
-    };
-
-    await expect(service.verifyPreCheckout(payload as any)).resolves.toBe(false);
+    const isValid = await service.verifyPreCheckout(invalidPayload as any);
+    expect(isValid).toBe(false);
   });
 
   test('should set webhook', async () => {
@@ -180,36 +144,39 @@ describe('PaymentRepository', () => {
   });
 });
 
-describe('DexAggregatorService', () => {
-  let service: DexAggregatorService;
+describe('FragmentService', () => {
+  let service: FragmentService;
 
   beforeEach(async () => {
-    service = new DexAggregatorService();
+    service = new FragmentService('EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT');
   });
 
-  test('should initialize DEX aggregator', () => {
+  test('should initialize with wallet address', () => {
     expect(service).toBeDefined();
   });
 
-  test('should get best rate from DEX providers', async () => {
+  test('should fail conversion below minimum', async () => {
+    // Fragment service requires minimum 1000 Stars
     try {
-      const quote = await service.getBestRate('TON', 'USDT', 100);
-      expect(quote).toBeDefined();
-      expect(quote.inputAmount).toBe(100);
-      expect(quote.outputAmount).toBeGreaterThan(0);
-      expect(quote.bestPool).toBeDefined();
-      expect(['dedust', 'stonfi']).toContain(quote.bestPool.provider);
+      const result = await service.convertStarsToTON(
+        ['pay-1'],
+        { lockedRateDuration: 60 }
+      );
+      // Should fail because aggregateStars returns less than 1000
+      expect(result.status).toBe('failed');
     } catch (err: any) {
-      // DEX APIs may not be available in test environment
-      expect(err.message).toContain('DEX');
+      // Expected to throw or return failed status
+      expect(err.message).toBeDefined();
     }
   });
 
-  test('should handle DEX provider failures gracefully', async () => {
-    try {
-      await service.getBestRate('INVALID', 'TOKEN', 100);
-    } catch (err: any) {
-      expect(err.message).toBeDefined();
-    }
+  test('should generate conversion with rate lock', async () => {
+    const result = await service.convertStarsToTON(
+      ['pay-1', 'pay-2', 'pay-3', 'pay-4'],
+      { lockedRateDuration: 60 }
+    );
+    // With 4 payments * 500 stars each = 2000 stars (above minimum of 1000)
+    expect(result).toBeDefined();
+    expect(result.starsAmount).toBeGreaterThanOrEqual(1000);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * @tg-payment/core
  * Core business logic for Telegram Payment Gateway
- *
+ * 
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025
  */
@@ -15,25 +15,13 @@ export { TonPaymentService } from './services/ton-payment.service';
 export { TonBlockchainService } from './services/ton-blockchain.service';
 export { FeeService } from './services/fee.service';
 export { FeeCollectionService } from './services/fee-collection.service';
-export { RateAggregatorService } from './services/rate-aggregator.service';
+export { RateAggregatorService } from './services/rate.aggregator';
 export { PaymentService } from './services/payment.service';
 export { WebhookService } from './services/webhook.service';
 export { ReconciliationService } from './services/reconciliation.service';
 export { WithdrawalService } from './services/withdrawal.service';
 export { StarsP2PService } from './services/stars-p2p.service';
 export { StarsOrderModel } from './models/stars-order.model';
-export { DexAggregatorService } from './services/dex-aggregator.service';
-export { P2PLiquidityService } from './services/p2p-liquidity.service';
-export { ConversionService } from './services/conversion.service';
-export { DexError, DexErrorCode, parseDexError, DexRetryHandler } from './services/dex-error-handler';
-export { DepositMonitorService } from './services/deposit-monitor.service';
-export { SettlementService } from './services/settlement.service';
-
-// ============================================
-// CONTRACTS
-// ============================================
-export { DeDustPool, DeDustVault } from './contracts/dedust.contract';
-export { StonfiRouter } from './contracts/stonfi.contract';
 
 // ============================================
 // MODELS
@@ -96,8 +84,6 @@ export {
   Database,
   initDatabase,
   getDatabase,
-  initPool,
-  getPool,
   closeDatabase
 } from './db/connection';
 

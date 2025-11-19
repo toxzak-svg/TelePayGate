@@ -4,7 +4,6 @@ import * as conversionController from '../controllers/conversion.controller';
 import UserController from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
 import FeeCollectionController from '../controllers/fee-collection.controller';
-import DexController from '../controllers/dex.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import P2POrdersController from '../controllers/p2p-orders.controller';
 
@@ -26,12 +25,6 @@ router.get('/conversions/rate', conversionController.getRate);
 router.post('/conversions', authenticate, conversionController.createConversion);
 router.get('/conversions/:id', authenticate, conversionController.getConversion);
 router.get('/conversions', authenticate, conversionController.getConversionHistory);
-
-// DEX routes
-router.get('/dex/quote', DexController.getQuote);
-router.post('/dex/swap', authenticate, DexController.executeSwap);
-router.get('/dex/liquidity', DexController.getLiquidity);
-router.get('/dex/route', DexController.getBestRoute);
 
 // User routes
 router.post('/users/register', UserController.register);
@@ -55,10 +48,27 @@ router.get('/fees/uncollected', authenticate, FeeCollectionController.getUncolle
 router.post('/fees/collections/:id/complete', authenticate, FeeCollectionController.markCompleted);
 router.get('/fees/collections', authenticate, FeeCollectionController.getHistory);
 
-// P2P Order routes
-router.post('/p2p/orders', authenticate, P2POrdersController.createOrder);
-router.get('/p2p/orders', authenticate, P2POrdersController.listOpenOrders);
-router.get('/p2p/orders/:orderId', authenticate, P2POrdersController.getOrder);
-router.post('/p2p/orders/:orderId/cancel', authenticate, P2POrdersController.cancelOrder);
+// Temporary: Simple health check only
+router.get('/health', (req, res) => {
+  res.status(200).json({ success: true, message: 'API is healthy' });
+});
+
+// User routes (commented while we build controller methods)
+// router.get('/users/me', authenticate, userController.getCurrentUser);
+// router.get('/users/me/balance', authenticate, userController.getBalance);
+// router.get('/users/me/transactions', authenticate, userController.getTransactions);
+
+// Admin routes (basic health check only for now)
+// router.get('/admin/stats', authenticate, requireAdmin, adminController.getStats);
+// router.get('/admin/users', authenticate, requireAdmin, adminController.getUsers);
+// router.get('/admin/users/:id', authenticate, requireAdmin, adminController.getUser);
+// router.put('/admin/users/:id', authenticate, requireAdmin, adminController.updateUser);
+// router.get('/admin/payments', authenticate, requireAdmin, adminController.getPayments);
+// router.get('/admin/conversions', authenticate, requireAdmin, adminController.getConversions);
+
+// Fee collection routes
+// router.get('/fees/stats', authenticate, requireAdmin, feeCollectionController.getFeeStats);
+// router.get('/fees/history', authenticate, requireAdmin, feeCollectionController.getFeeHistory);
+// router.post('/fees/collect', authenticate, requireAdmin, feeCollectionController.collectFees);
 
 export default router;
