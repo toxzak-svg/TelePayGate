@@ -20,8 +20,9 @@ COPY packages/sdk/package*.json ./packages/sdk/
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --only=production=false --ignore-scripts
 
-# Copy source code
+# Copy source code and database migrations
 COPY packages ./packages
+COPY database ./database
 
 # Build all packages
 RUN npm run build:backend
