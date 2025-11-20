@@ -6,7 +6,7 @@ services:
     name: telegram-payment-api
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --production=false && npm run build:backend
     startCommand: cd packages/api && npm start
     envVars:
       - key: NODE_ENV
@@ -45,7 +45,7 @@ services:
     name: worker-deposit-monitor
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --production=false && npm run build:backend
     startCommand: node packages/core/dist/workers/deposit-settlement.worker.js
     envVars:
       - key: NODE_ENV
@@ -73,7 +73,7 @@ services:
     name: worker-fee-collection
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --production=false && npm run build:backend
     startCommand: node packages/core/dist/workers/fee-collection.worker.js
     envVars:
       - key: NODE_ENV

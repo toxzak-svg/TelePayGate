@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api && npm run build -w @tg-payment/dashboard && npm run build -w @tg-payment/sdk",
+    "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
     "test": "npm run test --workspaces --if-present",
     "dev": "npm run dev --workspaces --if-present",
     "lint": "eslint . --ext .ts --fix",
