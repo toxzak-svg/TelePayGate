@@ -5,6 +5,8 @@
     "rootDir": "../../",
     "composite": true,
     "baseUrl": "../..",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "paths": {
       "@tg-payment/core": ["packages/core/src"]
     }
