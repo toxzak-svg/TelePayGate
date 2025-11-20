@@ -13,6 +13,12 @@ build/
 .env.production.local
 .env.test
 
+# Scripts with secrets - NEVER COMMIT
+scripts/set-render-env.sh
+scripts/*-secrets*.sh
+scripts/*.key
+scripts/*.pem
+
 # Logs
 *.log
 npm-debug.log*
