@@ -1,3 +1,4 @@
+import 'module-alias/register';
 import 'dotenv/config';
 import http from 'http';
 import { initDatabase } from '@tg-payment/core';
