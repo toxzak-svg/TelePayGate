@@ -4,7 +4,7 @@
   "description": "REST API for Telegram Payment Gateway",
   "main": "dist/packages/api/src/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "start": "node dist/packages/api/src/index.js",
     "test": "jest --passWithNoTests",
