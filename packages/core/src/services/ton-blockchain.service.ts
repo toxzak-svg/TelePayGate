@@ -71,6 +71,34 @@ export class TonBlockchainService {
   }
 
   /**
+   * Get the underlying TonClient
+   */
+  getClient(): TonClient {
+    return this.client;
+  }
+
+  /**
+   * Get the initialized wallet contract and key pair
+   */
+  getWallet(): { wallet: WalletContractV4; keyPair: any } {
+    if (!this.wallet || !this.keyPair) {
+      throw new Error('Wallet not initialized. Call initializeWallet() first.');
+    }
+    return { wallet: this.wallet, keyPair: this.keyPair };
+  }
+
+  /**
+   * Get a sender object for sending transactions
+   */
+  getSender() {
+    if (!this.wallet || !this.keyPair) {
+      throw new Error('Wallet not initialized');
+    }
+    const walletContract = this.client.open(this.wallet);
+    return walletContract.sender(this.keyPair.secretKey);
+  }
+
+  /**
    * Get wallet address
    */
   getWalletAddress(): string {
