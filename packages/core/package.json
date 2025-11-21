@@ -15,11 +15,12 @@
     "worker:fees": "ts-node src/workers/fee-collection.worker.ts"
   },
   "dependencies": {
-    "@ston-fi/sdk": "^0.6.0",
+    "@dedust/sdk": "^0.8.7",
+    "@ston-fi/sdk": "^2.7.0",
+    "@ton/core": "^0.62.0",
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.0.0",
     "axios": "^1.13.2",
-    "dedust-sdk-js": "^0.3.1",
     "dotenv": "^16.3.1",
     "pg-promise": "^12.3.0",
     "telegraf": "^4.16.3",
