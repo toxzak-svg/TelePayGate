@@ -366,7 +366,7 @@ export class DexAggregatorService {
     if (simulatedOutput < minOutput) {
       // Preserve slippage-style failure semantics (message can be aligned with real implementation)
       throw new Error(
-        `Simulated swap output ${simulatedOutput} is below minOutput ${minOutput}`
+        `SLIPPAGE: Simulated swap output ${simulatedOutput} is below min amount ${minOutput}`
       );
     }
 
