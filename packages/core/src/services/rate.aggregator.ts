@@ -275,12 +275,13 @@ export class RateAggregatorService {
 
   /**
    * Get simulated rate data for testing
+   * Note: These rates are test fixtures and do not reflect current market values
    */
   private getSimulatedRate(
     sourceCurrency: string,
     targetCurrency: string
   ): AggregatedRate {
-    // Simulated rates for common pairs
+    // Simulated rates for common pairs (test fixtures - not real market data)
     const rateMap: Record<string, Record<string, number>> = {
       TON: {
         USD: 2.15,

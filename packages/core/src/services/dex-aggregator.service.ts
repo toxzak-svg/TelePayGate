@@ -78,7 +78,8 @@ export class DexAggregatorService {
 
     const mnemonic = process.env.TON_WALLET_MNEMONIC;
     const isRealBlockchainTest = process.env.RUN_DEX_INTEGRATION_TESTS === 'true' && !this.isSimulationMode();
-    const requiresMnemonic = !this.isSimulationMode() && isRealBlockchainTest;
+    // Require mnemonic if NOT in simulation mode OR if running real blockchain tests
+    const requiresMnemonic = !this.isSimulationMode() || isRealBlockchainTest;
 
     if (requiresMnemonic && (!mnemonic || mnemonic.trim().split(' ').length < 12)) {
       throw new DexError(
