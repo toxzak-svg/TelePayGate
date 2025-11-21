@@ -1,5 +1,6 @@
 import { initDatabase, Database } from '../db/connection';
 import StarsOrderModel, { StarsOrder, AtomicSwap } from '../models/stars-order.model';
+import TonPaymentService from './ton-payment.service';
 
 /**
  * Simple P2P matching service for Stars <-> TON orders.
@@ -26,10 +27,12 @@ export class StarsP2PService {
   }
 
   async createSellOrder(userId: string, starsAmount: number, rate: string) {
+    const tonAmount = starsAmount * parseFloat(rate);
     const order: StarsOrder = {
       user_id: userId,
       type: 'sell',
       stars_amount: starsAmount,
+      ton_amount: tonAmount.toFixed(9), // Ensure string format
       rate,
       status: 'open',
     };
@@ -40,10 +43,12 @@ export class StarsP2PService {
   }
 
   async createBuyOrder(userId: string, tonAmount: string, rate: string) {
+    const starsAmount = parseFloat(tonAmount) / parseFloat(rate);
     const order: StarsOrder = {
       user_id: userId,
       type: 'buy',
       ton_amount: tonAmount,
+      stars_amount: starsAmount, // Decimal is allowed in 006 schema
       rate,
       status: 'open',
     };
@@ -83,12 +88,18 @@ export class StarsP2PService {
       const swap: AtomicSwap = {
         sell_order_id: sell.id,
         buy_order_id: buy.id,
-        status: 'initiated',
+        status: 'pending',
       };
       const createdSwap = await m.createAtomicSwap(swap);
       // In a real implementation we would now coordinate escrow and TON transfer
-      // For MVP mark swap as in_progress
-      await t.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['in_progress', createdSwap.id]);
+      // For MVP mark swap as ton_locked (simulating lock)
+      await t.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['ton_locked', createdSwap.id]);
+      
+      // Trigger execution immediately for this MVP phase
+      // Note: In production, this might be async or require further confirmation
+      // We don't await this to avoid blocking the transaction, but we should handle errors
+      this.executeAtomicSwap(createdSwap.id).catch(err => console.error('Auto-execution failed:', err));
+
       return createdSwap;
     });
   }
@@ -119,14 +130,64 @@ export class StarsP2PService {
   }
 
   async executeAtomicSwap(swapId: string) {
-    // Placeholder: run the settlement steps and mark swap completed
+    console.log(`Executing atomic swap ${swapId}...`);
     const swap = await this.db.oneOrNone('SELECT * FROM atomic_swaps WHERE id = $1', [swapId]);
     if (!swap) throw new Error('Swap not found');
-    // TODO: orchestrate TON transfer + Telegram escrow confirmation
-    await this.db.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['completed', swapId]);
-    // Mark orders completed
-    await this.db.none('UPDATE stars_orders SET status = $1, completed_at = NOW() WHERE id IN ($1, $2)', ['completed', swap.sell_order_id, swap.buy_order_id]);
-    return { success: true };
+    if (swap.status === 'completed') return { success: true, alreadyCompleted: true };
+
+    const sellOrder = await this.model.getById(swap.sell_order_id);
+    const buyOrder = await this.model.getById(swap.buy_order_id);
+
+    if (!sellOrder || !buyOrder) throw new Error('Orders not found');
+
+    // Calculate TON amount
+    let tonAmount = 0;
+    if (buyOrder.ton_amount) {
+        tonAmount = parseFloat(buyOrder.ton_amount);
+    } else if (sellOrder.stars_amount && sellOrder.rate) {
+        tonAmount = sellOrder.stars_amount * parseFloat(sellOrder.rate);
+    }
+
+    if (tonAmount <= 0) throw new Error('Invalid TON amount');
+
+    // Get Seller's wallet address (User selling Stars, receiving TON)
+    const sellerWallet = await this.db.oneOrNone('SELECT wallet_address FROM wallets WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1', [sellOrder.user_id]);
+    
+    if (!sellerWallet) {
+        console.error(`Seller wallet not found for user ${sellOrder.user_id}`);
+        // We can't proceed without a destination address
+        // In a real app, we might flag this for manual intervention
+        throw new Error('Seller wallet not found');
+    }
+
+    try {
+      // Initialize TON Service
+      const tonService = new TonPaymentService({
+          endpoint: process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
+          apiKey: process.env.TON_API_KEY,
+          mnemonic: process.env.TON_WALLET_MNEMONIC || '',
+          workchain: process.env.TON_WORKCHAIN ? parseInt(process.env.TON_WORKCHAIN) : 0
+      });
+      await tonService.initializeWallet();
+
+      // Execute Transfer
+      // We assume the platform wallet holds the funds (deposited by Buyer)
+      console.log(`Sending ${tonAmount} TON to ${sellerWallet.wallet_address}`);
+      const txResult = await tonService.sendTon(sellerWallet.wallet_address, tonAmount, `Swap ${swapId}`);
+
+      // Update Swap
+      await this.db.none('UPDATE atomic_swaps SET status = $1, ton_tx_hash = $2 WHERE id = $3', ['completed', txResult, swapId]);
+      
+      // Update Orders
+      await this.db.none('UPDATE stars_orders SET status = $1, completed_at = NOW() WHERE id IN ($2, $3)', ['completed', swap.sell_order_id, swap.buy_order_id]);
+
+      console.log(`Swap ${swapId} completed successfully. Tx: ${txResult}`);
+      return { success: true, txHash: txResult };
+    } catch (error) {
+      console.error(`Swap execution failed for ${swapId}:`, error);
+      await this.db.none('UPDATE atomic_swaps SET status = $1 WHERE id = $2', ['failed', swapId]);
+      throw error;
+    }
   }
 }
 

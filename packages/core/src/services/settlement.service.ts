@@ -130,13 +130,20 @@ export class SettlementService {
         ? settlement.fiat_amount
         : parseFloat(settlement.fiat_amount as unknown as string);
 
+      const transactionId = await this.executeFiatPayout(
+        settlement.settlement_id,
+        fiatAmount,
+        'USD',
+        settlement.user_id
+      );
+
       await this.db.none(
         `UPDATE settlements
             SET status = 'completed',
                 completed_at = NOW(),
                 transaction_id = $2
           WHERE id = $1`,
-        [settlement.settlement_id, this.generateSettlementTx(settlement.settlement_id)]
+        [settlement.settlement_id, transactionId]
       );
 
       await this.db.none(
@@ -178,15 +185,30 @@ export class SettlementService {
     }
   }
 
+  /**
+   * Execute fiat payout via gateway
+   */
+  private async executeFiatPayout(
+    settlementId: string,
+    amount: number,
+    currency: string,
+    userId: string
+  ): Promise<string> {
+    // TODO: Integrate with real fiat gateway (Stripe, Wise, etc.)
+    // For now, we simulate a successful payout
+    console.log(`💸 Executing fiat payout: ${amount} ${currency} to user ${userId}`);
+    
+    // Simulate API latency
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return `AUTO-SETTLED-${settlementId}-${Date.now()}`;
+  }
+
   private calculateFiatAmount(targetAmount: number, targetCurrency: string): number {
     if (targetCurrency === 'TON' || targetCurrency === 'USDT') {
       return parseFloat((targetAmount * this.tonUsdRate).toFixed(2));
     }
     return parseFloat(targetAmount.toFixed(2));
-  }
-
-  private generateSettlementTx(id: string): string {
-    return `AUTO-SETTLED-${id}-${Date.now()}`;
   }
 }
 

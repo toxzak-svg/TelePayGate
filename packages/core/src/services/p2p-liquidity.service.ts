@@ -196,19 +196,44 @@ export class P2PLiquidityService {
         throw new Error('Conversion not found');
       }
 
-      const { source_amount, user_id } = conversion.rows[0];
+      const { source_amount, user_id, rate: lockedRate } = conversion.rows[0];
 
-      // Create a buy order for this conversion
-      // This will automatically trigger P2P matching
-      const rate = '0.000015'; // Example rate: 1 Star = 0.000015 TON
+      // Use locked rate if available, otherwise fetch current market rate
+      // For now, we assume the rate is passed or we use a default/market rate
+      // In a real flow, the rate should be locked during the quote phase
+      const rate = lockedRate ? lockedRate.toString() : '0.000015'; 
       const tonAmount = (source_amount * parseFloat(rate)).toString();
 
-      await this.p2pService.createBuyOrder(user_id, tonAmount, rate);
+      console.log(`Creating P2P buy order for conversion ${conversionId}: ${source_amount} Stars @ ${rate}`);
+      const order = await this.p2pService.createBuyOrder(user_id, tonAmount, rate);
 
-      // TODO: Wait for order matching and update conversion status
-      // For now, return placeholder
+      // Check if order was immediately matched and completed
+      // We need to query the order again to get the latest status if createBuyOrder returns the initial state
+      // But createBuyOrder awaits tryMatchOrder, so the DB should be updated.
+      // However, the returned object 'created' might be the initial state.
+      
+      const updatedOrder = await this.pool.query('SELECT * FROM stars_orders WHERE id = $1', [order.id]);
+      const currentStatus = updatedOrder.rows[0]?.status;
+
+      if (currentStatus === 'completed' || currentStatus === 'matched') {
+        // Find the swap to get the tx hash
+        const swap = await this.pool.query(
+          'SELECT * FROM atomic_swaps WHERE buy_order_id = $1 OR sell_order_id = $1 LIMIT 1',
+          [order.id]
+        );
+        
+        if (swap.rows[0] && swap.rows[0].ton_tx_hash) {
+             return {
+                txHash: swap.rows[0].ton_tx_hash,
+                dexPoolId: 'p2p-order-book',
+             };
+        }
+      }
+
+      // If not immediately completed, we return undefined hash
+      // The background worker or polling will handle the rest
       return {
-        txHash: undefined, // Will be set when atomic swap completes
+        txHash: undefined, 
         dexPoolId: 'p2p-order-book',
       };
     } catch (error: any) {

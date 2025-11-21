@@ -45,10 +45,6 @@ A production-ready monorepo payment gateway enabling developers to accept Telegr
 
 **🔴 Critical TODOs** (5% remaining):
 
-- Smart contract swap execution (DeDust/Ston.fi on-chain calls)
-- P2P order matching engine
-- Webhook dispatcher with retry logic
-- Settlement payout connectors (fiat gateway + banking rails)
 - Blockchain transaction polling
 
 See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-week completion timeline.

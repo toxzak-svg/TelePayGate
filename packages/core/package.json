@@ -12,7 +12,8 @@
     "test:coverage": "jest --coverage",
     "clean": "rm -rf dist",
     "worker:monitor": "ts-node src/workers/deposit-settlement.worker.ts",
-    "worker:fees": "ts-node src/workers/fee-collection.worker.ts"
+    "worker:fees": "ts-node src/workers/fee-collection.worker.ts",
+    "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
     "@dedust/sdk": "^0.8.7",
