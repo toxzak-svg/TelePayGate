@@ -310,7 +310,7 @@ export class TonBlockchainService {
           let exitCode = 0;
           
           if (tx.description.type === 'generic') {
-             const computePhase = tx.description.computePhase;
+             const {computePhase} = tx.description;
              exitCode = computePhase.type === 'vm' ? computePhase.exitCode : 0;
              success = exitCode === 0 || exitCode === 1;
           }
