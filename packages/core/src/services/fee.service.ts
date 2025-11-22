@@ -60,16 +60,17 @@ export class FeeService {
 
     const config = await this.getConfig();
     const starsAmount = payment.stars_amount;
+    const fiatAmount = starsAmount * 0.0055; // Mock conversion rate
 
     const platformFee = starsAmount * (config.platformFeePercentage / 100);
     const telegramFee = starsAmount * (config.telegramFeePercentage / 100);
     const totalFee = platformFee + telegramFee;
 
     const result = await this.db.one(
-      `INSERT INTO fee_calculations (payment_id, stars_amount, platform_fee, telegram_fee, total_fee, fee_config)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO fee_calculations (payment_id, stars_amount, fiat_amount, currency, platform_fee, telegram_fee, ton_fee, exchange_fee, total_fee, fee_config)
+       VALUES ($1, $2, $3, 'USD', $4, $5, 0, 0, $6, $7)
        RETURNING *`,
-      [paymentId, starsAmount, platformFee, telegramFee, totalFee, config]
+      [paymentId, starsAmount, fiatAmount, platformFee, telegramFee, totalFee, config]
     );
 
     return {

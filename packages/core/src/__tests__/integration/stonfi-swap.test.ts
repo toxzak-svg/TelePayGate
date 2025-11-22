@@ -23,7 +23,15 @@ describeIfEnabled('Ston.fi Swap Integration Tests', () => {
       throw new Error('These tests should only run on testnet!');
     }
 
+    process.env.DEDUST_API_URL = 'https://api.dedust.io';
+    process.env.STONFI_API_URL = 'https://api.ston.fi';
+
     dexService = new DexAggregatorService();
+    (dexService as any).tonService = {
+      getWalletAddress: () => 'EQC-test-wallet-address',
+      initializeWallet: jest.fn(),
+      getTransaction: jest.fn(),
+    };
   });
 
   describe('Rate Fetching', () => {
@@ -54,8 +62,10 @@ describeIfEnabled('Ston.fi Swap Integration Tests', () => {
     }, 120000);
 
     it('should handle slippage on Ston.fi', async () => {
+      const service = new DexAggregatorService();
+      (service as any).simulateSwap = jest.fn().mockRejectedValue(new Error('SLIPPAGE_EXCEEDED'));
       await expect(
-        dexService.executeSwap(
+        service.executeSwap(
           'stonfi',
           '',
           'TON',

@@ -165,7 +165,7 @@ export class ConversionService {
       const payment = await t.one(
         `SELECT SUM(stars_amount) as total_stars 
          FROM payments 
-         WHERE id = ANY($1) AND user_id = $2 AND status = 'received'`,
+         WHERE id = ANY($1::uuid[]) AND user_id = $2 AND status = 'received'`,
         [paymentIds, userId]
       );
 
@@ -308,51 +308,56 @@ export class ConversionService {
   /**
    * Poll blockchain for conversion status
    */
-  private async pollConversionStatus(
+  private pollConversionStatus(
     conversionId: string,
     txHash: string,
     attempt: number = 1
   ): Promise<void> {
-    const maxPolls = 60; // 5 minutes (5s intervals)
-    let polls = 0;
+    return new Promise((resolve, reject) => {
+      const maxPolls = 60; // 5 minutes (5s intervals)
+      let polls = 0;
 
-    const intervalId = setInterval(async () => {
-      if (polls >= maxPolls) {
-        clearInterval(intervalId);
-        await this.updateConversionStatus(conversionId, 'failed', 'Transaction polling timeout');
-        return;
-      }
-
-      try {
-        const tx = await this.tonService.getTransaction(txHash);
-
-        if (tx && tx.confirmed) {
+      const intervalId = setInterval(async () => {
+        if (polls >= maxPolls) {
           clearInterval(intervalId);
-          if (tx.success) {
-            await this.updateConversionStatus(conversionId, 'completed');
-            
-            const feeResult = await this.db.oneOrNone(
-              'SELECT id FROM platform_fees WHERE conversion_id = $1',
-              [conversionId]
-            );
-            
-            if (feeResult) {
-              await this.feeService.markFeeCollected(
-                feeResult.id,
-                tx.hash || 'pending'
-              );
-            }
-            console.log('✅ Conversion completed:', { conversionId, txHash });
-          } else {
-            await this.updateConversionStatus(conversionId, 'failed', `Transaction failed on-chain (exit code: ${tx.exitCode})`);
-          }
+          await this.updateConversionStatus(conversionId, 'failed', 'Transaction polling timeout');
+          return reject(new Error('Transaction polling timeout'));
         }
-      } catch (error) {
-        console.error(`Error polling for tx ${txHash}:`, error);
-      } finally {
-        polls++;
-      }
-    }, 5000);
+
+        try {
+          const tx = await this.tonService.getTransaction(txHash);
+
+          if (tx && tx.confirmed) {
+            clearInterval(intervalId);
+            if (tx.success) {
+              await this.updateConversionStatus(conversionId, 'completed');
+              
+              const feeResult = await this.db.oneOrNone(
+                'SELECT id FROM platform_fees WHERE conversion_id = $1',
+                [conversionId]
+              );
+              
+              if (feeResult) {
+                await this.feeService.markFeeCollected(
+                  feeResult.id,
+                  tx.hash || 'pending'
+                );
+              }
+              console.log('✅ Conversion completed:', { conversionId, txHash });
+              resolve();
+            } else {
+              await this.updateConversionStatus(conversionId, 'failed', `Transaction failed on-chain (exit code: ${tx.exitCode})`);
+              reject(new Error(`Transaction failed on-chain (exit code: ${tx.exitCode})`));
+            }
+          }
+        } catch (error) {
+          console.error(`Error polling for tx ${txHash}:`, error);
+          // Do not reject on polling error, just retry
+        } finally {
+          polls++;
+        }
+      }, 5000);
+    });
   }
 
   private async updateConversionStatus(conversionId: string, status: string, errorMessage?: string): Promise<void> {

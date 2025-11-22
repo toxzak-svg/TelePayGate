@@ -62,11 +62,19 @@ export class RateAggregatorService {
     sourceCurrency: string,
     targetCurrency: string
   ): Promise<AggregatedRate> {
+    const cacheKey = `rate:${sourceCurrency}:${targetCurrency}`;
+    const cachedRate = await this.redis.get(cacheKey);
+    if (cachedRate) {
+      return JSON.parse(cachedRate);
+    }
+
     console.log(`📊 Fetching rates: ${sourceCurrency} → ${targetCurrency}`);
 
     // Use simulation mode if enabled
     if (this.simulationMode) {
-      return this.getSimulatedRate(sourceCurrency, targetCurrency);
+      const rate = await this.getSimulatedRate(sourceCurrency, targetCurrency);
+      await this.redis.set(cacheKey, JSON.stringify(rate), 'EX', 300);
+      return rate;
     }
 
     try {
@@ -100,19 +108,23 @@ export class RateAggregatorService {
         { sum: 0, weightSum: 0 }
       );
 
-      // Calculate best (minimum) rate
-      const bestRate = Math.min(...rates.map((r) => r.value));
+      const averageRate = weightedSum / weightSum;
+      const bestRate = Math.max(...rates.map(r => r.value));
 
-      return {
+      const result: AggregatedRate = {
         bestRate,
-        averageRate: weightSum > 0 ? weightedSum / weightSum : weightedSum,
+        averageRate,
         rates,
         sourceCurrency,
         targetCurrency,
         timestamp: Date.now(),
       };
+
+      await this.redis.set(cacheKey, JSON.stringify(result), 'EX', 300); // Cache for 5 minutes
+
+      return result;
     } catch (error) {
-      console.error('❌ Failed to fetch aggregated rate:', error);
+      console.error('❌ Rate aggregation failed:', error);
       throw error;
     }
   }

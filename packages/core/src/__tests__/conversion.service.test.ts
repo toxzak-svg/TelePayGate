@@ -1,33 +1,31 @@
-import { ConversionService } from '../conversion.service';
+import { v4 as uuidv4 } from 'uuid';
+import { ConversionService } from '../services/conversion.service';
+import { initDatabase, Database } from '../db/connection';
 import { Pool } from 'pg';
 
-jest.mock('pg', () => {
-  const mPool = {
-    connect: jest.fn(),
-    query: jest.fn(),
-    end: jest.fn(),
-  };
-  return { Pool: jest.fn(() => mPool) };
-});
 
-jest.mock('../ton-blockchain.service', () => {
+
+jest.mock('../services/ton-blockchain.service', () => {
   return {
     TonBlockchainService: jest.fn().mockImplementation(() => {
       return {
         initializeWallet: jest.fn(),
-        getTransactionState: jest.fn(),
+        getTransaction: jest.fn(),
+        getClient: jest.fn().mockReturnValue({}),
       };
     }),
   };
 });
 
 describe('ConversionService', () => {
-  let pool: Pool;
+  let db: Database;
   let conversionService: ConversionService;
+  let conversionId: string;
 
   beforeEach(() => {
-    pool = new Pool();
-    conversionService = new ConversionService(pool);
+    db = initDatabase(process.env.DATABASE_URL!);
+    conversionService = new ConversionService(db);
+    conversionId = uuidv4();
   });
 
   it('should be defined', () => {
@@ -38,22 +36,24 @@ describe('ConversionService', () => {
     it('should update status to completed when transaction is confirmed', async () => {
       jest.useFakeTimers();
       const tonService = (conversionService as any).tonService;
-      tonService.getTransactionState.mockResolvedValue({
-        status: 'confirmed',
-        confirmations: 10,
+      tonService.getTransaction.mockResolvedValue({
+        confirmed: true,
+        success: true,
         transaction: { hash: 'some-hash' },
       });
-      const poolQuery = (pool as any).query;
-      poolQuery.mockResolvedValue({ rows: [{ id: 'fee-id' }] });
+      const dbNoneSpy = jest.spyOn(db, 'none').mockResolvedValue(undefined);
+      jest.spyOn(db, 'oneOrNone').mockResolvedValue({ id: 'fee-id' });
 
-      (conversionService as any).pollConversionStatus('conv-id', 'tx-hash');
+      const pollPromise = (conversionService as any).pollConversionStatus(conversionId, 'tx-hash');
 
-      jest.runAllTimers();
+      // Advance timers to trigger the interval
+      await jest.advanceTimersByTimeAsync(5000);
 
-      await Promise.resolve(); // allow promises to resolve
+      // Wait for the polling to complete
+      await pollPromise;
 
-      expect(tonService.getTransactionState).toHaveBeenCalledWith('tx-hash');
-      expect(poolQuery).toHaveBeenCalledWith(expect.stringContaining('UPDATE conversions'), ['completed', undefined, 'conv-id']);
+      expect(tonService.getTransaction).toHaveBeenCalledWith('tx-hash');
+      expect(dbNoneSpy).toHaveBeenCalledWith(expect.stringContaining('UPDATE conversions'), ['completed', undefined, conversionId]);
       jest.useRealTimers();
     });
   });

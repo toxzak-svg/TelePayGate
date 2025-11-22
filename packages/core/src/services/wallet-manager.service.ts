@@ -8,12 +8,14 @@ export interface DepositInfo {
   expectedAmount: number;
   expiresAt: Date;
   paymentLink: string;
+  minConfirmations: number;
 }
 
 export class WalletManagerService {
   private db: Database;
   private tonService: TonPaymentService;
   private encryption: EncryptionUtil;
+  private minConfirmations: number;
 
   constructor() {
     const conn = process.env.DATABASE_URL || '';
@@ -27,6 +29,7 @@ export class WalletManagerService {
     });
 
     this.encryption = new EncryptionUtil(process.env.WALLET_ENCRYPTION_KEY || '');
+    this.minConfirmations = parseInt(process.env.TON_MIN_CONFIRMATIONS || '2', 10);
   }
 
   /**
@@ -71,6 +74,7 @@ export class WalletManagerService {
       expectedAmount,
       expiresAt,
       paymentLink,
+      minConfirmations: this.minConfirmations,
     };
   }
 

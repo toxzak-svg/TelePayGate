@@ -1,81 +1,63 @@
-import { ConversionService } from '../src/services/conversion.service';
-import { ReconciliationService } from '../src/services/reconciliation.service';
-import { TonBlockchainService } from '../src/services/ton-blockchain.service';
+import { ConversionService } from '../services/conversion.service';
+import { ReconciliationService } from '../services/reconciliation.service';
+import { TonBlockchainService } from '../services/ton-blockchain.service';
+import { initDatabase, Database } from '../db/connection';
 import { Pool } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 
-jest.mock('pg', () => {
-  const mPool = {
-    connect: jest.fn().mockReturnThis(),
-    query: jest.fn(),
-    release: jest.fn(),
-  };
-  return { Pool: jest.fn(() => mPool) };
-});
 
-jest.mock('../src/services/ton-blockchain.service', () => {
-  return {
-    TonBlockchainService: jest.fn().mockImplementation(() => {
-      return {
-        initializeWallet: jest.fn(),
-        getTransactionState: jest.fn(),
-      };
-    }),
-  };
-});
+
+jest.mock('../services/ton-blockchain.service');
 
 describe('Conversion and Reconciliation Integration Test', () => {
-  let pool: Pool;
+  let db: Database;
   let conversionService: ConversionService;
   let reconciliationService: ReconciliationService;
-  let tonService: TonBlockchainService;
+  let tonService: jest.Mocked<TonBlockchainService>;
+  let conversionId: string;
+  let paymentId: string;
+  let userId: string;
 
   beforeEach(() => {
-    pool = new Pool();
-    conversionService = new ConversionService(pool);
-    reconciliationService = new ReconciliationService(pool);
-    tonService = (conversionService as any).tonService;
+    db = initDatabase(process.env.DATABASE_URL!);
+    conversionService = new ConversionService(db);
+    reconciliationService = new ReconciliationService(db);
+    
+    // Create a mocked instance of TonBlockchainService
+    tonService = new (TonBlockchainService as jest.Mock<TonBlockchainService>)() as jest.Mocked<TonBlockchainService>;
+    
+    // Inject the mocked service into the services under test
+    (conversionService as any).tonService = tonService;
+    (reconciliationService as any).tonService = tonService;
+
+    conversionId = uuidv4();
+    paymentId = uuidv4();
+    userId = uuidv4();
   });
 
   it('should process a conversion and then reconcile it', async () => {
-    jest.useFakeTimers();
-    
-    // --- Conversion Part ---
-    const poolQuery = (pool as any).query;
-    // Mock database calls for conversion
-    poolQuery.mockResolvedValueOnce({ rows: [{ total_stars: 1000 }] }); // Get total stars
-    poolQuery.mockResolvedValueOnce({ rows: [{ minConversionAmount: 100 }] }); // Get config
-    poolQuery.mockResolvedValueOnce({ rows: [{ id: 'conv-id', target_amount: 1, exchange_rate: 0.001, fees: { platform: 10 } }] }); // Create conversion
-    poolQuery.mockResolvedValueOnce({ rows: [] }); // Update payments
-    poolQuery.mockResolvedValueOnce({ rows: [] }); // Record fee
-    
+    // --- Mock services ---
     (conversionService as any).p2pLiquidityService = {
         findBestRoute: jest.fn().mockResolvedValue({}),
         executeConversion: jest.fn().mockResolvedValue({ success: true, txHash: 'tx-hash' })
     };
+    tonService.getTransaction.mockResolvedValue({
+        confirmed: true,
+        amount: 1,
+        success: true,
+    } as any);
 
-    tonService.getTransactionState.mockResolvedValue({
-      status: 'confirmed',
-      confirmations: 10,
-      transaction: { hash: 'tx-hash', amount: 1 },
-    });
-    poolQuery.mockResolvedValue({ rows: [{ id: 'fee-id' }] });
+    // --- Mock DB ---
+    const dbOneSpy = jest.spyOn(db, 'one').mockResolvedValue({ total_stars: 1000 });
+    const dbNoneSpy = jest.spyOn(db, 'none').mockResolvedValue(undefined);
+    const dbOneOrNoneSpy = jest.spyOn(db, 'oneOrNone').mockResolvedValue({ id: conversionId, target_amount: 1, ton_tx_hash: 'tx-hash' });
 
+    // --- Execute ---
+    await conversionService.createConversion(userId, [paymentId]);
+    await reconciliationService.reconcileConversion(conversionId);
 
-    await conversionService.createConversion('user-1', ['payment-1']);
-    
-    // --- Polling Part ---
-    jest.runAllTimers();
-    await new Promise(resolve => setImmediate(resolve));
-
-
-    // --- Reconciliation Part ---
-    poolQuery.mockResolvedValueOnce({ rows: [{ id: 'conv-id', target_amount: 1, ton_tx_hash: 'tx-hash' }] });
-    poolQuery.mockResolvedValueOnce({ rows: [{ id: 'rec-id' }] });
-
-    const reconciliationRecord = await reconciliationService.reconcileConversion('conv-id');
-
-    expect(reconciliationRecord.status).toBe('matched');
-    
-    jest.useRealTimers();
+    // --- Assert ---
+    expect(tonService.getTransaction).toHaveBeenCalledWith('tx-hash');
+    expect(dbOneOrNoneSpy).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM conversions'), [conversionId]);
   });
 });

@@ -46,14 +46,19 @@ export interface SwapResult {
  * Finds best rates and executes swaps on-chain.
  */
 export class DexAggregatorService {
-  private dedustApiUrl: string;
-  private stonfiApiUrl: string;
-  private client: TonClient;
-  private wallet: WalletContractV4 | null = null;
-  private keyPair: any = null;
-  private tonService: TonBlockchainService;
-  private retryHandler: DexRetryHandler;
-  private simulationMode: boolean;
+
+    constructor(tonService?: TonBlockchainService) {
+      this.tonService = tonService || new TonBlockchainService(
+        process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
+        process.env.TON_API_KEY,
+        process.env.TON_WALLET_MNEMONIC
+      );
+      this.dedustApiUrl = process.env.DEDUST_API_URL || '';
+      this.stonfiApiUrl = process.env.STONFI_API_URL || '';
+      this.simulationMode = process.env.DEX_SIMULATION_MODE === 'true';
+      this.client = this.tonService.getClient();
+      this.retryHandler = new DexRetryHandler();
+    }
 
   /**
    * Initialize wallet for swap execution
