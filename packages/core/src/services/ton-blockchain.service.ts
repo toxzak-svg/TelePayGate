@@ -18,6 +18,12 @@ export interface TransactionInfo {
   exitCode?: number;
 }
 
+export interface TransactionState {
+  status: 'confirmed' | 'pending' | 'failed';
+  confirmations: number;
+  transaction: TransactionInfo | null;
+}
+
 /**
  * TonBlockchainService
  * Direct TON blockchain integration (no Fragment API)

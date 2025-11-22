@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Redis from 'ioredis';
 
 export interface RateSource {
   source: string;
@@ -22,6 +23,7 @@ export interface AggregatedRate {
  * Sources: CoinGecko, DexScreener, CoinMarketCap
  */
 export class RateAggregatorService {
+  private redis: Redis;
   private sources = {
     coingecko: 'https://api.coingecko.com/api/v3',
     dexscreener: 'https://api.dexscreener.com/latest/dex/tokens',
@@ -46,6 +48,10 @@ export class RateAggregatorService {
     if (this.simulationMode) {
       console.log('🧪 RateAggregatorService running in simulation mode');
     }
+  }
+
+  constructor() {
+    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
   }
 
   /**
@@ -266,10 +272,20 @@ export class RateAggregatorService {
   async getRateWithCache(
     source: string,
     target: string,
-    cacheDuration: number = 60000 // 1 minute default
+    cacheDuration: number = 60 // 1 minute default
   ): Promise<number> {
-    // TODO: Implement Redis caching for production
+    const cacheKey = `rate:${source}:${target}`;
+    const cachedRate = await this.redis.get(cacheKey);
+
+    if (cachedRate) {
+      return parseFloat(cachedRate);
+    }
+
     const rate = await this.getAggregatedRate(source, target);
+    if (rate.averageRate > 0) {
+      await this.redis.set(cacheKey, rate.averageRate, 'EX', cacheDuration);
+    }
+    
     return rate.averageRate;
   }
 

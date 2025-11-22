@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { TonBlockchainService } from './ton-blockchain.service';
 
 export interface ReconciliationRecord {
   id: string;
@@ -24,7 +25,16 @@ export interface ReconciliationResult {
 }
 
 export class ReconciliationService {
-  constructor(private pool: Pool) {}
+  private tonService: TonBlockchainService;
+
+  constructor(private pool: Pool) {
+    this.tonService = new TonBlockchainService(
+      process.env.TON_API_URL!,
+      process.env.TON_API_KEY,
+      process.env.TON_WALLET_MNEMONIC
+    );
+    this.tonService.initializeWallet();
+  }
 
   /**
    * Reconcile payment against Telegram webhook data
@@ -78,12 +88,20 @@ export class ReconciliationService {
 
     const conversion = conversionResult.rows[0];
     const expectedAmount = conversion.target_amount;
+    let actualAmount = 0;
+    let status: 'matched' | 'mismatch' | 'pending' = 'pending';
+    let difference = 0;
 
-    // TODO: Query DEX API and TON blockchain for actual amount
-    const actualAmount = expectedAmount; // Placeholder
-    const difference = Math.abs(expectedAmount - actualAmount);
-
-    const status = difference < 0.01 ? 'matched' : 'mismatch'; // Allow 0.01 TON tolerance
+    if (conversion.ton_tx_hash) {
+      const txState = await this.tonService.getTransactionState(conversion.ton_tx_hash);
+      if (txState.status === 'confirmed' && txState.transaction) {
+        actualAmount = txState.transaction.amount;
+        difference = Math.abs(expectedAmount - actualAmount);
+        status = difference < 0.01 ? 'matched' : 'mismatch'; // Allow 0.01 TON tolerance
+      }
+    } else {
+      status = 'pending';
+    }
 
     const result = await this.pool.query(
       `INSERT INTO reconciliation_records (

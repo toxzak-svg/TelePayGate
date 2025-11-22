@@ -2,7 +2,11 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { P2PLiquidityService } from './p2p-liquidity.service';
 import { FeeService } from './fee.service';
+<<<<<<< HEAD
 import TonBlockchainService from './ton-blockchain.service';
+=======
+import TonBlockchainService from './ton-blockchain.service';
+>>>>>>> a1667e7 (feat: Complete core features, add tests, and update documentation)
 
 export interface ConversionRecord {
   id: string;
@@ -55,6 +59,7 @@ export class ConversionService {
     this.pool = pool;
     this.p2pLiquidityService = new P2PLiquidityService(pool);
     this.feeService = new FeeService(pool);
+<<<<<<< HEAD
     this.tonService = new TonBlockchainService(
       process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
       process.env.TON_API_KEY,
@@ -64,6 +69,7 @@ export class ConversionService {
     this.tonService.initializeWallet().catch(err => 
       console.warn('⚠️ Failed to initialize wallet for polling (might be already init):', err.message)
     );
+>>>>>>> a1667e7 (feat: Complete core features, add tests, and update documentation)
   }
 
   /**
@@ -387,6 +393,13 @@ export class ConversionService {
         this.pollConversionStatus(conversionId, txHash, attempt + 1);
       }
     }, 5000);
+  }
+
+  private async updateConversionStatus(conversionId: string, status: string, errorMessage?: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE conversions SET status = $1, error_message = $2, updated_at = NOW() WHERE id = $3`,
+      [status, errorMessage, conversionId]
+    );
   }
 
   /**
