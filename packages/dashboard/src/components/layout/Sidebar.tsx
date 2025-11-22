@@ -1,11 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Settings, Zap, LogOut } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Settings, Zap, LogOut, TrendingUp, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { name: 'Transactions', to: '/transactions', icon: ArrowLeftRight },
   { name: 'P2P Orders', to: '/p2p-orders', icon: Zap },
+  { name: 'DEX Analytics', to: '/dex-analytics', icon: TrendingUp },
+  { name: 'Webhooks', to: '/webhooks', icon: Bell },
   { name: 'Settings', to: '/settings', icon: Settings },
 ];
 
