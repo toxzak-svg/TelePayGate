@@ -137,3 +137,93 @@ export class ConversionError extends PaymentGatewayError {
     super('CONVERSION_ERROR', message, 400, details);
   }
 }
+
+export type FeeBreakdown = {
+  platform: number;
+  network: number;
+  telegram: number;
+  total: number;
+  platformPercentage: number;
+};
+
+export type PlatformConfig = {
+  id: string;
+  platformFeePercentage: number;
+  telegramFeePercentage: number;
+  networkFeePercentage: number;
+  minConversionAmount: number;
+  maxConversionAmount: number;
+  rateLockDurationSeconds: number;
+  platformTonWallet: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type FeeCalculationResult = {
+  paymentId: string;
+  starsAmount: number;
+  platformFee: number;
+  telegramFee: number;
+  totalFee: number;
+  finalAmount: number;
+  calculationId: string;
+};
+
+export type StaleConversion = {
+  conversionId: string;
+  userId: string;
+  sourceAmount: number;
+  targetAmount: number;
+  status: string;
+  ageHours: number;
+};
+
+export type StuckAtomicSwap = {
+  payment_id?: string;
+  conversion_id?: string;
+  user_id: string;
+  swap_id: string;
+  swap_status: string;
+  swap_created_at: Date;
+};
+
+export type UnverifiedDeposit = {
+  deposit_id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export interface ReconciliationRecord {
+  id: string;
+  paymentId: string;
+  conversionId?: string;
+  expectedAmount: number;
+  actualAmount: number;
+  difference: number;
+  status: 'matched' | 'mismatch' | 'pending';
+  reconciliationType: 'payment' | 'conversion' | 'settlement';
+  externalReference?: string;
+  notes?: string;
+  reconciledAt?: Date;
+  createdAt: Date;
+}
+
+export interface ReconciliationResult {
+  matched: number;
+  mismatched: number;
+  pending: number;
+  totalChecked: number;
+  discrepancies: ReconciliationRecord[];
+}
+
+export type StalePayment = {
+  paymentId: string;
+  userId: string;
+  starsAmount: number;
+  status: string;
+  ageHours: number;
+};

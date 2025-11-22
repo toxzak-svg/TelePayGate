@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import PaymentController from '../controllers/payment.controller';
-import * as conversionController from '../controllers/conversion.controller';
+import { ConversionController } from '../controllers/conversion.controller';
 import UserController from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
 import FeeCollectionController from '../controllers/fee-collection.controller';
@@ -9,6 +9,7 @@ import P2POrdersController from '../controllers/p2p-orders.controller';
 import webhookRoutes from './webhooks.routes';
 
 const router = Router();
+const conversionController = new ConversionController();
 
 // Health check
 router.get('/health', (req, res) => {
@@ -25,10 +26,10 @@ router.get('/payments', authenticate, PaymentController.listPayments);
 router.get('/payments/stats', authenticate, PaymentController.getPaymentStats);
 
 // Conversion routes
-router.get('/conversions/rate', conversionController.getRate);
-router.post('/conversions', authenticate, conversionController.createConversion);
-router.get('/conversions/:id', authenticate, conversionController.getConversion);
-router.get('/conversions', authenticate, conversionController.getConversionHistory);
+router.get('/conversions/rate', conversionController.getRate.bind(conversionController));
+router.post('/conversions', authenticate, conversionController.createConversion.bind(conversionController));
+router.get('/conversions/:id', authenticate, conversionController.getConversion.bind(conversionController));
+router.get('/conversions', authenticate, conversionController.getConversionHistory.bind(conversionController));
 
 // User routes
 router.post('/users/register', UserController.register);

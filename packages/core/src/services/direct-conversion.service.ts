@@ -1,7 +1,7 @@
-import { Pool } from 'pg';
+import { getDatabase, Database } from '../db/connection';
 import { TonPaymentService } from './ton-payment.service';
 import { FeeService } from './fee.service';
-import { RateAggregatorService } from './rate.aggregator';
+import { RateAggregatorService } from './rate-aggregator.service';
 
 export interface DirectConversionRecord {
   id: string;
@@ -53,25 +53,20 @@ export interface RateQuote {
  * - Real-time rate aggregation from multiple sources
  */
 export class DirectConversionService {
-  private pool: Pool;
-  private tonService: TonPaymentService;
+  private db: Database;
   private feeService: FeeService;
   private rateAggregator: RateAggregatorService;
-  private minConversionStars: number = 100; // Much lower than Fragment's 1000
+  private tonService: TonPaymentService;
+  private minConversionStars: number = 100;
 
-  constructor(
-    pool: Pool,
-    tonService: TonPaymentService,
-    minConversionStars?: number
-  ) {
-    this.pool = pool;
-    this.tonService = tonService;
-    this.feeService = new FeeService(pool);
+  constructor() {
+    this.db = getDatabase();
+    this.feeService = new FeeService(this.db);
     this.rateAggregator = new RateAggregatorService();
-    
-    if (minConversionStars) {
-      this.minConversionStars = minConversionStars;
-    }
+    this.tonService = new TonPaymentService({
+      endpoint: process.env.TON_API_URL!,
+      mnemonic: process.env.TON_WALLET_MNEMONIC!,
+    });
   }
 
   /**
@@ -134,9 +129,9 @@ export class DirectConversionService {
     platformFee: number;
   }> {
     const quote = await this.getQuote(sourceAmount, sourceCurrency, targetCurrency);
-    const lockedUntil = Date.now() + durationSeconds * 1000;
+    const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
 
-    const result = await this.pool.query(
+    const conversion = await this.db.one(
       `INSERT INTO conversions (
         user_id, source_currency, target_currency, source_amount,
         target_amount, exchange_rate, rate_locked_until, status,
@@ -157,19 +152,17 @@ export class DirectConversionService {
       ]
     );
 
-    const conversion = result.rows[0];
-
     console.log('🔒 Rate locked (direct TON):', {
       conversionId: conversion.id,
       rate: quote.exchangeRate,
       platformFee: quote.fees.platform,
-      lockedUntil: new Date(lockedUntil),
+      lockedUntil: lockedUntil,
     });
 
     return {
       conversionId: conversion.id,
       rate: quote.exchangeRate,
-      lockedUntil: new Date(lockedUntil),
+      lockedUntil: lockedUntil,
       targetAmount: conversion.target_amount,
       platformFee: conversion.platform_fee_amount,
     };
@@ -185,20 +178,15 @@ export class DirectConversionService {
     targetCurrency: string = 'TON',
     destinationAddress?: string
   ): Promise<DirectConversionRecord> {
-    const client = await this.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
-      // Get total stars from payments
-      const paymentsResult = await client.query(
+    return this.db.tx(async t => {
+      const paymentsResult = await t.one(
         `SELECT SUM(stars_amount) as total_stars 
          FROM payments 
          WHERE id = ANY($1) AND user_id = $2 AND status = 'received'`,
         [paymentIds, userId]
       );
 
-      const totalStars = parseFloat(paymentsResult.rows[0]?.total_stars || 0);
+      const totalStars = parseFloat(paymentsResult.total_stars || 0);
 
       if (totalStars === 0) {
         throw new Error('No valid payments found for conversion');
@@ -216,11 +204,11 @@ export class DirectConversionService {
 
       // Get user's TON address if not provided
       if (!destinationAddress) {
-        const userResult = await client.query(
+        const user = await t.oneOrNone(
           'SELECT ton_wallet_address FROM users WHERE id = $1',
           [userId]
         );
-        destinationAddress = userResult.rows[0]?.ton_wallet_address;
+        destinationAddress = user?.ton_wallet_address;
         
         if (!destinationAddress) {
           throw new Error('User has no TON wallet address configured');
@@ -228,7 +216,7 @@ export class DirectConversionService {
       }
 
       // Create conversion record
-      const conversionResult = await client.query(
+      const conversion = await t.one(
         `INSERT INTO conversions (
           user_id, payment_ids, source_currency, target_currency,
           source_amount, target_amount, exchange_rate, status,
@@ -248,17 +236,12 @@ export class DirectConversionService {
         ]
       );
 
-      const conversion = conversionResult.rows[0];
-
-      // Update payment statuses
-      await client.query(
+      await t.none(
         `UPDATE payments 
          SET status = 'converting', updated_at = NOW()
          WHERE id = ANY($1)`,
         [paymentIds]
       );
-
-      await client.query('COMMIT');
 
       // Record platform fee
       const feeAmountTon = quote.fees.platform * quote.exchangeRate;
@@ -285,13 +268,7 @@ export class DirectConversionService {
       ).catch((err) => console.error('Direct TON transfer error:', err));
 
       return conversion;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('❌ Conversion failed:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   /**
@@ -304,7 +281,7 @@ export class DirectConversionService {
     amount: number
   ): Promise<void> {
     try {
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions SET status = 'sending_ton', updated_at = NOW() WHERE id = $1`,
         [conversionId]
       );
@@ -316,7 +293,7 @@ export class DirectConversionService {
         `Conversion ${conversionId}`
       );
 
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions 
          SET ton_tx_hash = $1, status = 'completed', 
              completed_at = NOW(), updated_at = NOW()
@@ -330,18 +307,16 @@ export class DirectConversionService {
         amount,
       });
 
-      // Mark fee as collected
-      const feeResult = await this.pool.query(
+      const fee = await this.db.oneOrNone(
         'SELECT id FROM platform_fees WHERE conversion_id = $1',
         [conversionId]
       );
 
-      if (feeResult.rows.length > 0) {
-        await this.feeService.markFeeCollected(feeResult.rows[0].id, txHash);
+      if (fee) {
+        await this.feeService.markFeeCollected(fee.id, txHash);
       }
 
-      // Update payments to completed
-      await this.pool.query(
+      await this.db.none(
         `UPDATE payments 
          SET status = 'completed', updated_at = NOW()
          WHERE id = ANY(
@@ -351,7 +326,7 @@ export class DirectConversionService {
       );
     } catch (error) {
       console.error('❌ Direct TON transfer failed:', error);
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions 
          SET status = 'failed', error_message = $1, updated_at = NOW()
          WHERE id = $2`,
@@ -367,11 +342,10 @@ export class DirectConversionService {
   async getConversionById(
     conversionId: string
   ): Promise<DirectConversionRecord | null> {
-    const result = await this.pool.query(
+    return this.db.oneOrNone(
       'SELECT * FROM conversions WHERE id = $1',
       [conversionId]
     );
-    return result.rows[0] || null;
   }
 
   /**
@@ -382,14 +356,13 @@ export class DirectConversionService {
     limit: number = 20,
     offset: number = 0
   ): Promise<DirectConversionRecord[]> {
-    const result = await this.pool.query(
+    return this.db.any(
       `SELECT * FROM conversions 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
        LIMIT $2 OFFSET $3`,
       [userId, limit, offset]
     );
-    return result.rows;
   }
 
   /**

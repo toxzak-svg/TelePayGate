@@ -5,7 +5,7 @@ import { getDatabase, FeeService } from '@tg-payment/core';
 export class AdminController {
   private static getServices() {
     const db = getDatabase();
-    const feeService = new FeeService(db as any);
+    const feeService = new FeeService(db);
     return { db, feeService };
   }
 
@@ -172,7 +172,7 @@ export class AdminController {
         ? new Date(endDate as string)
         : new Date();
 
-      const summary = await feeService.getRevenueSummary(start, end);
+      const summary = await feeService.getFeeSummary(start, end);
 
       return res.status(200).json({
         success: true,
@@ -207,7 +207,6 @@ export class AdminController {
         success: true,
         config: {
           platformFeePercentage: `${(config.platformFeePercentage * 100).toFixed(2)}%`,
-          fragmentFeePercentage: `${(config.fragmentFeePercentage * 100).toFixed(2)}%`,
           networkFeePercentage: `${(config.networkFeePercentage * 100).toFixed(2)}%`,
           platformTonWallet: config.platformTonWallet,
           minConversionAmount: config.minConversionAmount,
@@ -279,8 +278,8 @@ export class AdminController {
 
       updates.push(`updated_at = NOW()`);
 
-      await db.query(
-        `UPDATE platform_config SET ${updates.join(', ')} WHERE is_active = true`,
+      await db.none(
+        `UPDATE platform_config SET ${updates.join(', ')} WHERE id = (SELECT id FROM platform_config ORDER BY created_at DESC LIMIT 1)`,
         values
       );
 

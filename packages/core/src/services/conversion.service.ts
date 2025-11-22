@@ -2,11 +2,8 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { P2PLiquidityService } from './p2p-liquidity.service';
 import { FeeService } from './fee.service';
-<<<<<<< HEAD
-import TonBlockchainService from './ton-blockchain.service';
-=======
-import TonBlockchainService from './ton-blockchain.service';
->>>>>>> a1667e7 (feat: Complete core features, add tests, and update documentation)
+import { TonBlockchainService } from './ton-blockchain.service';
+import { IDatabase } from 'pg-promise';
 
 export interface ConversionRecord {
   id: string;
@@ -50,26 +47,18 @@ export interface RateQuote {
 }
 
 export class ConversionService {
-  private pool: Pool;
   private p2pLiquidityService: P2PLiquidityService;
   private feeService: FeeService;
   private tonService: TonBlockchainService;
 
-  constructor(pool: Pool) {
-    this.pool = pool;
-    this.p2pLiquidityService = new P2PLiquidityService(pool);
-    this.feeService = new FeeService(pool);
-<<<<<<< HEAD
+  constructor(private db: IDatabase<any>) {
+    this.p2pLiquidityService = new P2PLiquidityService(db);
+    this.feeService = new FeeService(db);
     this.tonService = new TonBlockchainService(
       process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
       process.env.TON_API_KEY,
       process.env.TON_WALLET_MNEMONIC
     );
-    // Initialize wallet for polling (fire and forget)
-    this.tonService.initializeWallet().catch(err => 
-      console.warn('⚠️ Failed to initialize wallet for polling (might be already init):', err.message)
-    );
->>>>>>> a1667e7 (feat: Complete core features, add tests, and update documentation)
   }
 
   /**
@@ -93,7 +82,7 @@ export class ConversionService {
       targetAmount,
       exchangeRate: baseRate,
       fees: {
-        dex: feeBreakdown.dex,
+        dex: 0, // Placeholder
         network: feeBreakdown.network,
         platform: feeBreakdown.platform,
         total: totalFees,
@@ -124,7 +113,7 @@ export class ConversionService {
     const quote = await this.getQuote(sourceAmount, sourceCurrency, targetCurrency);
     const lockedUntil = Date.now() + durationSeconds * 1000;
 
-    const result = await this.pool.query(
+    const result = await this.db.one(
       `INSERT INTO conversions (
         user_id, source_currency, target_currency, source_amount,
         target_amount, exchange_rate, rate_locked_until, status,
@@ -138,14 +127,14 @@ export class ConversionService {
         sourceAmount,
         quote.targetAmount,
         quote.exchangeRate,
-        lockedUntil,
+        new Date(lockedUntil),
         JSON.stringify(quote.fees),
         quote.fees.platform,
         quote.fees.platformPercentage / 100,
       ]
     );
 
-    const conversion = result.rows[0];
+    const conversion = result;
 
     console.log('🔒 Rate locked with fees:', {
       conversionId: conversion.id,
@@ -171,20 +160,16 @@ export class ConversionService {
     paymentIds: string[],
     targetCurrency: string = 'TON'
   ): Promise<ConversionRecord> {
-    const client = await this.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
+    return this.db.tx(async t => {
       // Get total stars from payments
-      const paymentsResult = await client.query(
+      const payment = await t.one(
         `SELECT SUM(stars_amount) as total_stars 
          FROM payments 
          WHERE id = ANY($1) AND user_id = $2 AND status = 'received'`,
         [paymentIds, userId]
       );
 
-      const totalStars = parseFloat(paymentsResult.rows[0]?.total_stars || 0);
+      const totalStars = parseFloat(payment.total_stars || 0);
 
       if (totalStars === 0) {
         throw new Error('No valid payments found for conversion');
@@ -200,7 +185,7 @@ export class ConversionService {
       const quote = await this.getQuote(totalStars, 'STARS', targetCurrency);
 
       // Create conversion record
-      const conversionResult = await client.query(
+      const conversion = await t.one(
         `INSERT INTO conversions (
           user_id, payment_ids, source_currency, target_currency,
           source_amount, target_amount, exchange_rate, status,
@@ -220,20 +205,15 @@ export class ConversionService {
         ]
       );
 
-      const conversion = conversionResult.rows[0];
-
       // Update payment statuses
-      await client.query(
+      await t.none(
         `UPDATE payments 
          SET status = 'converting', updated_at = NOW()
          WHERE id = ANY($1)`,
         [paymentIds]
       );
 
-      // COMMIT TRANSACTION BEFORE recording fee
-      await client.query('COMMIT');
-
-      // NOW record platform fee (after conversion exists in DB)
+      // Record platform fee
       const feeAmountTon = quote.fees.platform * quote.exchangeRate;
       await this.feeService.recordFee(
         conversion.id,
@@ -257,13 +237,7 @@ export class ConversionService {
       );
 
       return conversion;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('❌ Conversion failed:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   /**
@@ -274,17 +248,16 @@ export class ConversionService {
     paymentIds: string[]
   ): Promise<void> {
     try {
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions SET status = 'phase1_prepared' WHERE id = $1`,
         [conversionId]
       );
 
       // Get conversion details
-      const conversionResult = await this.pool.query(
+      const conversion = await this.db.one(
         'SELECT * FROM conversions WHERE id = $1',
         [conversionId]
       );
-      const conversion = conversionResult.rows[0];
 
       // Find best route (P2P or DEX)
       const route = await this.p2pLiquidityService.findBestRoute(
@@ -300,7 +273,7 @@ export class ConversionService {
       );
 
       if (result.success) {
-        await this.pool.query(
+        await this.db.none(
           `UPDATE conversions 
            SET dex_pool_id = $1, dex_provider = $2, dex_tx_hash = $3, 
                status = 'phase2_committed', updated_at = NOW()
@@ -323,7 +296,7 @@ export class ConversionService {
       }
     } catch (error) {
       console.error('❌ P2P/DEX conversion error:', error);
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions 
          SET status = 'failed', error_message = $1, updated_at = NOW()
          WHERE id = $2`,
@@ -340,63 +313,50 @@ export class ConversionService {
     txHash: string,
     attempt: number = 1
   ): Promise<void> {
-    const maxAttempts = 60; // 5 minutes (5s * 60)
+    const maxPolls = 60; // 5 minutes (5s intervals)
+    let polls = 0;
 
-    if (attempt > maxAttempts) {
-      console.error(`❌ Polling timeout for conversion ${conversionId} (tx: ${txHash})`);
-      // We don't mark as failed automatically, as it might just be slow.
-      // Reconciliation service should pick this up later.
-      return;
-    }
+    const intervalId = setInterval(async () => {
+      if (polls >= maxPolls) {
+        clearInterval(intervalId);
+        await this.updateConversionStatus(conversionId, 'failed', 'Transaction polling timeout');
+        return;
+      }
 
-    setTimeout(async () => {
       try {
         const tx = await this.tonService.getTransaction(txHash);
 
-        if (tx && tx.confirmed && tx.success) {
-          await this.pool.query(
-            `UPDATE conversions 
-             SET status = 'completed', ton_tx_hash = $1, 
-                 completed_at = NOW(), updated_at = NOW()
-             WHERE id = $2`,
-            [tx.hash, conversionId]
-          );
-
-          console.log('✅ Conversion completed on-chain:', { conversionId, txHash: tx.hash });
-
-          const feeResult = await this.pool.query(
-            'SELECT id FROM platform_fees WHERE conversion_id = $1',
-            [conversionId]
-          );
-          
-          if (feeResult.rows.length > 0) {
-            await this.feeService.markFeeCollected(
-              feeResult.rows[0].id,
-              tx.hash
+        if (tx && tx.confirmed) {
+          clearInterval(intervalId);
+          if (tx.success) {
+            await this.updateConversionStatus(conversionId, 'completed');
+            
+            const feeResult = await this.db.oneOrNone(
+              'SELECT id FROM platform_fees WHERE conversion_id = $1',
+              [conversionId]
             );
+            
+            if (feeResult) {
+              await this.feeService.markFeeCollected(
+                feeResult.id,
+                tx.hash || 'pending'
+              );
+            }
+            console.log('✅ Conversion completed:', { conversionId, txHash });
+          } else {
+            await this.updateConversionStatus(conversionId, 'failed', `Transaction failed on-chain (exit code: ${tx.exitCode})`);
           }
-        } else if (tx && tx.confirmed && !tx.success) {
-          console.error(`❌ Transaction failed on-chain: ${txHash} (Exit code: ${tx.exitCode})`);
-          await this.pool.query(
-            `UPDATE conversions 
-             SET status = 'failed', error_message = $1, updated_at = NOW()
-             WHERE id = $2`,
-            [`Transaction failed on-chain (exit code: ${tx.exitCode})`, conversionId]
-          );
-        } else {
-          // Not found or not confirmed yet, continue polling
-          this.pollConversionStatus(conversionId, txHash, attempt + 1);
         }
       } catch (error) {
-        console.error(`⚠️ Error polling transaction ${txHash}:`, error);
-        // Retry anyway
-        this.pollConversionStatus(conversionId, txHash, attempt + 1);
+        console.error(`Error polling for tx ${txHash}:`, error);
+      } finally {
+        polls++;
       }
     }, 5000);
   }
 
   private async updateConversionStatus(conversionId: string, status: string, errorMessage?: string): Promise<void> {
-    await this.pool.query(
+    await this.db.none(
       `UPDATE conversions SET status = $1, error_message = $2, updated_at = NOW() WHERE id = $3`,
       [status, errorMessage, conversionId]
     );
@@ -406,11 +366,10 @@ export class ConversionService {
    * Get conversion by ID
    */
   async getConversionById(conversionId: string): Promise<ConversionRecord | null> {
-    const result = await this.pool.query(
+    return this.db.oneOrNone(
       'SELECT * FROM conversions WHERE id = $1',
       [conversionId]
     );
-    return result.rows[0] || null;
   }
 
   /**
@@ -421,14 +380,13 @@ export class ConversionService {
     limit: number = 20,
     offset: number = 0
   ): Promise<ConversionRecord[]> {
-    const result = await this.pool.query(
+    return this.db.any(
       `SELECT * FROM conversions 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
        LIMIT $2 OFFSET $3`,
       [userId, limit, offset]
     );
-    return result.rows;
   }
 
   /**

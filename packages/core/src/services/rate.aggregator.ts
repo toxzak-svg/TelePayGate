@@ -48,9 +48,6 @@ export class RateAggregatorService {
     if (this.simulationMode) {
       console.log('🧪 RateAggregatorService running in simulation mode');
     }
-  }
-
-  constructor() {
     this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
   }
 

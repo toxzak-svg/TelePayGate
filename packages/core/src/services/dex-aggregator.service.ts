@@ -52,22 +52,8 @@ export class DexAggregatorService {
   private tonService: TonBlockchainService;
   private retryHandler: DexRetryHandler;
   private simulationMode: boolean;
-  
-  constructor() {
-    this.dedustApiUrl = process.env.DEDUST_API_URL || 'https://api.dedust.io';
-    this.stonfiApiUrl = process.env.STONFI_API_URL || 'https://api.ston.fi';
-    
-    this.tonService = new TonBlockchainService(
-      process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
-      process.env.TON_API_KEY,
-      process.env.TON_WALLET_MNEMONIC
-    );
-    this.client = this.tonService.getClient();
-    
-    this.retryHandler = new DexRetryHandler();
-    const simulationFlag = process.env.DEX_SIMULATION_MODE ?? (process.env.NODE_ENV === 'test' ? 'true' : 'false');
-    this.simulationMode = simulationFlag === 'true';
-  }
+  private keyPair: any;
+  private wallet: WalletContractV4;
 
   /**
    * Initialize wallet for swap execution

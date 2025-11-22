@@ -12,13 +12,8 @@ interface AuthenticatedRequest extends Request {
 }
 
 export class ConversionController {
-  private conversionService: DirectConversionService;
-
-  constructor() {
-    // In production, inject these dependencies; for now use placeholder
-    const dummyPool = {} as any;
-    const dummyTonService = {} as any;
-    this.conversionService = new DirectConversionService(dummyPool, dummyTonService);
+  private getConversionService(): DirectConversionService {
+    return new DirectConversionService();
   }
 
   /**
@@ -29,7 +24,8 @@ export class ConversionController {
     try {
       const { amount = 100, sourceCurrency = 'STARS', targetCurrency = 'TON' } = req.query;
 
-      const quote = await this.conversionService.getQuote(
+      const conversionService = this.getConversionService();
+      const quote = await conversionService.getQuote(
         parseFloat(amount as string),
         sourceCurrency as string,
         targetCurrency as string
@@ -69,7 +65,8 @@ export class ConversionController {
         return;
       }
 
-      const conversion = await this.conversionService.lockRate(
+      const conversionService = this.getConversionService();
+      const conversion = await conversionService.lockRate(
         userId,
         parseFloat(amount),
         sourceCurrency,
@@ -94,7 +91,8 @@ export class ConversionController {
     try {
       const { id } = req.params;
 
-      const conversion = await this.conversionService.getConversionById(id);
+      const conversionService = this.getConversionService();
+      const conversion = await conversionService.getConversionById(id);
 
       if (!conversion) {
         res.status(404).json({
@@ -130,7 +128,8 @@ export class ConversionController {
         return;
       }
 
-      const conversions = await this.conversionService.getUserConversions(userId);
+      const conversionService = this.getConversionService();
+      const conversions = await conversionService.getUserConversions(userId);
 
       // Filter by status if provided
       const filtered = status 

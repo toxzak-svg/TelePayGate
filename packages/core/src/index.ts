@@ -22,6 +22,10 @@ export { ReconciliationService } from './services/reconciliation.service';
 export { WithdrawalService } from './services/withdrawal.service';
 export { StarsP2PService } from './services/stars-p2p.service';
 export { StarsOrderModel } from './models/stars-order.model';
+export * from './services/wallet-manager.service';
+export * from './services/webhook.service';
+export * from './services/p2p-liquidity.service';
+export * from './services/dex-aggregator.service';
 
 // ============================================
 // MODELS

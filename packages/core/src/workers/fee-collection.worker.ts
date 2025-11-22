@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Pool } from 'pg';
+import { getDatabase, Database } from '../db/connection';
 import { FeeService } from '../services/fee.service';
 import TonBlockchainService from '../services/ton-blockchain.service';
 
@@ -9,7 +9,7 @@ import TonBlockchainService from '../services/ton-blockchain.service';
  * Runs periodically to sweep pending fees to platform wallet
  */
 class FeeCollectionWorker {
-  private pool: Pool;
+  private db: Database;
   private feeService: FeeService;
   private tonService: TonBlockchainService;
   private isRunning = false;
@@ -21,11 +21,11 @@ class FeeCollectionWorker {
   private readonly GAS_RESERVE_TON = 0.1; // Reserve for gas fees
 
   constructor(
-    pool: Pool,
+    db: Database,
     feeService: FeeService,
     tonService: TonBlockchainService
   ) {
-    this.pool = pool;
+    this.db = db;
     this.feeService = feeService;
     this.tonService = tonService;
   }
@@ -74,7 +74,7 @@ class FeeCollectionWorker {
       console.log('\n🔍 Checking pending fees...');
 
       // Get pending fees
-      const result = await this.pool.query(`
+      const result = await this.db.oneOrNone(`
         SELECT 
           COUNT(*) as fee_count,
           COALESCE(SUM(fee_amount_ton), 0) as total_ton,
@@ -86,7 +86,11 @@ class FeeCollectionWorker {
         AND fee_amount_ton > 0
       `);
 
-      const pendingData = result.rows[0];
+      const pendingData = result;
+      if (!pendingData || !pendingData.fee_ids) {
+        console.log('No pending fees to collect.');
+        return;
+      }
       const totalTon = parseFloat(pendingData.total_ton);
       const feeCount = parseInt(pendingData.fee_count);
       const feeIds = pendingData.fee_ids;
@@ -110,7 +114,7 @@ class FeeCollectionWorker {
       console.log(`💸 Collecting ${totalTon.toFixed(4)} TON to ${platformWallet}`);
 
       // Create collection record
-      const collectionResult = await this.pool.query(`
+      const collectionResult = await this.db.one(`
         INSERT INTO fee_collections (
           user_id, 
           fee_ids, 
@@ -137,8 +141,8 @@ class FeeCollectionWorker {
         RETURNING id, total_fees_ton
       `, [feeIds, platformWallet]);
 
-      const collectionId = collectionResult.rows[0].id;
-      const amountToSend = parseFloat(collectionResult.rows[0].total_fees_ton) - this.GAS_RESERVE_TON;
+      const collectionId = collectionResult.id;
+      const amountToSend = parseFloat(collectionResult.total_fees_ton) - this.GAS_RESERVE_TON;
 
       if (amountToSend <= 0) {
         console.error('❌ Amount too small after gas reserve');
@@ -180,22 +184,24 @@ class FeeCollectionWorker {
     txHash: string,
     feeIds: string[]
   ): Promise<void> {
-    await this.pool.query(`
-      UPDATE fee_collections 
-      SET status = 'completed', 
-          tx_hash = $1, 
-          collected_at = NOW()
-      WHERE id = $2
-    `, [txHash, collectionId]);
+    await this.db.tx(async t => {
+      await t.none(`
+        UPDATE fee_collections 
+        SET status = 'completed', 
+            tx_hash = $1, 
+            collected_at = NOW()
+        WHERE id = $2
+      `, [txHash, collectionId]);
 
-    await this.pool.query(`
-      UPDATE platform_fees 
-      SET status = 'collected', 
-          collection_tx_hash = $1, 
-          collected_at = NOW(),
-          updated_at = NOW()
-      WHERE id = ANY($2)
-    `, [txHash, feeIds]);
+      await t.none(`
+        UPDATE platform_fees 
+        SET status = 'collected', 
+            collection_tx_hash = $1, 
+            collected_at = NOW(),
+            updated_at = NOW()
+        WHERE id = ANY($2)
+      `, [txHash, feeIds]);
+    });
   }
 
   /**
@@ -205,7 +211,7 @@ class FeeCollectionWorker {
     collectionId: string,
     errorMessage: string
   ): Promise<void> {
-    await this.pool.query(`
+    await this.db.none(`
       UPDATE fee_collections 
       SET status = 'failed', 
           error_message = $1
@@ -226,12 +232,9 @@ async function bootstrap() {
     throw new Error('TON_WALLET_MNEMONIC is required for fee collection');
   }
 
-  const pool = new Pool({ 
-    connectionString: process.env.DATABASE_URL,
-    max: 5
-  });
+  const db = getDatabase();
 
-  const feeService = new FeeService(pool);
+  const feeService = new FeeService(db);
   
   const tonService = new TonBlockchainService(
     process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
@@ -239,14 +242,13 @@ async function bootstrap() {
     process.env.TON_WALLET_MNEMONIC
   );
 
-  const worker = new FeeCollectionWorker(pool, feeService, tonService);
+  const worker = new FeeCollectionWorker(db, feeService, tonService);
 
   await worker.start();
 
   const shutdown = async () => {
     console.log('\n🛑 Shutting down fee collection worker...');
     await worker.stop();
-    await pool.end();
     process.exit(0);
   };
 

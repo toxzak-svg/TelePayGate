@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PaymentModel, FeeService, PaymentStatus } from '@tg-payment/core';
-import { getDatabase } from '@tg-payment/core';
+import { PaymentModel, FeeService, PaymentStatus, getDatabase } from '@tg-payment/core';
 import type { Database } from '@tg-payment/core';
-import { pool } from '../db/connection';
 import { TelegramService } from '@tg-payment/core';
 import { validate as validateUuid, v5 as uuidv5 } from 'uuid';
 
@@ -61,7 +59,7 @@ export class PaymentController {
 
         // 💰 CALCULATE AND CREATE PLATFORM FEES
         try {
-          const feeService = new FeeService(pool);
+          const feeService = new FeeService(db);
           await feeService.calculateFeesForPayment(payment.id);
           console.log('💰 Platform fee created for payment:', payment.id);
         } catch (feeError: any) {

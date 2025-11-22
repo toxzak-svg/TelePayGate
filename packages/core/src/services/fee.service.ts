@@ -1,294 +1,165 @@
 import { Database } from '../db/connection';
-
-import { Pool } from 'pg';
-
-export interface PlatformConfig {
-  platformFeePercentage: number;
-  dexFeePercentage: number;
-  dexSlippageTolerance: number;
-  preferredDexProvider: 'dedust' | 'stonfi' | 'auto';
-  networkFeePercentage: number;
-  platformTonWallet: string;
-  minConversionAmount: number;
-}
-
-export interface FeeBreakdown {
-  platform: number;
-  dex: number;
-  network: number;
-  total: number;
-  platformPercentage: number;
-}
-
-export interface PlatformFee {
-  id: string;
-  payment_id: string;
-  user_id: string;
-  fee_percentage: number;
-  fee_amount_stars: number;
-  fee_amount_ton: number;
-  status: string;
-  created_at: Date;
-}
+import { PlatformConfig, FeeCalculationResult, FeeBreakdown } from '../types';
 
 export class FeeService {
-  private pool: Pool;
+  private db: Database;
   private config: PlatformConfig | null = null;
 
-  constructor(pool: Pool) {
-    this.pool = pool;
+  constructor(db: Database) {
+    this.db = db;
   }
 
-  /**
-   * Get platform configuration (cached)
-   */
   async getConfig(): Promise<PlatformConfig> {
     if (this.config) {
       return this.config;
     }
-
-    const result = await this.pool.query(
-      `SELECT
-        platform_fee_percentage,
-        dex_fee_percentage,
-        dex_slippage_tolerance,
-        preferred_dex_provider,
-        network_fee_percentage,
-        platform_ton_wallet,
-        min_conversion_amount
-      FROM platform_config
-      WHERE is_active = true
-      LIMIT 1`
-    );
-
-    if (result.rows.length === 0) {
-      throw new Error('Platform configuration not found');
-    }
-
-    const row = result.rows[0];
-    this.config = {
-      platformFeePercentage: parseFloat(row.platform_fee_percentage),
-      dexFeePercentage: parseFloat(row.dex_fee_percentage),
-      dexSlippageTolerance: parseFloat(row.dex_slippage_tolerance ?? 0),
-      preferredDexProvider: (row.preferred_dex_provider || 'dedust') as
-        | 'dedust'
-        | 'stonfi'
-        | 'auto',
-      networkFeePercentage: parseFloat(row.network_fee_percentage),
-      platformTonWallet: row.platform_ton_wallet,
-      minConversionAmount: row.min_conversion_amount,
-    };
-
-    return this.config;
+    return this.loadConfig();
   }
 
-  /**
-   * Calculate fees for a given amount
-   */
-  async calculateFeeBreakdown(sourceAmount: number): Promise<FeeBreakdown> {
-    const config = await this.getConfig();
+  private async loadConfig(): Promise<PlatformConfig> {
+    const result = await this.db.oneOrNone('SELECT * FROM platform_config ORDER BY created_at DESC LIMIT 1');
+    if (!result) {
+      throw new Error('Platform configuration not found.');
+    }
+    this.config = result;
+    return this.config as PlatformConfig;
+  }
 
-    const platformFee = sourceAmount * config.platformFeePercentage;
-    const dexFee = sourceAmount * config.dexFeePercentage;
-    const networkFee = sourceAmount * config.networkFeePercentage;
+  async calculateFeeBreakdown(
+    sourceAmount: number
+  ): Promise<FeeBreakdown> {
+    const config = await this.getConfig();
+    const platformFee = sourceAmount * (config.platformFeePercentage / 100);
+    
+    // Placeholder for network fee
+    const networkFee = 0.1; // Example fixed fee in STARS
 
     return {
       platform: platformFee,
-      dex: dexFee,
       network: networkFee,
-      total: platformFee + dexFee + networkFee,
-      platformPercentage: config.platformFeePercentage * 100,
+      telegram: 0, // Assuming no direct telegram fee for this flow
+      total: platformFee + networkFee,
+      platformPercentage: config.platformFeePercentage,
     };
   }
 
-  /**
-   * Calculate and record fees for a payment
-   * Works with payment UUIDs
-   */
-  async calculateFeesForPayment(paymentId: string): Promise<PlatformFee> {
-    // Get payment details
-    const paymentResult = await this.pool.query(
-      `SELECT id, user_id, stars_amount FROM payments WHERE id = $1`,
+  async getPlatformWallet(): Promise<string> {
+    // This should return the platform's master wallet for collecting fees
+    return process.env.TON_MASTER_WALLET_ADDRESS || 'YOUR_PLATFORM_WALLET_ADDRESS';
+  }
+
+
+  async calculateFeesForPayment(paymentId: string): Promise<FeeCalculationResult> {
+    const payment = await this.db.oneOrNone(
+      'SELECT * FROM payments WHERE id = $1',
       [paymentId]
     );
-
-    if (!paymentResult.rows || paymentResult.rows.length === 0) {
-      throw new Error(`Payment not found: ${paymentId}`);
-    }
-
-    const payment = paymentResult.rows[0];
-
-    if (!payment.stars_amount) {
-      throw new Error(`Payment ${paymentId} has no stars_amount`);
+    if (!payment) {
+      throw new Error('Payment not found');
     }
 
     const config = await this.getConfig();
+    const starsAmount = payment.stars_amount;
 
-    // Calculate fee amounts
-    const feeAmountStars = payment.stars_amount * config.platformFeePercentage;
-    const feeAmountTon = 0; // Will be calculated during conversion
-    const feeAmountUsd = 0; // Will be calculated during conversion
+    const platformFee = starsAmount * (config.platformFeePercentage / 100);
+    const telegramFee = starsAmount * (config.telegramFeePercentage / 100);
+    const totalFee = platformFee + telegramFee;
 
-    // Record the fee - ✅ FIXED: Added array brackets
-    const result = await this.pool.query(
-      `INSERT INTO platform_fees (
-        payment_id,
-        user_id,
-        fee_percentage,
-        fee_amount_stars,
-        fee_amount_ton,
-        fee_amount_usd,
-        status,
-        fee_type
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'platform')
-      RETURNING *`,
-      [
-        paymentId,
-        payment.user_id,
-        config.platformFeePercentage,
-        feeAmountStars,
-        feeAmountTon,
-        feeAmountUsd,
-      ]
+    const result = await this.db.one(
+      `INSERT INTO fee_calculations (payment_id, stars_amount, platform_fee, telegram_fee, total_fee, fee_config)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [paymentId, starsAmount, platformFee, telegramFee, totalFee, config]
     );
 
-    console.log('💰 Platform fee recorded:', {
+    return {
       paymentId,
-      feeStars: feeAmountStars,
-      feePercentage: config.platformFeePercentage,
-    });
-
-    return result.rows[0];
+      starsAmount,
+      platformFee,
+      telegramFee,
+      totalFee,
+      finalAmount: starsAmount - totalFee,
+      calculationId: result.id,
+    };
   }
 
-  /**
-   * Record platform fee for a conversion
-   */
   async recordFee(
     conversionId: string,
     userId: string,
     feeAmountStars: number,
     feeAmountTon: number,
-    exchangeRate: number
-  ): Promise<PlatformFee> {
-    const config = await this.getConfig();
-    const feeAmountUsd = feeAmountTon * exchangeRate;
-
-    // ✅ FIXED: Added array brackets
-    const result = await this.pool.query(
-      `INSERT INTO platform_fees (
-        conversion_id,
-        user_id,
-        fee_percentage,
-        fee_amount_stars,
-        fee_amount_ton,
-        fee_amount_usd,
-        status,
-        fee_type
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'platform')
-      RETURNING *`,
-      [
-        conversionId,
-        userId,
-        config.platformFeePercentage,
-        feeAmountStars,
-        feeAmountTon,
-        feeAmountUsd,
-      ]
+    tonUsdRate: number
+  ): Promise<void> {
+    const result = await this.db.one(
+      `INSERT INTO fee_collections (conversion_id, user_id, fee_amount_stars, fee_amount_ton, ton_usd_rate, status)
+       VALUES ($1, $2, $3, $4, $5, 'collected')
+       RETURNING id`,
+      [conversionId, userId, feeAmountStars, feeAmountTon, tonUsdRate]
     );
 
-    console.log('💰 Platform fee recorded:', {
+    console.log('✅ Fee recorded:', {
+      feeCollectionId: result.id,
       conversionId,
-      feeStars: feeAmountStars,
-      feeTon: feeAmountTon,
-      feeUsd: feeAmountUsd,
+      feeAmountStars,
+      feeAmountTon,
     });
-
-    return result.rows[0];
   }
 
-  /**
-   * Get total fees collected
-   */
-  async getTotalRevenue(): Promise<{
-    totalFeesStars: number;
-    totalFeesTon: number;
-    totalFeesUsd: number;
-    collectedTon: number;
-    pendingTon: number;
-  }> {
-    const result = await this.pool.query(`
-      SELECT
-        SUM(fee_amount_stars) as total_fees_stars,
-        SUM(fee_amount_ton) as total_fees_ton,
-        SUM(fee_amount_usd) as total_fees_usd,
-        SUM(CASE WHEN status = 'collected' THEN fee_amount_ton ELSE 0 END) as collected_ton,
-        SUM(CASE WHEN status = 'pending' THEN fee_amount_ton ELSE 0 END) as pending_ton
-      FROM platform_fees
-    `);
+  async markFeeCollected(feeId: string, txHash: string): Promise<void> {
+    await this.db.none(
+      `UPDATE platform_fees SET status = 'collected', ton_tx_hash = $1, updated_at = NOW() WHERE id = $2`,
+      [txHash, feeId]
+    );
+    console.log(`✅ Fee ${feeId} marked as collected.`);
+  }
 
-    const row = result.rows[0];
+  async getFeeSummary(
+    from: Date,
+    to: Date
+  ): Promise<{ totalFeesStars: number; totalFeesTon: number }> {
+    const result = await this.db.one(
+      `SELECT 
+         SUM(fee_amount_stars) as total_fees_stars,
+         SUM(fee_amount_ton) as total_fees_ton
+       FROM fee_collections
+       WHERE collected_at BETWEEN $1 AND $2`,
+      [from, to]
+    );
+
     return {
-      totalFeesStars: parseFloat(row.total_fees_stars || 0),
-      totalFeesTon: parseFloat(row.total_fees_ton || 0),
-      totalFeesUsd: parseFloat(row.total_fees_usd || 0),
-      collectedTon: parseFloat(row.collected_ton || 0),
-      pendingTon: parseFloat(row.pending_ton || 0),
+      totalFeesStars: parseFloat(result.total_fees_stars || 0),
+      totalFeesTon: parseFloat(result.total_fees_ton || 0),
     };
   }
 
-  /**
-   * Get revenue summary by date range
-   */
-  async getRevenueSummary(
-    startDate: Date,
-    endDate: Date
-  ): Promise<Array<any>> {
-    const result = await this.pool.query(
-      `SELECT
-        DATE(created_at) as date,
-        COUNT(*) as total_fees,
-        SUM(fee_amount_stars) as total_stars_fees,
-        SUM(fee_amount_ton) as total_ton_fees
-      FROM platform_fees
-      WHERE created_at BETWEEN $1 AND $2
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC`,
-      [startDate, endDate]
+  async getTotalRevenue(): Promise<{ totalRevenueStars: number; totalRevenueTon: number }> {
+    const result = await this.db.one(
+      `SELECT 
+         SUM(fee_amount_stars) as total_revenue_stars,
+         SUM(fee_amount_ton) as total_revenue_ton
+       FROM fee_collections
+       WHERE status = 'collected'`
     );
 
-    return result.rows.map((row: any) => ({
-      date: row.date,
-      totalFees: parseInt(row.total_fees),
-      totalStarsFees: parseFloat(row.total_stars_fees),
-      totalTonFees: parseFloat(row.total_ton_fees),
-    }));
+    return {
+      totalRevenueStars: parseFloat(result.total_revenue_stars || 0),
+      totalRevenueTon: parseFloat(result.total_revenue_ton || 0),
+    };
   }
 
-  /**
-   * Mark fee as collected
-   */
-  async markFeeCollected(feeId: string, txHash: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE platform_fees
-      SET status = 'collected',
-          collection_tx_hash = $1,
-          collected_at = NOW(),
-          updated_at = NOW()
-      WHERE id = $2`,
-      [txHash, feeId]
+  async collectFeesToMasterWallet(): Promise<string> {
+    const masterWalletAddress = process.env.TON_MASTER_WALLET_ADDRESS;
+    if (!masterWalletAddress) {
+      throw new Error('TON_MASTER_WALLET_ADDRESS is not set');
+    }
+
+    await this.db.none(
+      `UPDATE fee_collections 
+       SET status = 'transferred', master_wallet_address = $1, transferred_at = NOW()
+       WHERE status = 'collected'`,
+      [masterWalletAddress]
     );
 
-    console.log('✅ Fee marked as collected:', { feeId, txHash });
-  }
-
-  /**
-   * Get platform TON wallet address
-   */
-  async getPlatformWallet(): Promise<string> {
-    const config = await this.getConfig();
-    return config.platformTonWallet;
+    return masterWalletAddress;
   }
 }
-
-export default FeeService;

@@ -286,7 +286,6 @@ export class TonBlockchainService {
   }
 
   /**
-<<<<<<< HEAD
    * Get transaction details by hash
    */
   async getTransaction(txHash: string): Promise<TransactionInfo | null> {
@@ -344,8 +343,6 @@ export class TonBlockchainService {
   }
 
   /**
-=======
->>>>>>> f52dc83 (feat: Implement P2P Stars-TON order matching service and API endpoints)
    * Validate TON address format
    */
   isValidAddress(address: string): boolean {

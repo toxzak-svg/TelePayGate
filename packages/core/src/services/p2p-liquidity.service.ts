@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { IDatabase } from 'pg-promise';
 import { DexAggregatorService } from './dex-aggregator.service';
 import { StarsP2PService } from './stars-p2p.service';
 
@@ -32,15 +32,14 @@ export interface ConversionRoute {
  * - Confidence/reliability
  */
 export class P2PLiquidityService {
-  private pool: Pool;
+  private db: IDatabase<any>;
   private dexAggregator: DexAggregatorService;
   private p2pService: StarsP2PService;
 
-  constructor(pool: Pool) {
-    this.pool = pool;
+  constructor(db: IDatabase<any>) {
+    this.db = db;
     this.dexAggregator = new DexAggregatorService();
-    // Pass pool with type assertion for StarsP2PService compatibility
-    this.p2pService = new StarsP2PService(pool as any);
+    this.p2pService = new StarsP2PService(db);
   }
 
   /**
@@ -156,7 +155,7 @@ export class P2PLiquidityService {
   ) {
     try {
       // Query P2P order book for available sell orders
-      const result = await this.pool.query(`
+      const result = await this.db.oneOrNone(`
         SELECT 
           COUNT(*) as order_count,
           SUM(stars_amount) as total_liquidity,
@@ -168,9 +167,9 @@ export class P2PLiquidityService {
       `, [amount]);
 
       return {
-        totalLiquidity: parseFloat(result.rows[0]?.total_liquidity || '0'),
-        averageRate: parseFloat(result.rows[0]?.average_rate || '0'),
-        orderCount: parseInt(result.rows[0]?.order_count || '0'),
+        totalLiquidity: parseFloat(result?.total_liquidity || '0'),
+        averageRate: parseFloat(result?.average_rate || '0'),
+        orderCount: parseInt(result?.order_count || '0'),
       };
     } catch (error: any) {
       console.error('P2P liquidity query error:', error);
@@ -188,16 +187,16 @@ export class P2PLiquidityService {
   private async executeP2PConversion(conversionId: string) {
     try {
       // Get conversion details
-      const conversion = await this.pool.query(
+      const conversion = await this.db.oneOrNone(
         'SELECT * FROM conversions WHERE id = $1',
         [conversionId]
       );
 
-      if (!conversion.rows[0]) {
+      if (!conversion) {
         throw new Error('Conversion not found');
       }
 
-      const { source_amount, user_id, rate: lockedRate, target_currency } = conversion.rows[0];
+      const { source_amount, user_id, rate: lockedRate, target_currency } = conversion;
 
       // For P2P, we are assuming Stars to TON conversion
       if (target_currency.toUpperCase() !== 'TON') {
@@ -211,18 +210,18 @@ export class P2PLiquidityService {
       console.log(`Creating P2P buy order for conversion ${conversionId}: ${source_amount} Stars @ ${rate}`);
       const order = await this.p2pService.createBuyOrder(user_id, tonAmount, rate);
       
-      const updatedOrder = await this.pool.query('SELECT * FROM stars_orders WHERE id = $1', [order.id]);
-      const currentStatus = updatedOrder.rows[0]?.status;
+      const updatedOrder = await this.db.oneOrNone('SELECT * FROM stars_orders WHERE id = $1', [order.id]);
+      const currentStatus = updatedOrder?.status;
 
       if (currentStatus === 'completed' || currentStatus === 'matched') {
-        const swap = await this.pool.query(
+        const swap = await this.db.oneOrNone(
           'SELECT * FROM atomic_swaps WHERE buy_order_id = $1 OR sell_order_id = $1 LIMIT 1',
           [order.id]
         );
         
-        if (swap.rows[0] && swap.rows[0].ton_tx_hash) {
+        if (swap && swap.ton_tx_hash) {
              return {
-                txHash: swap.rows[0].ton_tx_hash,
+                txHash: swap.ton_tx_hash,
                 dexPoolId: 'p2p-order-book',
              };
         }
@@ -244,16 +243,16 @@ export class P2PLiquidityService {
   private async executeDexConversion(conversionId: string, source: LiquiditySource) {
     try {
       // Get conversion details
-      const conversion = await this.pool.query(
+      const conversion = await this.db.oneOrNone(
         'SELECT * FROM conversions WHERE id = $1',
         [conversionId]
       );
 
-      if (!conversion.rows[0]) {
+      if (!conversion) {
         throw new Error('Conversion not found');
       }
 
-      const { source_amount, source_currency, target_currency, rate: lockedRate } = conversion.rows[0];
+      const { source_amount, source_currency, target_currency, rate: lockedRate } = conversion;
 
       const bestQuote = await this.dexAggregator.getBestRate(source_currency, target_currency, source_amount);
       const {poolId} = bestQuote.bestPool;
