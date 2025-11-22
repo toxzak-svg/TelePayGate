@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
+import P2POrders from './pages/P2POrders';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
+              <Route path="p2p-orders" element={<P2POrders />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>

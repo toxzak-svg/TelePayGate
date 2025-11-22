@@ -14,4 +14,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export async function fetchP2POrders() {
+  const res = await api.get('/p2p/orders');
+  return res.data.orders || [];
+}
+
 export default api;

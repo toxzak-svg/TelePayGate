@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 const navigation = [
   { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { name: 'Transactions', to: '/transactions', icon: ArrowLeftRight },
+  { name: 'P2P Orders', to: '/p2p-orders', icon: Zap },
   { name: 'Settings', to: '/settings', icon: Settings },
 ];
 
