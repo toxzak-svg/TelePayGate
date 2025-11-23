@@ -2,12 +2,17 @@
 process.env.FEATURE_PASSWORDLESS_AUTH = 'true';
 process.env.JWT_SECRET = 'dev-secret';
 import request from 'supertest';
+import { Application } from 'express';
 
 // We'll lazy-require server/core modules when starting the fixture so DB URL
 // can be injected before modules create DB connections.
-let createServer: any;
-let initDatabase: any;
-let AuthService: any;
+let createServer: (() => Application) | undefined;
+let initDatabase: ((dbUrl: string) => Promise<void>) | undefined;
+let AuthService:
+  | {
+      requestMagicLink: (email: string, opts?: unknown) => Promise<{ token?: string }>;
+    }
+  | undefined;
 
 beforeAll(async () => {
   jest.setTimeout(60_000);

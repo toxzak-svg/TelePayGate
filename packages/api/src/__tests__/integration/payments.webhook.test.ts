@@ -1,9 +1,11 @@
 import request from 'supertest';
+import { Application } from 'express';
+
 describe('Payments API - webhook', () => {
-  let app: any = null;
-  let fixture: any = null;
-  let cleanDatabase: any;
-  let disconnectDatabase: any;
+  let app: Application | null = null;
+  let fixture: { databaseUrl: string } | null = null;
+  let cleanDatabase: (() => Promise<void>) | undefined;
+  let disconnectDatabase: (() => Promise<void>) | undefined;
 
   beforeAll(async () => {
     jest.setTimeout(60_000);

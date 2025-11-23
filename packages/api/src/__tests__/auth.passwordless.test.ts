@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { Application } from 'express';
 console.log('[test-debug] USE_TESTCONTAINERS=', process.env.USE_TESTCONTAINERS);
 // Fixture setup (container start + migrations) may take longer than Jest's default timeout
 jest.setTimeout(120000);
@@ -6,8 +7,8 @@ import { buildPasswordlessTestApp } from './auth.passwordless-app.test-setup';
 import { resetPasswordlessStub } from './stubs/passwordless.stub.controller';
 
 describe('Passwordless Auth (Isolated or Fixture)', () => {
-  let app: any = null;
-  let fixture: any = null;
+  let app: Application | null = null;
+  let fixture: { databaseUrl: string } | null = null;
 
   beforeAll(async () => {
     if (process.env.USE_TESTCONTAINERS === 'true') {
