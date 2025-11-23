@@ -15,8 +15,9 @@ export default class AuthController {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
       // In production, send email via SMTP provider. Here we return 202.
       res.status(202).json({ success: true, data: { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at } });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: err.message || 'Failed to issue magic link' } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: message || 'Failed to issue magic link' } });
     }
   }
 
@@ -45,8 +46,9 @@ export default class AuthController {
       }
 
       res.status(200).json({ success: true, data: { user: result.user } });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: err.message || 'Verification failed' } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: message || 'Verification failed' } });
     }
   }
 
@@ -84,8 +86,9 @@ export default class AuthController {
       await AuthService.persistTotpAndBackupCodes(user_id, encrypted_secret, backupCodes);
 
       res.status(200).json({ success: true, data: { backup_codes: backupCodes } });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: err.message || 'Failed to persist TOTP' } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: message || 'Failed to persist TOTP' } });
     }
   }
 
@@ -117,8 +120,9 @@ export default class AuthController {
       const user = await db.oneOrNone('SELECT id, email, role, is_active FROM dashboard_users WHERE id = $1', [session.user_id]);
       if (!user) return res.status(404).json({ success: false, error: { code: 'NO_USER', message: 'User not found' } });
       res.status(200).json({ success: true, data: { user } });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: err.message || 'Failed' } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: message || 'Failed' } });
     }
   }
 }

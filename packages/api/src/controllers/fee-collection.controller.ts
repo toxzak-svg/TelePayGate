@@ -5,7 +5,7 @@ import { getDatabase, FeeCollectionService } from '@tg-payment/core';
 export class FeeCollectionController {
   private static getServices() {
     const db = getDatabase();
-    const feeCollectionService = new FeeCollectionService(db as any);
+    const feeCollectionService = new FeeCollectionService(db);
     return { db, feeCollectionService };
   }
 
@@ -20,10 +20,11 @@ export class FeeCollectionController {
         stats: { totalFees: 0, collectedFees: 0, pendingFees: 0 },
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'STATS_ERROR', message: error.message },
+        error: { code: 'STATS_ERROR', message },
         requestId,
       });
     }
@@ -40,10 +41,11 @@ export class FeeCollectionController {
         history: [],
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'HISTORY_ERROR', message: error.message },
+        error: { code: 'HISTORY_ERROR', message },
         requestId,
       });
     }
@@ -60,10 +62,11 @@ export class FeeCollectionController {
         message: 'Fees collected',
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'COLLECT_ERROR', message: error.message },
+        error: { code: 'COLLECT_ERROR', message },
         requestId,
       });
     }
@@ -90,11 +93,12 @@ export class FeeCollectionController {
         },
         requestId
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Get uncollected fees error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'UNCOLLECTED_ERROR', message: error.message },
+        error: { code: 'UNCOLLECTED_ERROR', message },
         requestId
       });
     }
@@ -139,11 +143,12 @@ export class FeeCollectionController {
         message: 'Fee collection request created. Transfer will be processed shortly.',
         requestId
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Request collection error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'COLLECTION_ERROR', message: error.message },
+        error: { code: 'COLLECTION_ERROR', message },
         requestId
       });
     }
@@ -176,11 +181,12 @@ export class FeeCollectionController {
         message: 'Fee collection marked as completed',
         requestId
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Mark completed error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'COMPLETE_ERROR', message: error.message },
+        error: { code: 'COMPLETE_ERROR', message },
         requestId
       });
     }
@@ -213,11 +219,12 @@ export class FeeCollectionController {
         })),
         requestId
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Get history error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'HISTORY_ERROR', message: error.message },
+        error: { code: 'HISTORY_ERROR', message },
         requestId
       });
     }

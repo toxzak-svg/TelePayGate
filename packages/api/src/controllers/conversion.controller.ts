@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { DirectConversionService } from '@tg-payment/core';
-import { db } from '../db/connection';
 
 // Interface for authenticated requests
 interface AuthenticatedRequest extends Request {
@@ -36,7 +35,8 @@ export class ConversionController {
         data: quote
       });
     } catch (error) {
-      next(error);
+      const message = error instanceof Error ? error.message : String(error);
+      next(message);
     }
   }
 

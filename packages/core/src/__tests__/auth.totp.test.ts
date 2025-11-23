@@ -33,5 +33,6 @@ test('persistTotpAndBackupCodes stores secret and backup codes', async () => {
 
   // ensure hashed values don't equal plain codes
   const match = codes.some((r: any) => r.code_hash === 'code1');
+  const match = codes.some((r: unknown) => (r as { code_hash: string }).code_hash === 'code1');
   expect(match).toBe(false);
 });

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { RateAggregatorService, getDatabase, P2PLiquidityService, DexAggregatorService } from '@tg-payment/core';
+import { Request, Response, NextFunction } from 'express';
+import { getDatabase, P2PLiquidityService, DexAggregatorService } from '@tg-payment/core';
 
 /**
  * DEX Controller
@@ -11,7 +12,7 @@ export class DexController {
    * GET /api/v1/dex/quote
    * Get best rate quote from all DEX sources
    */
-  static async getQuote(req: Request, res: Response, next: NextFunction) {
+  static async getQuote(req: Request, res: Response) {
     try {
       const { fromToken, toToken, amount } = req.query;
       
@@ -40,13 +41,14 @@ export class DexController {
           validFor: 30, // seconds
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('DEX quote error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
           code: 'QUOTE_FAILED',
-          message: error.message || 'Failed to get DEX quote',
+          message: message || 'Failed to get DEX quote',
         },
       });
     }
@@ -56,7 +58,7 @@ export class DexController {
    * POST /api/v1/dex/swap
    * Execute swap through selected DEX
    */
-  static async executeSwap(req: Request, res: Response, next: NextFunction) {
+  static async executeSwap(req: Request, res: Response) {
     try {
       const { provider, poolId, fromToken, toToken, amount, minOutput } = req.body;
 
@@ -99,13 +101,14 @@ export class DexController {
           timestamp: Date.now(),
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('DEX swap error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
           code: 'SWAP_FAILED',
-          message: error.message || 'Failed to execute DEX swap',
+          message: message || 'Failed to execute DEX swap',
         },
       });
     }
@@ -115,7 +118,7 @@ export class DexController {
    * GET /api/v1/dex/liquidity
    * Get all available liquidity sources for a conversion
    */
-  static async getLiquidity(req: Request, res: Response, next: NextFunction) {
+  static async getLiquidity(req: Request, res: Response) {
     try {
       const { fromCurrency, toCurrency, amount } = req.query;
 
@@ -145,13 +148,14 @@ export class DexController {
           timestamp: Date.now(),
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Liquidity query error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
           code: 'LIQUIDITY_QUERY_FAILED',
-          message: error.message || 'Failed to query liquidity sources',
+          message: message || 'Failed to query liquidity sources',
         },
       });
     }
@@ -161,7 +165,7 @@ export class DexController {
    * GET /api/v1/dex/route
    * Find best conversion route (P2P or DEX)
    */
-  static async getBestRoute(req: Request, res: Response, next: NextFunction) {
+  static async getBestRoute(req: Request, res: Response) {
     try {
       const { fromCurrency, toCurrency, amount } = req.query;
 
@@ -191,13 +195,14 @@ export class DexController {
           timestamp: Date.now(),
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Route finding error:', error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
           code: 'ROUTE_FINDING_FAILED',
-          message: error.message || 'Failed to find best route',
+          message: message || 'Failed to find best route',
         },
       });
     }

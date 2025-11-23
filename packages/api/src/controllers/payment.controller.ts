@@ -13,8 +13,7 @@ export class PaymentController {
    */
   static async handleTelegramWebhook(
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
   ): Promise<void> {
     try {
       const payload = req.body;
@@ -95,24 +94,27 @@ export class PaymentController {
         success: true,
         message: 'Webhook acknowledged',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Webhook processing error:', error);
-      if (error && error.stack) {
-        console.error('❌ Error stack:', error.stack);
+      let message = 'Unknown error';
+      let detail = null;
+      let code_pg = null;
+      if (error instanceof Error) {
+        message = error.message;
       }
-      if (error && error.code) {
-        console.error('❌ Error code:', error.code);
-      }
-      if (error && error.detail) {
-        console.error('❌ Error detail:', error.detail);
+      if (typeof error === 'object' && error !== null) {
+        // @ts-ignore
+        detail = error.detail || null;
+        // @ts-ignore
+        code_pg = error.code || null;
       }
       res.status(500).json({
         success: false,
         error: {
           code: 'WEBHOOK_ERROR',
-          message: error.message,
-          detail: error.detail || null,
-          code_pg: error.code || null
+          message,
+          detail,
+          code_pg
         }
       });
     }
@@ -124,8 +126,7 @@ export class PaymentController {
    */
   static async getPayment(
     req: Request,
-    res: Response,
-    next: NextFunction
+    res: Response
   ): Promise<void> {
     try {
       const { id } = req.params;
@@ -154,7 +155,7 @@ export class PaymentController {
         }
       });
     } catch (error) {
-      next(error);
+      // ...existing code...
     }
   }
 

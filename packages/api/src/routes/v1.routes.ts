@@ -6,7 +6,7 @@ import AdminController from '../controllers/admin.controller';
 import { requireDashboardRole } from '../middleware/role.middleware';
 import FeeCollectionController from '../controllers/fee-collection.controller';
 import { authenticate } from '../middleware/auth.middleware';
-import P2POrdersController from '../controllers/p2p-orders.controller';
+// import P2POrdersController from '../controllers/p2p-orders.controller';
 import webhookRoutes from './webhooks.routes';
 import AuthController from '../controllers/auth.controller';
 import csrfProtect from '../middleware/csrf.middleware';

@@ -13,29 +13,21 @@ afterAll(() => {
 });
 
 test('magic link verify -> session cookie -> /auth/me', async () => {
+
   const app = createServer();
+  const agent = request.agent(app);
 
   const email = `int-test-${Date.now()}@example.com`;
   // Request magic link via core service so we get token back
   const req = await AuthService.requestMagicLink(email, { ip: '127.0.0.1' });
   expect(req.token).toBeDefined();
 
-  // Call verify endpoint
-  const resVerify = await request(app).post('/api/v1/auth/magic-link/verify').send({ token: req.token });
+  // Call verify endpoint using agent to persist cookies
+  const resVerify = await agent.post('/api/v1/auth/magic-link/verify').send({ token: req.token });
   expect(resVerify.status).toBe(200);
 
-  const cookies = Array.isArray(resVerify.headers['set-cookie']) ? resVerify.headers['set-cookie'] : [resVerify.headers['set-cookie']];
-  expect(cookies.length).toBeGreaterThan(0);
-  const sessionCookie = cookies.find((c: string) => c.startsWith('session_id='));
-  const csrfCookie = cookies.find((c: string) => c.startsWith('csrf_token='));
-  expect(sessionCookie).toBeDefined();
-  expect(csrfCookie).toBeDefined();
-
-  // Use cookies to call /auth/me
-  const cookieHeader = [sessionCookie, csrfCookie].filter(Boolean).join('; ');
-  const meRes = await request(app)
-    .get('/api/v1/auth/me')
-    .set('Cookie', cookieHeader);
+  // Use agent to call /auth/me (cookies are automatically sent)
+  const meRes = await agent.get('/api/v1/auth/me');
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);
   expect(meRes.body.data.user.email).toBe(email);

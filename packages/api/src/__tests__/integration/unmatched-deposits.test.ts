@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { buildTestApp } from './app.test-setup';
 import { cleanDatabase, disconnectDatabase } from './db-test-utils';
-import { getDatabase } from '@tg-payment/core';
 
 describe('Unmatched Deposits', () => {
   const app = buildTestApp();

@@ -20,12 +20,13 @@ export class AdminController {
         stats: { totalUsers: 0, totalPayments: 0, totalConversions: 0 },
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'STATS_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'STATS_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -40,12 +41,13 @@ export class AdminController {
         users: [],
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'USERS_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'USERS_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -60,12 +62,13 @@ export class AdminController {
         user: {},
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'USER_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'USER_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -80,12 +83,13 @@ export class AdminController {
         message: 'User updated',
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'UPDATE_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'UPDATE_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -100,12 +104,13 @@ export class AdminController {
         payments: [],
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'PAYMENTS_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'PAYMENTS_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -120,12 +125,13 @@ export class AdminController {
         conversions: [],
         requestId,
       });
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        error: { code: 'CONVERSIONS_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'CONVERSIONS_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -144,13 +150,14 @@ export class AdminController {
         revenue,
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get revenue error:', error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'REVENUE_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        console.error('❌ Get revenue error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'REVENUE_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -183,13 +190,14 @@ export class AdminController {
         },
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get revenue summary error:', error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'SUMMARY_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        console.error('❌ Get revenue summary error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'SUMMARY_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -213,13 +221,14 @@ export class AdminController {
         },
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get config error:', error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'CONFIG_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        console.error('❌ Get config error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'CONFIG_ERROR', message },
+          requestId,
+        });
     }
   }
 
@@ -240,7 +249,7 @@ export class AdminController {
       } = req.body;
 
       const updates: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (platformFeePercentage !== undefined) {
@@ -290,13 +299,14 @@ export class AdminController {
         message: 'Configuration updated successfully',
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Update config error:', error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'UPDATE_ERROR', message: error.message },
-        requestId,
-      });
+      } catch (error: unknown) {
+        console.error('❌ Update config error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return res.status(500).json({
+          success: false,
+          error: { code: 'UPDATE_ERROR', message },
+          requestId,
+        });
     }
   }
 }
