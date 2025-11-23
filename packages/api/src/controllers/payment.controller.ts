@@ -32,9 +32,12 @@ export class PaymentController {
       }
 
       const normalizedUserId = PaymentController.normalizeUserId(userId);
+        console.log(`[Webhook] Received x-user-id: ${userId}, normalized: ${normalizedUserId}`);
 
       const db = getDatabase();
+        console.log(`[Webhook] Ensuring user exists: ${normalizedUserId}`);
       await PaymentController.ensureUserExists(db, normalizedUserId);
+        console.log(`[Webhook] User provisioning complete for: ${normalizedUserId}`);
       const paymentModel = new PaymentModel(db);
       const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN!, {
         paymentModel,
@@ -94,11 +97,22 @@ export class PaymentController {
       });
     } catch (error: any) {
       console.error('❌ Webhook processing error:', error);
+      if (error && error.stack) {
+        console.error('❌ Error stack:', error.stack);
+      }
+      if (error && error.code) {
+        console.error('❌ Error code:', error.code);
+      }
+      if (error && error.detail) {
+        console.error('❌ Error detail:', error.detail);
+      }
       res.status(500).json({
         success: false,
         error: {
           code: 'WEBHOOK_ERROR',
-          message: error.message
+          message: error.message,
+          detail: error.detail || null,
+          code_pg: error.code || null
         }
       });
     }

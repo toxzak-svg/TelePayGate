@@ -24,20 +24,18 @@ test('magic link verify -> session cookie -> /auth/me', async () => {
   const resVerify = await request(app).post('/api/v1/auth/magic-link/verify').send({ token: req.token });
   expect(resVerify.status).toBe(200);
 
-  const cookies = resVerify.headers['set-cookie'];
-  expect(cookies).toBeDefined();
+  const cookies = Array.isArray(resVerify.headers['set-cookie']) ? resVerify.headers['set-cookie'] : [resVerify.headers['set-cookie']];
+  expect(cookies.length).toBeGreaterThan(0);
   const sessionCookie = cookies.find((c: string) => c.startsWith('session_id='));
   const csrfCookie = cookies.find((c: string) => c.startsWith('csrf_token='));
   expect(sessionCookie).toBeDefined();
   expect(csrfCookie).toBeDefined();
 
   // Use cookies to call /auth/me
-  const agent = request.agent(app);
-  // attach cookies
-  agent.jar.setCookie(sessionCookie);
-  agent.jar.setCookie(csrfCookie);
-
-  const meRes = await agent.get('/api/v1/auth/me');
+  const cookieHeader = [sessionCookie, csrfCookie].filter(Boolean).join('; ');
+  const meRes = await request(app)
+    .get('/api/v1/auth/me')
+    .set('Cookie', cookieHeader);
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);
   expect(meRes.body.data.user.email).toBe(email);

@@ -31,11 +31,10 @@ router.post('/auth/totp/confirm', AuthController.totpConfirm);
 router.post('/auth/logout', AuthController.logout);
 router.get('/auth/me', AuthController.me);
 
-// After auth routes, enable CSRF protection for state-changing endpoints
-router.use(csrfProtect);
-
 // Payment routes
 router.post('/payments/webhook', PaymentController.handleTelegramWebhook);
+// After webhook, enable CSRF protection for state-changing endpoints
+router.use(csrfProtect);
 router.get('/payments/:id', authenticate, PaymentController.getPayment);
 router.get('/payments', authenticate, PaymentController.listPayments);
 router.get('/payments/stats', authenticate, PaymentController.getPaymentStats);
