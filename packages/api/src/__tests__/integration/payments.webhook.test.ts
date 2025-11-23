@@ -9,35 +9,31 @@ describe('Payments API - webhook', () => {
     jest.setTimeout(60_000);
     if (process.env.USE_TESTCONTAINERS === 'true') {
       // If globalSetup wrote DB info, read it and reuse instead of starting
-      const path = require('path');
-      const fs = require('fs');
+      const path = await import('path');
+      const fs = await import('fs');
       const tcFile = path.resolve(__dirname, '../../tmp', 'tc-db.json');
       if (fs.existsSync(tcFile)) {
         const data = JSON.parse(fs.readFileSync(tcFile, 'utf8'));
         fixture = { databaseUrl: data.databaseUrl };
         process.env.DATABASE_URL = fixture.databaseUrl;
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { startPostgresFixture } = require('../fixtures/postgresFixture');
+        const mod = await import('../fixtures/postgresFixture');
+        const { startPostgresFixture } = mod;
         fixture = await startPostgresFixture();
         process.env.DATABASE_URL = fixture.databaseUrl;
       }
 
-      // Now require utilities and app builder so they use the injected DATABASE_URL
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require('./app.test-setup');
-      app = mod.buildTestApp();
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const dbUtils = require('./db-test-utils');
+      // Now import utilities and app builder so they use the injected DATABASE_URL
+      const mod2 = await import('./app.test-setup');
+      app = mod2.buildTestApp();
+      const dbUtils = await import('./db-test-utils');
       cleanDatabase = dbUtils.cleanDatabase;
       disconnectDatabase = dbUtils.disconnectDatabase;
     } else {
       // Non-fixture path: require modules normally
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require('./app.test-setup');
+      const mod = await import('./app.test-setup');
       app = mod.buildTestApp();
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const dbUtils = require('./db-test-utils');
+      const dbUtils = await import('./db-test-utils');
       cleanDatabase = dbUtils.cleanDatabase;
       disconnectDatabase = dbUtils.disconnectDatabase;
     }
@@ -45,8 +41,8 @@ describe('Payments API - webhook', () => {
 
   afterAll(async () => {
     if (fixture) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { stopPostgresFixture } = require('../fixtures/postgresFixture');
+      const mod = await import('../fixtures/postgresFixture');
+      const { stopPostgresFixture } = mod;
       await stopPostgresFixture(fixture);
     }
     if (disconnectDatabase) {

@@ -1,6 +1,5 @@
 import { ReconciliationService } from '../services/reconciliation.service';
 import { initDatabase, Database } from '../db/connection';
-import { Pool } from 'pg';
 
 
 

@@ -252,7 +252,7 @@ export class P2PLiquidityService {
         throw new Error('Conversion not found');
       }
 
-      const { source_amount, source_currency, target_currency, rate: lockedRate } = conversion;
+      const { source_amount, source_currency, target_currency, rate: _lockedRate } = conversion;
 
       const bestQuote = await this.dexAggregator.getBestRate(source_currency, target_currency, source_amount);
       const { poolId } = bestQuote.bestPool;

@@ -49,7 +49,7 @@ export class StarsP2PService {
     };
     const created = await this.model.createOrder(order);
     // Try to match immediately and get the result
-    const matchResult = await this.tryMatchOrder(created);
+    const _matchResult = await this.tryMatchOrder(created);
     
     // Return the latest state of the order
     const latestOrder = await this.model.getById(created.id);

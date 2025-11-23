@@ -12,7 +12,7 @@ export async function startPostgresFixture(): Promise<Fixture> {
   // If a global Jest fixture wrote DB info, reuse it instead of starting
   // a new container. This allows shared global setup to control lifecycle.
   try {
-    const possible = path.resolve(__dirname, '../../jest.global-setup.js');
+    const _possible = path.resolve(__dirname, '../../jest.global-setup.js');
     // look for tmp/tc-db.json under package root
     const rootTmp = path.resolve(__dirname, '../../tmp', 'tc-db.json');
     if (fs.existsSync(rootTmp)) {
@@ -38,7 +38,7 @@ export async function startPostgresFixture(): Promise<Fixture> {
   // Run migrations (find repo-root `database/migrate.js` by walking up)
   try {
     let migrateScript: string | null = null;
-    let dir = __dirname;
+    const dir = __dirname;
     for (let i = 0; i < 8; i++) {
       const candidate = path.resolve(dir, ...Array(i).fill('..'), 'database', 'migrate.js');
       if (fs.existsSync(candidate)) {

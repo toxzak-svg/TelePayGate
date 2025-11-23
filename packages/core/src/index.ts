@@ -5,6 +5,13 @@
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025
  */
+/**
+ * @tg-payment/core
+ * Core business logic for Telegram Payment Gateway
+ * 
+ * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
+ * Updated: November 14, 2025
+ */
 
 // ============================================
 // SERVICES (Updated - No Fragment)
@@ -112,3 +119,23 @@ export const INTEGRATION_METHOD = 'DIRECT_TON'; // No Fragment
 console.log('✅ @tg-payment/core v2.0.0 initialized');
 console.log('🔗 Integration: Direct TON Blockchain (No Fragment API)');
 console.log('📦 Features: No KYC | No Holding Period | Instant Withdrawals');
+
+// If an AWS KMS key is configured, wire the AWS provider into KMS abstraction.
+try {
+  // lazy require to avoid pulling AWS SDK unless needed
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { setKmsProvider } = require('./services/kms.service');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const createAws = require('./services/kms.aws').createAwsKmsProvider;
+  if (process.env.AWS_KMS_KEY_ID) {
+    try {
+      const provider = createAws();
+      setKmsProvider(provider);
+      console.log('🔐 KMS: AWS KMS provider configured');
+    } catch (err) {
+      console.warn('🔐 KMS: failed to configure AWS provider:', err && err.message ? err.message : err);
+    }
+  }
+} catch (e) {
+  // ignore if optional dependency not available
+}

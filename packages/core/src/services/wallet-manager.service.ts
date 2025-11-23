@@ -1,4 +1,4 @@
-import { initDatabase, getDatabase, Database } from '../db/connection';
+import { initDatabase, Database } from '../db/connection';
 import TonPaymentService from './ton-payment.service';
 import EncryptionUtil from '../utils/encryption.util';
 

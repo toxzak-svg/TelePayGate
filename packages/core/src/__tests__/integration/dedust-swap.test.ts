@@ -1,5 +1,4 @@
 import { DexAggregatorService } from '../../services/dex-aggregator.service';
-import { DexErrorCode } from '../../services/dex-error-handler';
 
 process.env.DEX_SIMULATION_MODE = process.env.DEX_SIMULATION_MODE || 'true';
 if (!process.env.RUN_DEX_INTEGRATION_TESTS && process.env.DEX_SIMULATION_MODE === 'true') {

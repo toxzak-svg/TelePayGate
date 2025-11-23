@@ -13,27 +13,25 @@ beforeAll(async () => {
   jest.setTimeout(60_000);
   // Optionally start Testcontainers fixture when requested
   if (process.env.USE_TESTCONTAINERS === 'true') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { startPostgresFixture } = require('../fixtures/postgresFixture');
+    const mod = await import('../fixtures/postgresFixture');
+    const { startPostgresFixture } = mod;
     const fixture = await startPostgresFixture();
     process.env.DATABASE_URL = fixture.databaseUrl;
     (global as any).__tc_fixture = fixture;
 
-    // Now require modules that rely on DATABASE_URL
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    createServer = require('../../server').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    initDatabase = require('@tg-payment/core').initDatabase;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    AuthService = require('@tg-payment/core').AuthService;
+    // Now import modules that rely on DATABASE_URL
+    const srv = await import('../../server');
+    createServer = srv.default;
+    const coreMod = await import('@tg-payment/core');
+    initDatabase = coreMod.initDatabase;
+    AuthService = coreMod.AuthService;
   } else {
-    // Non-fixture path: require modules normally
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    createServer = require('../../server').default;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    initDatabase = require('@tg-payment/core').initDatabase;
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    AuthService = require('@tg-payment/core').AuthService;
+    // Non-fixture path: import modules normally
+    const srv = await import('../../server');
+    createServer = srv.default;
+    const coreMod = await import('@tg-payment/core');
+    initDatabase = coreMod.initDatabase;
+    AuthService = coreMod.AuthService;
   }
 
   const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test';
@@ -59,7 +57,7 @@ test('magic link verify -> session cookie -> /auth/me', async () => {
   expect(req.token).toBeDefined();
 
   // Call verify endpoint and capture cookies from set-cookie header
-  const resVerify = await request(app).post('/api/v1/auth/magic-link/verify').send({ token: req.token }).set('Content-Type', 'application/json');
+  const resVerify = await agent.post('/api/v1/auth/magic-link/verify').send({ token: req.token }).set('Content-Type', 'application/json');
   expect(resVerify.status).toBe(200);
 
   // Use the returned cookie to call /auth/me explicitly
@@ -67,7 +65,7 @@ test('magic link verify -> session cookie -> /auth/me', async () => {
   const cookieHeader = Array.isArray(rawCookies)
     ? rawCookies.map((c: string) => c.split(';')[0]).join('; ')
     : (typeof rawCookies === 'string' ? rawCookies.split(';')[0] : '');
-  const meRes = await request(app).get('/api/v1/auth/me').set('Cookie', cookieHeader);
+  const meRes = await agent.get('/api/v1/auth/me').set('Cookie', cookieHeader);
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);
   expect(meRes.body.data.user.email).toBe(email);

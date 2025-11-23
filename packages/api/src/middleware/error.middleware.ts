@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { AppError, ErrorHandler } from '@tg-payment/core';
 
 export function errorHandler(

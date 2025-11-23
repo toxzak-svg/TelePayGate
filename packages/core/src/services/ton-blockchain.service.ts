@@ -1,4 +1,4 @@
-import { TonClient, WalletContractV4, internal, fromNano, toNano, Address, Cell } from '@ton/ton';
+import { TonClient, WalletContractV4, internal, fromNano, toNano, Address } from '@ton/ton';
 import { mnemonicToPrivateKey } from '@ton/crypto';
 
 export interface WalletInfo {
@@ -210,7 +210,7 @@ export class TonBlockchainService {
       const contract = this.client.open(this.wallet);
       const seqno = await contract.getSeqno();
 
-      const result = await contract.sendTransfer({
+      await contract.sendTransfer({
         seqno,
         secretKey: this.keyPair.secretKey,
         messages: [
@@ -241,7 +241,7 @@ export class TonBlockchainService {
    */
   async verifyTransaction(
     txHash: string,
-    minConfirmations: number = 10
+    _minConfirmations: number = 10
   ): Promise<boolean> {
     if (!this.walletAddress) {
       throw new Error('Wallet not initialized');

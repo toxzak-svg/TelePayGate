@@ -5,10 +5,10 @@ beforeAll(async () => {
   // Optionally start Testcontainers fixture when requested
   if (process.env.USE_TESTCONTAINERS === 'true') {
     // compute path to api fixture
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path');
+    const path = await import('path');
     const fixturePath = path.resolve(__dirname, '../../../../api/src/__tests__/fixtures/postgresFixture');
-    const { startPostgresFixture } = require(fixturePath);
+    const mod = await import(fixturePath);
+    const { startPostgresFixture } = mod;
     const fixture = await startPostgresFixture();
     process.env.DATABASE_URL = fixture.databaseUrl;
     (global as any).__tc_fixture = fixture;
@@ -18,13 +18,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  try { closeDatabase(); } catch (e) {}
+  try { closeDatabase(); } catch (e) { /* ignore cleanup errors */ }
   const fixture = (global as any).__tc_fixture;
   if (fixture) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path');
+    const path = await import('path');
     const fixturePath = path.resolve(__dirname, '../../../../api/src/__tests__/fixtures/postgresFixture');
-    const { stopPostgresFixture } = require(fixturePath);
+    const mod = await import(fixturePath);
+    const { stopPostgresFixture } = mod;
     await stopPostgresFixture(fixture);
   }
 });

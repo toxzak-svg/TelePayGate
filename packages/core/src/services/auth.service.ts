@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import { getDatabase } from '../db/connection';
 import { encryptSecret as kmsEncrypt, decryptSecret as kmsDecrypt } from './kms.service';
+import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.API_SECRET_KEY || 'dev-secret';
 
@@ -60,15 +61,15 @@ export class AuthService {
 
     // send mail if configured
     try {
-      if (process.env.EMAIL_SMTP_HOST && process.env.EMAIL_SMTP_USER) {
+      // If an SMTP host is configured, attempt to send mail. Some local
+      // SMTP servers (e.g. MailHog) don't require authentication, so we
+      // send if EMAIL_SMTP_HOST is present.
+      if (process.env.EMAIL_SMTP_HOST) {
         const transport = nodemailer.createTransport({
           host: process.env.EMAIL_SMTP_HOST,
           port: parseInt(process.env.EMAIL_SMTP_PORT || '587', 10),
           secure: process.env.EMAIL_SMTP_SECURE === 'true',
-          auth: {
-            user: process.env.EMAIL_SMTP_USER,
-            pass: process.env.EMAIL_SMTP_PASS,
-          },
+          auth: process.env.EMAIL_SMTP_USER ? { user: process.env.EMAIL_SMTP_USER, pass: process.env.EMAIL_SMTP_PASS } : undefined,
         });
         const link = `${process.env.DASHBOARD_URL || 'http://localhost:5173'}/auth/verify?token=${encodeURIComponent(token)}`;
         await transport.sendMail({ from: process.env.EMAIL_FROM || 'no-reply@example.com', to: email, subject: 'Your magic sign-in link', text: `Sign in: ${link}`, html: `<p>Sign in: <a href="${link}">${link}</a></p>` });
@@ -141,7 +142,6 @@ export class AuthService {
     await db.none('INSERT INTO totp_secrets (user_id, encrypted_secret, enabled_at, confirmed_at, created_at) VALUES ($1, $2, now(), now(), now()) ON CONFLICT (user_id) DO UPDATE SET encrypted_secret = EXCLUDED.encrypted_secret, enabled_at = EXCLUDED.enabled_at, confirmed_at = EXCLUDED.confirmed_at, created_at = now()', [userId, Buffer.from(encryptedSecretBase64, 'base64')]);
 
     // Hash backup codes and insert
-    const bcrypt = require('bcryptjs');
     for (const code of backupCodesPlain) {
       const hash = await bcrypt.hash(code, 10);
       await db.none('INSERT INTO backup_codes (user_id, code_hash, created_at) VALUES ($1, $2, now())', [userId, hash]);

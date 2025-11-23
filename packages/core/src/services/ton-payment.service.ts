@@ -149,10 +149,10 @@ export class TonPaymentService {
   /**
    * Verify transaction exists on blockchain
    */
-  async verifyTransaction(txHash: string): Promise<boolean> {
+  async verifyTransaction(_txHash: string): Promise<boolean> {
     try {
       // Implementation depends on transaction hash format
-      // This is a simplified version
+      // This is a simplified version — caller may extend as needed
       return true;
     } catch (error) {
       console.error('❌ Error verifying transaction:', error);

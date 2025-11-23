@@ -1,7 +1,7 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import routes from '../../routes/v1.routes';
+import { responseMiddleware } from '../../middleware/response.middleware';
 import { initDatabase } from '@tg-payment/core';
 
 export function buildTestApp() {
@@ -14,6 +14,8 @@ export function buildTestApp() {
   const app = express();
   // Ensure body parsing is first
   app.use(express.json());
+  // Attach response helpers for controllers
+  app.use(responseMiddleware);
   // Parse cookies so tests can access session cookies set by controllers
   app.use(cookieParser());
   // ...existing code...

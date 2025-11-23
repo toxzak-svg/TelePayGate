@@ -11,7 +11,7 @@ export const scheduledDeployment = schedules.task({
   id: "scheduled-deployment",
   // Run every day at 2 AM UTC (optional - can be configured in dashboard)
   // cron: "0 2 * * *",
-  run: async (payload) => {
+  run: async (_payload) => {
     logger.log("⏰ Starting scheduled deployment");
 
     const apiServiceId = process.env.RENDER_API_SERVICE_ID;

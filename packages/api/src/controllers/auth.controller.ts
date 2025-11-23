@@ -6,40 +6,41 @@ const FEATURE_FLAG = process.env.FEATURE_PASSWORDLESS_AUTH === 'true';
 
 export default class AuthController {
   static async requestMagicLink(req: Request, res: Response) {
-    if (!FEATURE_FLAG) return res.status(404).json({ success: false, error: { code: 'FEATURE_DISABLED', message: 'Passwordless auth is disabled' } });
+    if (!FEATURE_FLAG) return res.replyError('FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, error: { code: 'MISSING_EMAIL', message: 'Email is required' } });
+    if (!email) return res.replyError('MISSING_EMAIL', 'Email is required', 400);
 
     try {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
       // In production, send email via SMTP provider. Here we return 202.
       // For tests and development, include the token in the response so test suites can verify flows without SMTP.
-      const responseData: any = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
+      const responseData = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
       // Only expose raw token when explicitly allowed (tests/dev), to avoid leaking tokens in CI/production.
       if (process.env.EXPOSE_TEST_TOKENS === 'true') {
-        responseData.token = result.token;
+        // explicit property only when allowed
+        (responseData as any).token = result.token;
       }
-      res.status(202).json({ success: true, data: responseData });
+      res.replySuccess(responseData, 202);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: message || 'Failed to issue magic link' } });
+      res.replyError('INTERNAL_ERROR', message || 'Failed to issue magic link', 500);
     }
   }
 
   static async verifyMagicLink(req: Request, res: Response) {
 
-    if (!FEATURE_FLAG) return res.status(404).json({ success: false, error: { code: 'FEATURE_DISABLED', message: 'Passwordless auth is disabled' } });
+    if (!FEATURE_FLAG) return res.replyError('FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     // (no debug logs)
 
     const { token } = req.body;
-    if (!token) return res.status(400).json({ success: false, error: { code: 'MISSING_TOKEN', message: 'Token is required' } });
+    if (!token) return res.replyError('MISSING_TOKEN', 'Token is required', 400);
 
     try {
       const result = await AuthService.verifyMagicLink(token);
       if (!result.ok) {
-        return res.status(400).json({ success: false, error: { code: 'INVALID_TOKEN', message: result.reason } });
+        return res.replyError('INVALID_TOKEN', result.reason, 400);
       }
 
       // Set secure session cookie and CSRF cookie
@@ -54,10 +55,10 @@ export default class AuthController {
         res.cookie('csrf_token', result.csrf_token, { httpOnly: false, secure: isProd, sameSite: 'lax', maxAge });
       }
 
-      res.status(200).json({ success: true, data: { user: result.user } });
+      res.replySuccess({ user: result.user }, 200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: message || 'Verification failed' } });
+      res.replyError('INTERNAL_ERROR', message || 'Verification failed', 500);
     }
   }
 

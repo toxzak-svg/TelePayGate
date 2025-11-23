@@ -15,7 +15,8 @@ describe('Passwordless Auth (Isolated or Fixture)', () => {
       // Lazy-load to avoid pulling testcontainers for the default path
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       try {
-        const { startPostgresFixture } = require('./fixtures/postgresFixture');
+        const mod = await import('./fixtures/postgresFixture');
+        const { startPostgresFixture } = mod;
         fixture = await startPostgresFixture();
       } catch (err) {
         console.error('[test-debug] startPostgresFixture error:', err && (err.stack || err.message || err));
@@ -28,9 +29,9 @@ describe('Passwordless Auth (Isolated or Fixture)', () => {
       process.env.EXPOSE_TEST_TOKENS = 'true';
 
       // Use the real integration app
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { buildTestApp } = require('./integration/app.test-setup');
       try {
+        const mod2 = await import('./integration/app.test-setup');
+        const { buildTestApp } = mod2;
         app = buildTestApp();
         console.log('[test-debug] Started fixture, built integration app');
       } catch (err) {
@@ -42,8 +43,8 @@ describe('Passwordless Auth (Isolated or Fixture)', () => {
 
   afterAll(async () => {
     if (fixture) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { stopPostgresFixture } = require('./fixtures/postgresFixture');
+      const mod = await import('./fixtures/postgresFixture');
+      const { stopPostgresFixture } = mod;
       await stopPostgresFixture(fixture);
     }
   });
