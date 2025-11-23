@@ -1,5 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import routes from '../../routes/v1.routes';
 import { initDatabase } from '@tg-payment/core';
 
@@ -11,7 +12,11 @@ export function buildTestApp() {
   initDatabase(DATABASE_URL);
 
   const app = express();
-  app.use(bodyParser.json());
+  // Ensure body parsing is first
+  app.use(express.json());
+  // Parse cookies so tests can access session cookies set by controllers
+  app.use(cookieParser());
+  // ...existing code...
   app.use('/api/v1', routes);
   return app;
 }

@@ -3,7 +3,7 @@ npm WARN config cache-min This option has been deprecated in favor of `--prefer-
 > @tg-payment/api@0.1.0 test
 > dotenv -e .env.test -- jest --passWithNoTests --forceExit
 
-PASS src/__tests__/integration/unmatched-deposits.test.ts (5.306 s)
+FAIL src/__tests__/integration/auth.flow.test.ts
   ● Console
 
     console.log
@@ -22,14 +22,104 @@ PASS src/__tests__/integration/unmatched-deposits.test.ts (5.306 s)
       at Object.<anonymous> (../core/src/index.ts:120:9)
 
     console.log
-      Received TON transaction webhook: {
-        tx_hash: 'unmatched_tx_hash',
-        sender: 'some_ton_address',
-        amount: '1000000000',
-        destination: 'our_custodial_wallet_address'
-      }
+      Magic link (no SMTP): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImludC10ZXN0LTE3NjM5MDc4MjUyMjVAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM5MDc4MjUsImV4cCI6MTc2MzkwODcyNSwianRpIjoiNTExZGJmYTE3MzU1MGQ5Yzg0NmViNDE1MzhkYzVhZjcifQ.QjPz5ZMiQNbXnZmQXEma72yN6P2ibRjkZvB911SrpWU
 
-      at handleTonTransaction (src/controllers/webhook.controller.ts:9:21)
+      at Function.requestMagicLink (../core/dist/services/auth.service.js:87:25)
+
+  ● magic link verify -> session cookie -> /auth/me
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      24 |
+      25 |   // Call verify endpoint using agent to persist cookies
+    > 26 |   const resVerify = await agent.post('/api/v1/auth/magic-link/verify').send({ token: req.token });
+         |                              ^
+      27 |   expect(resVerify.status).toBe(200);
+      28 |
+      29 |   // Use agent to call /auth/me (cookies are automatically sent)
+
+      at Object.<anonymous> (src/__tests__/integration/auth.flow.test.ts:26:30)
+
+FAIL src/__tests__/auth.magic-link.test.ts
+  ● Console
+
+    console.log
+      ✅ @tg-payment/core v2.0.0 initialized
+
+      at Object.<anonymous> (../core/src/index.ts:118:9)
+
+    console.log
+      🔗 Integration: Direct TON Blockchain (No Fragment API)
+
+      at Object.<anonymous> (../core/src/index.ts:119:9)
+
+    console.log
+      📦 Features: No KYC | No Holding Period | Instant Withdrawals
+
+      at Object.<anonymous> (../core/src/index.ts:120:9)
+
+    console.log
+      Magic link (no SMTP): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QtbWFnaWNAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM5MDc4MjUsImV4cCI6MTc2MzkwODcyNSwianRpIjoiYWIxM2QyNDU0MGM5MjZlMzRiNzUxMThkMGQ0M2M3MTYifQ.FXIScHxtqenK2htyt6ji55m3Af9pC0p_8ITQBLJnRmA
+
+      at Function.requestMagicLink (../core/src/services/auth.service.ts:87:25)
+
+    console.log
+      Magic link (no SMTP): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3QtbWFnaWNAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM5MDc4MjUsImV4cCI6MTc2MzkwODcyNSwianRpIjoiMWM0NmUwY2NhZmZiZmM4NjNlMTdiMWQyMjhlYmJhYzAifQ.R3a8Yj4PxQ9Lp9AFG3b0X3Ww9XZSfx-QSvCzoUw9n1o
+
+      at Function.requestMagicLink (../core/src/services/auth.service.ts:87:25)
+
+  ● Magic Link Authentication › should verify a valid magic link token and return user from /auth/me
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 400
+
+      41 |     // Verify the magic link (agent will persist cookies)
+      42 |     const verifyRes = await agent
+    > 43 |       .post('/api/v1/auth/magic-link/verify')
+         |                                  ^
+      44 |       .send({ token });
+      45 |     expect(verifyRes.status).toBe(200);
+      46 |     expect(verifyRes.body.success).toBe(true);
+
+      at Object.<anonymous> (src/__tests__/auth.magic-link.test.ts:43:34)
+
+FAIL src/__tests__/auth.backup-codes.test.ts
+  ● Console
+
+    console.log
+      ✅ @tg-payment/core v2.0.0 initialized
+
+      at Object.<anonymous> (../core/src/index.ts:118:9)
+
+    console.log
+      🔗 Integration: Direct TON Blockchain (No Fragment API)
+
+      at Object.<anonymous> (../core/src/index.ts:119:9)
+
+    console.log
+      📦 Features: No KYC | No Holding Period | Instant Withdrawals
+
+      at Object.<anonymous> (../core/src/index.ts:120:9)
+
+  ● Backup Codes Integration › should persist and verify backup codes
+
+    Database not initialized. Call initDatabase() first.
+
+      41 |
+      42 | export function getDatabase(): Database {
+    > 43 |   if (!db) {
+         |             ^
+      44 |     throw new Error('Database not initialized. Call initDatabase() first.');
+      45 |   }
+      46 |   return db;
+
+      at getDatabase (../core/src/db/connection.ts:43:15)
+      at Object.<anonymous> (src/__tests__/auth.backup-codes.test.ts:8:43)
 
 PASS src/__tests__/integration/conversions.test.ts
   ● Console
@@ -64,57 +154,17 @@ PASS src/__tests__/integration/conversions.test.ts
         {
           source: 'coingecko',
           value: 2.1607499999999997,
-          timestamp: 1763906541434
+          timestamp: 1763907826249
         },
         {
           source: 'dexscreener',
           value: 2.1456999999999997,
-          timestamp: 1763906541434
+          timestamp: 1763907826249
         },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763906541434 }
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763907826249 }
       ]
 
       at RateAggregatorService.getSimulatedRate (../core/src/services/rate.aggregator.ts:301:17)
-
-FAIL src/__tests__/integration/auth.flow.test.ts
-  ● Console
-
-    console.log
-      ✅ @tg-payment/core v2.0.0 initialized
-
-      at Object.<anonymous> (../core/src/index.ts:118:9)
-
-    console.log
-      🔗 Integration: Direct TON Blockchain (No Fragment API)
-
-      at Object.<anonymous> (../core/src/index.ts:119:9)
-
-    console.log
-      📦 Features: No KYC | No Holding Period | Instant Withdrawals
-
-      at Object.<anonymous> (../core/src/index.ts:120:9)
-
-    console.log
-      Magic link (no SMTP): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImludC10ZXN0LTE3NjM5MDY1NDIxMDBAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM5MDY1NDIsImV4cCI6MTc2MzkwNzQ0MiwianRpIjoiMGVmYTc3NzMyYTdkYWYzY2Y1Yjc1ZTk5OTU5YWZjY2EifQ.TSY9mod9FD5Y_nZ9cuTPvik2gc6ZKfHyhWkkIk0cP-o
-
-      at Function.requestMagicLink (../core/dist/services/auth.service.js:87:25)
-
-  ● magic link verify -> session cookie -> /auth/me
-
-    expect(received).toBe(expected) // Object.is equality
-
-    Expected: 200
-    Received: 404
-
-      24 |
-      25 |   // Call verify endpoint using agent to persist cookies
-    > 26 |   const resVerify = await agent.post('/api/v1/auth/magic-link/verify').send({ token: req.token });
-         |                              ^
-      27 |   expect(resVerify.status).toBe(200);
-      28 |
-      29 |   // Use agent to call /auth/me (cookies are automatically sent)
-
-      at Object.<anonymous> (src/__tests__/integration/auth.flow.test.ts:26:30)
 
 PASS src/__tests__/integration/payments.webhook.test.ts
   ● Console
@@ -192,25 +242,60 @@ PASS src/__tests__/integration/payments.webhook.test.ts
       at TelegramService.processSuccessfulPayment (../core/src/services/Telegram.service.ts:73:17)
 
     console.log
-      ✅ Telegram payment persisted: 566e13f5-fce9-42b9-beef-f26e0c25d0db
+      ✅ Telegram payment persisted: cc0d592e-e13b-46ea-9852-de84e913f04a
 
       at TelegramService.processSuccessfulPayment (../core/src/services/Telegram.service.ts:91:21)
 
     console.log
-      ✅ Payment created: 566e13f5-fce9-42b9-beef-f26e0c25d0db
+      ✅ Payment created: cc0d592e-e13b-46ea-9852-de84e913f04a
 
       at handleTelegramWebhook (src/controllers/payment.controller.ts:47:25)
 
     console.log
-      💰 Platform fee created for payment: 566e13f5-fce9-42b9-beef-f26e0c25d0db
+      💰 Platform fee created for payment: cc0d592e-e13b-46ea-9852-de84e913f04a
 
       at handleTelegramWebhook (src/controllers/payment.controller.ts:54:29)
 
+PASS src/__tests__/integration/unmatched-deposits.test.ts
+  ● Console
 
-Test Suites: 1 failed, 3 passed, 4 total
-Tests:       1 failed, 4 passed, 5 total
+    console.log
+      ✅ @tg-payment/core v2.0.0 initialized
+
+      at Object.<anonymous> (../core/src/index.ts:118:9)
+
+    console.log
+      🔗 Integration: Direct TON Blockchain (No Fragment API)
+
+      at Object.<anonymous> (../core/src/index.ts:119:9)
+
+    console.log
+      📦 Features: No KYC | No Holding Period | Instant Withdrawals
+
+      at Object.<anonymous> (../core/src/index.ts:120:9)
+
+    console.log
+      Received TON transaction webhook: {
+        tx_hash: 'unmatched_tx_hash',
+        sender: 'some_ton_address',
+        amount: '1000000000',
+        destination: 'our_custodial_wallet_address'
+      }
+
+      at handleTonTransaction (src/controllers/webhook.controller.ts:9:21)
+
+FAIL src/__tests__/auth.totp.test.ts
+  ● Test suite failed to run
+
+    [96msrc/__tests__/auth.totp.test.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './app.test-setup' or its corresponding type declarations.
+
+    [7m2[0m import { buildTestApp } from './app.test-setup';
+    [7m [0m [91m                             ~~~~~~~~~~~~~~~~~~[0m
+
+Test Suites: 4 failed, 3 passed, 7 total
+Tests:       3 failed, 5 passed, 8 total
 Snapshots:   0 total
-Time:        7.461 s
+Time:        5.989 s, estimated 7 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
 npm ERR! Lifecycle script `test` failed with error: 
@@ -222,6 +307,19 @@ npm ERR!   at location: /workspaces/telegram-payment-gateway/packages/api
 > jest --forceExit
 
 PASS src/__tests__/auth.service.test.ts
+PASS src/__tests__/unit/settlement.service.test.ts
+  ● Console
+
+    console.log
+      💸 Executing fiat payout: 55 USD to user user-1
+
+      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:199:13)
+
+    console.log
+      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
+
+      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:181:15)
+
 PASS src/__tests__/unit/services.test.ts
   ● Console
 
@@ -283,14 +381,14 @@ PASS src/__tests__/unit/services.test.ts
         {
           source: 'coingecko',
           value: 2.1607499999999997,
-          timestamp: 1763906547094
+          timestamp: 1763907832190
         },
         {
           source: 'dexscreener',
           value: 2.1456999999999997,
-          timestamp: 1763906547094
+          timestamp: 1763907832190
         },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763906547094 }
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763907832190 }
       ]
 
       at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:381:13)
@@ -310,27 +408,23 @@ PASS src/__tests__/unit/services.test.ts
         {
           source: 'coingecko',
           value: 45224.99999999999,
-          timestamp: 1763906547096
+          timestamp: 1763907832192
         },
-        { source: 'dexscreener', value: 44910, timestamp: 1763906547096 },
-        { source: 'coinmarketcap', value: 45090, timestamp: 1763906547096 }
+        { source: 'dexscreener', value: 44910, timestamp: 1763907832192 },
+        { source: 'coinmarketcap', value: 45090, timestamp: 1763907832192 }
       ]
 
       at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:381:13)
 
-PASS src/__tests__/unit/settlement.service.test.ts
+PASS src/__tests__/integration/dedust-swap.test.ts
   ● Console
 
     console.log
-      💸 Executing fiat payout: 55 USD to user user-1
+      🧪 DeDust integration tests running in simulation mode
 
-      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:199:13)
+      at Object.<anonymous> (src/__tests__/integration/dedust-swap.test.ts:16:11)
 
-    console.log
-      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
-
-      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:181:15)
-
+PASS src/__tests__/unit/wallet-manager.service.test.ts
 PASS src/__tests__/integration.test.ts
   ● Console
 
@@ -356,7 +450,7 @@ PASS src/__tests__/integration.test.ts
       at ConversionService.createConversion (src/services/conversion.service.ts:229:13)
 
     console.log
-      ✅ Conversion reconciled: bf08827e-7d3e-4179-9577-6089f7206a82 - Status: matched
+      ✅ Conversion reconciled: 60e1320b-d07d-4a54-b7c8-189e8204243f - Status: matched
 
       at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:106:13)
 
@@ -365,15 +459,22 @@ PASS src/__tests__/integration.test.ts
 
       at ConversionService.executeP2PConversion (src/services/conversion.service.ts:286:17)
 
-PASS src/__tests__/integration/dedust-swap.test.ts
+PASS src/__tests__/conversion.service.test.ts
   ● Console
 
     console.log
-      🧪 DeDust integration tests running in simulation mode
+      ✅ Fee fee-id marked as collected.
 
-      at Object.<anonymous> (src/__tests__/integration/dedust-swap.test.ts:16:11)
+      at FeeService.markFeeCollected (src/services/fee.service.ts:114:13)
 
-PASS src/__tests__/unit/wallet-manager.service.test.ts
+    console.log
+      ✅ Conversion completed: {
+        conversionId: '4ca6c086-b866-4131-8f88-bdd029a5fc92',
+        txHash: 'tx-hash'
+      }
+
+      at src/services/conversion.service.ts:348:23
+
 PASS src/__tests__/rate.aggregator.test.ts
   ● Console
 
@@ -405,22 +506,6 @@ PASS src/__tests__/integration/stonfi-swap.test.ts
 
       at Object.<anonymous> (src/__tests__/integration/stonfi-swap.test.ts:15:11)
 
-PASS src/__tests__/conversion.service.test.ts
-  ● Console
-
-    console.log
-      ✅ Fee fee-id marked as collected.
-
-      at FeeService.markFeeCollected (src/services/fee.service.ts:114:13)
-
-    console.log
-      ✅ Conversion completed: {
-        conversionId: '83f76de6-5b72-4ab1-bc7c-a10f3719949f',
-        txHash: 'tx-hash'
-      }
-
-      at src/services/conversion.service.ts:348:23
-
 PASS src/__tests__/unit/basic.test.ts
   ● Console
 
@@ -439,17 +524,35 @@ PASS src/__tests__/unit/basic.test.ts
         {
           source: 'coingecko',
           value: 2.1607499999999997,
-          timestamp: 1763906549203
+          timestamp: 1763907833330
         },
         {
           source: 'dexscreener',
           value: 2.1456999999999997,
-          timestamp: 1763906549203
+          timestamp: 1763907833330
         },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763906549203 }
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1763907833330 }
       ]
 
       at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:381:13)
+
+PASS src/__tests__/unit/deposit-monitor.service.test.ts
+  ● Console
+
+    console.log
+      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
+
+      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:42:13)
+
+    console.log
+      ✅ Manual deposit confirmed {
+        depositId: 'deposit-1',
+        paymentId: 'payment-1',
+        conversionId: undefined,
+        txHash: 'abc'
+      }
+
+      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:153:13)
 
 PASS src/__tests__/reconciliation.service.test.ts
   ● Console
@@ -482,24 +585,6 @@ PASS src/__tests__/transaction-monitor.test.ts
       at TransactionMonitorService.checkPendingTransactions (src/services/transaction-monitor.service.ts:57:9)
       at Object.<anonymous> (src/__tests__/transaction-monitor.test.ts:61:5)
 
-PASS src/__tests__/unit/deposit-monitor.service.test.ts
-  ● Console
-
-    console.log
-      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
-
-      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:42:13)
-
-    console.log
-      ✅ Manual deposit confirmed {
-        depositId: 'deposit-1',
-        paymentId: 'payment-1',
-        conversionId: undefined,
-        txHash: 'abc'
-      }
-
-      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:153:13)
-
 FAIL src/__tests__/auth.totp.test.ts
   ● Test suite failed to run
 
@@ -515,7 +600,7 @@ FAIL src/__tests__/auth.totp.test.ts
 Test Suites: 1 failed, 13 passed, 14 total
 Tests:       2 skipped, 38 passed, 40 total
 Snapshots:   0 total
-Time:        6.402 s
+Time:        5.814 s, estimated 6 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
 npm ERR! Lifecycle script `test` failed with error: 
@@ -529,7 +614,7 @@ npm ERR!   at location: /workspaces/telegram-payment-gateway/packages/core
 
  RUN  v1.6.1 /workspaces/telegram-payment-gateway/packages/dashboard
 
-(node:24327) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspaces/telegram-payment-gateway/postcss.config.js is not specified and it doesn't parse as CommonJS.
+(node:45525) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspaces/telegram-payment-gateway/postcss.config.js is not specified and it doesn't parse as CommonJS.
 Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 To eliminate this warning, add "type": "module" to /workspaces/telegram-payment-gateway/package.json.
 (Use `node --trace-warnings ...` to show where the warning was created)
@@ -537,12 +622,12 @@ stderr | src/__tests__/P2POrders.test.tsx > P2POrders confirm/cancel flow > show
 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
 
- ✓ src/__tests__/P2POrders.test.tsx  (1 test) 200ms
+ ✓ src/__tests__/P2POrders.test.tsx  (1 test) 303ms
 
  Test Files  1 passed (1)
       Tests  1 passed (1)
-   Start at  14:02:30
-   Duration  1.79s (transform 146ms, setup 0ms, collect 520ms, tests 200ms, environment 571ms, prepare 157ms)
+   Start at  14:23:54
+   Duration  1.77s (transform 244ms, setup 0ms, collect 640ms, tests 303ms, environment 438ms, prepare 127ms)
 
 
 > @tg-payment/sdk@0.1.0 test

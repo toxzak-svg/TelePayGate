@@ -14,7 +14,12 @@ export default class AuthController {
     try {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
       // In production, send email via SMTP provider. Here we return 202.
-      res.status(202).json({ success: true, data: { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at } });
+      // For tests and development, include the token in the response so test suites can verify flows without SMTP.
+      const responseData: any = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
+      if (process.env.NODE_ENV !== 'production') {
+        responseData.token = result.token;
+      }
+      res.status(202).json({ success: true, data: responseData });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: message || 'Failed to issue magic link' } });
@@ -22,7 +27,11 @@ export default class AuthController {
   }
 
   static async verifyMagicLink(req: Request, res: Response) {
+
     if (!FEATURE_FLAG) return res.status(404).json({ success: false, error: { code: 'FEATURE_DISABLED', message: 'Passwordless auth is disabled' } });
+
+    // Debug: log request body
+    console.log('verifyMagicLink req.body:', req.body);
 
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, error: { code: 'MISSING_TOKEN', message: 'Token is required' } });
