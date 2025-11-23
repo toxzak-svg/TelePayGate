@@ -92,6 +92,20 @@ async function optionalAuth(
   const apiKey = req.headers['x-api-key'] as string;
 
   if (!apiKey) {
+    // Attempt session cookie auth for dashboard users
+    try {
+      const sessionToken = req.cookies?.session_id as string | undefined;
+      if (sessionToken) {
+        const db = getDatabase();
+        const session = await db.oneOrNone('SELECT * FROM sessions WHERE session_token = $1', [sessionToken]);
+        if (session && !session.revoked_at && new Date(session.expires_at) > new Date()) {
+          // attach dashboard user id to headers
+          req.headers['x-dashboard-user-id'] = session.user_id;
+        }
+      }
+    } catch (e) {
+      // ignore session lookup errors and continue as unauthenticated
+    }
     next();
     return;
   }

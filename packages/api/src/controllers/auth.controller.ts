@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '@tg-payment/core';
+import { getDatabase } from '@tg-payment/core';
 
 const FEATURE_FLAG = process.env.FEATURE_PASSWORDLESS_AUTH === 'true';
 
@@ -31,8 +32,18 @@ export default class AuthController {
         return res.status(400).json({ success: false, error: { code: 'INVALID_TOKEN', message: result.reason } });
       }
 
-      // Create session cookie (placeholder) — real implementation should create session record and secure cookie
-      res.cookie('session_id', AuthService.generatePendingToken(), { httpOnly: true, secure: true, sameSite: 'strict' });
+      // Set secure session cookie and CSRF cookie
+      const isProd = process.env.NODE_ENV === 'production';
+      const maxAge = result.expires_at ? Math.max(0, new Date(result.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
+
+      // session_id: HttpOnly, Secure in production, SameSite lax
+      res.cookie('session_id', result.session_token, { httpOnly: true, secure: isProd, sameSite: 'lax', maxAge });
+
+      // csrf_token: accessible to JS (not HttpOnly) so single-page app can read and include in headers
+      if (result.csrf_token) {
+        res.cookie('csrf_token', result.csrf_token, { httpOnly: false, secure: isProd, sameSite: 'lax', maxAge });
+      }
+
       res.status(200).json({ success: true, data: { user: result.user } });
     } catch (err: any) {
       res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: err.message || 'Verification failed' } });
@@ -62,9 +73,52 @@ export default class AuthController {
     res.status(200).json({ success: true, data: { secret, otpauth } });
   }
 
+  static async totpConfirm(req: Request, res: Response) {
+    // Persist encrypted secret and generate backup codes
+    try {
+      const { user_id, encrypted_secret, confirm } = req.body;
+      if (!user_id || !encrypted_secret || !confirm) return res.status(400).json({ success: false, error: { code: 'MISSING_PARAMS', message: 'user_id, encrypted_secret and confirm are required' } });
+
+      // Generate backup codes
+      const backupCodes = AuthService.generateBackupCodes(8);
+      await AuthService.persistTotpAndBackupCodes(user_id, encrypted_secret, backupCodes);
+
+      res.status(200).json({ success: true, data: { backup_codes: backupCodes } });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: err.message || 'Failed to persist TOTP' } });
+    }
+  }
+
   static async logout(req: Request, res: Response) {
     // Revoke session cookie
+    const sessionToken = req.cookies?.session_id || req.headers['x-session-token'];
+    if (sessionToken) {
+      try {
+        await AuthService.revokeSession(sessionToken as string);
+      } catch (e) {
+        // ignore
+      }
+    }
     res.clearCookie('session_id');
+    res.clearCookie('csrf_token');
     res.status(200).json({ success: true });
+  }
+
+  static async me(req: Request, res: Response) {
+    // Return current dashboard user via session cookie
+    try {
+      const sessionToken = req.cookies?.session_id as string | undefined;
+      if (!sessionToken) return res.status(401).json({ success: false, error: { code: 'NO_SESSION', message: 'No session' } });
+      const db = getDatabase();
+      const session = await db.oneOrNone('SELECT * FROM sessions WHERE session_token = $1', [sessionToken]);
+      if (!session) return res.status(401).json({ success: false, error: { code: 'INVALID_SESSION', message: 'Session not found' } });
+      if (session.revoked_at) return res.status(401).json({ success: false, error: { code: 'REVOKED', message: 'Session revoked' } });
+      if (new Date(session.expires_at) < new Date()) return res.status(401).json({ success: false, error: { code: 'EXPIRED', message: 'Session expired' } });
+      const user = await db.oneOrNone('SELECT id, email, role, is_active FROM dashboard_users WHERE id = $1', [session.user_id]);
+      if (!user) return res.status(404).json({ success: false, error: { code: 'NO_USER', message: 'User not found' } });
+      res.status(200).json({ success: true, data: { user } });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: { code: 'INTERNAL', message: err.message || 'Failed' } });
+    }
   }
 }

@@ -115,12 +115,14 @@ export class AuthService {
         dashUser = await db.one('INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at) VALUES ($1, $2, true, now(), now()) RETURNING *', [email, 'admin']);
       }
 
-      // Create session
+      // Create session with CSRF token stored in meta
       const sessionToken = AuthService.generatePendingToken();
+      const csrfToken = AuthService.generatePendingToken();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await db.none('INSERT INTO sessions (user_id, session_token, created_at, last_seen_at, expires_at) VALUES ($1, $2, now(), now(), $3)', [dashUser.id, sessionToken, expiresAt]);
+      const meta = { csrf_token: csrfToken };
+      await db.none('INSERT INTO sessions (user_id, session_token, created_at, last_seen_at, expires_at, meta) VALUES ($1, $2, now(), now(), $3, $4)', [dashUser.id, sessionToken, expiresAt, JSON.stringify(meta)]);
 
-      return { ok: true, user: { id: dashUser.id, email: dashUser.email, role: dashUser.role }, session_token: sessionToken, expires_at: expiresAt.toISOString() };
+      return { ok: true, user: { id: dashUser.id, email: dashUser.email, role: dashUser.role }, session_token: sessionToken, csrf_token: csrfToken, expires_at: expiresAt.toISOString() };
     } catch (err: any) {
       // Log the verification error for debugging
       try {
@@ -135,6 +137,26 @@ export class AuthService {
       if (new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
       await db.none('UPDATE magic_links SET used_at = now() WHERE token_jti = $1', [tokenOrJti]);
       return { ok: true, user: { email: row.email } };
+    }
+  }
+
+  // Revoke a session by token
+  static async revokeSession(sessionToken: string) {
+    const db = getDatabase();
+    await db.none('UPDATE sessions SET revoked_at = now() WHERE session_token = $1', [sessionToken]);
+  }
+
+  // Persist TOTP secret (encrypted) and hashed backup codes for a dashboard user
+  static async persistTotpAndBackupCodes(userId: string, encryptedSecretBase64: string, backupCodesPlain: string[]) {
+    const db = getDatabase();
+    // store encrypted secret (BYTEA)
+    await db.none('INSERT INTO totp_secrets (user_id, encrypted_secret, enabled_at, confirmed_at, created_at) VALUES ($1, $2, now(), now(), now()) ON CONFLICT (user_id) DO UPDATE SET encrypted_secret = EXCLUDED.encrypted_secret, enabled_at = EXCLUDED.enabled_at, confirmed_at = EXCLUDED.confirmed_at, created_at = now()', [userId, Buffer.from(encryptedSecretBase64, 'base64')]);
+
+    // Hash backup codes and insert
+    const bcrypt = require('bcryptjs');
+    for (const code of backupCodesPlain) {
+      const hash = await bcrypt.hash(code, 10);
+      await db.none('INSERT INTO backup_codes (user_id, code_hash, created_at) VALUES ($1, $2, now())', [userId, hash]);
     }
   }
 }

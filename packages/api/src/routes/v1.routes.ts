@@ -9,6 +9,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import P2POrdersController from '../controllers/p2p-orders.controller';
 import webhookRoutes from './webhooks.routes';
 import AuthController from '../controllers/auth.controller';
+import csrfProtect from '../middleware/csrf.middleware';
 
 const router = Router();
 const conversionController = new ConversionController();
@@ -26,7 +27,12 @@ router.post('/auth/magic-link', AuthController.requestMagicLink);
 router.post('/auth/magic-link/verify', AuthController.verifyMagicLink);
 router.post('/auth/totp/verify', AuthController.totpVerify);
 router.post('/auth/totp/enable', AuthController.enableTotp);
+router.post('/auth/totp/confirm', AuthController.totpConfirm);
 router.post('/auth/logout', AuthController.logout);
+router.get('/auth/me', AuthController.me);
+
+// After auth routes, enable CSRF protection for state-changing endpoints
+router.use(csrfProtect);
 
 // Payment routes
 router.post('/payments/webhook', PaymentController.handleTelegramWebhook);

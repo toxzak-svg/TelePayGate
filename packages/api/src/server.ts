@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import globalLimiter from './middleware/ratelimit.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import v1Routes from './routes/v1.routes';
@@ -14,6 +15,7 @@ export function createServer(): Application {
   app.use(helmet());
   app.use(cors());
   app.use(compression());
+  app.use(cookieParser());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
