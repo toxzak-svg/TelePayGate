@@ -3,6 +3,7 @@ import PaymentController from '../controllers/payment.controller';
 import { ConversionController } from '../controllers/conversion.controller';
 import UserController from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
+import { requireDashboardRole } from '../middleware/role.middleware';
 import FeeCollectionController from '../controllers/fee-collection.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import P2POrdersController from '../controllers/p2p-orders.controller';
@@ -46,10 +47,10 @@ router.post('/users/api-keys/regenerate', authenticate, UserController.regenerat
 router.get('/users/stats', authenticate, UserController.getStats);
 
 // Admin routes
-router.get('/admin/stats', authenticate, AdminController.getStats);
-router.get('/admin/users', authenticate, AdminController.getUsers);
-router.get('/admin/revenue', authenticate, AdminController.getRevenue);
-router.get('/admin/revenue/summary', authenticate, AdminController.getRevenueSummary);
+router.get('/admin/stats', authenticate, requireDashboardRole('admin'), AdminController.getStats);
+router.get('/admin/users', authenticate, requireDashboardRole('admin'), AdminController.getUsers);
+router.get('/admin/revenue', authenticate, requireDashboardRole('admin'), AdminController.getRevenue);
+router.get('/admin/revenue/summary', authenticate, requireDashboardRole('admin'), AdminController.getRevenueSummary);
 router.get('/admin/config', authenticate, AdminController.getConfig);
 router.put('/admin/config', authenticate, AdminController.updateConfig);
 
