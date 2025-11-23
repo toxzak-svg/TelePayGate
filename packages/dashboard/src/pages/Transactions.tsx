@@ -1,47 +1,33 @@
 import React, { useState } from 'react';
-
-const mockTx = [
-  { id: 'TX1001', user: 'alice', amount: 120, status: 'Success', date: '2025-11-07' },
-  { id: 'TX1002', user: 'bob', amount: 75, status: 'Pending', date: '2025-11-07' },
-  { id: 'TX1003', user: 'carol', amount: 200, status: 'Failed', date: '2025-11-06' },
-  { id: 'TX1004', user: 'dan', amount: 50, status: 'Success', date: '2025-11-06' },
-  { id: 'TX1005', user: 'eve', amount: 300, status: 'Success', date: '2025-11-05' },
-];
-
-const statusColor = {
-  Success: 'text-green-600',
-  Pending: 'text-yellow-600',
-  Failed: 'text-red-600',
-};
+import { useQuery } from '@tanstack/react-query';
+import { paymentService } from '../api/services';
+import Pagination from '../components/common/Pagination';
+import { exportToCsv } from '../utils/exportCsv';
 
 export default function Transactions() {
-  const [sortBy, setSortBy] = useState<'date'|'amount'>('date');
-  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const filtered = mockTx
-    .filter(tx => tx.user.toLowerCase().includes(filter.toLowerCase()) || tx.id.toLowerCase().includes(filter.toLowerCase()))
-    .sort((a, b) => sortBy === 'amount' ? b.amount - a.amount : b.date.localeCompare(a.date));
+  const { data: paymentsResp, isLoading } = useQuery<any>(['payments', { page, pageSize }], () =>
+    paymentService.getPayments({ limit: pageSize, offset: (page - 1) * pageSize })
+  );
+
+  const items = Array.isArray(paymentsResp) ? paymentsResp : paymentsResp?.items || [];
+  const total = Array.isArray(paymentsResp) ? items.length : paymentsResp?.meta?.total ?? items.length;
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Transactions</h1>
-      <div className="flex items-center mb-4 gap-4">
-        <input
-          type="text"
-          placeholder="Search by user or ID..."
-          className="border px-3 py-2 rounded-lg text-sm"
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-        />
-        <button
-          className={`px-3 py-2 rounded-lg text-sm border ${sortBy==='date'?'bg-blue-50 border-blue-500':'border-gray-300'}`}
-          onClick={() => setSortBy('date')}
-        >Sort by Date</button>
-        <button
-          className={`px-3 py-2 rounded-lg text-sm border ${sortBy==='amount'?'bg-blue-50 border-blue-500':'border-gray-300'}`}
-          onClick={() => setSortBy('amount')}
-        >Sort by Amount</button>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex gap-3">
+          <button
+            onClick={() => exportToCsv('payments.csv', items as any)}
+            className="px-3 py-2 rounded-lg border text-sm"
+          >Export CSV</button>
+        </div>
+        <Pagination total={total} page={page} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
       </div>
+
       <div className="bg-white rounded-lg shadow p-6 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
@@ -54,13 +40,13 @@ export default function Transactions() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {filtered.map((tx) => (
+            {items.map((tx: any) => (
               <tr key={tx.id}>
                 <td className="px-4 py-2 font-mono text-sm text-blue-700">{tx.id}</td>
-                <td className="px-4 py-2">{tx.user}</td>
+                <td className="px-4 py-2">{tx.userId || tx.user || tx.telegramUserId}</td>
                 <td className="px-4 py-2">${tx.amount}</td>
-                <td className={`px-4 py-2 font-semibold ${statusColor[tx.status as keyof typeof statusColor]}`}>{tx.status}</td>
-                <td className="px-4 py-2 text-xs text-gray-500">{tx.date}</td>
+                <td className="px-4 py-2 font-semibold">{tx.status}</td>
+                <td className="px-4 py-2 text-xs text-gray-500">{new Date(tx.createdAt || tx.date).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

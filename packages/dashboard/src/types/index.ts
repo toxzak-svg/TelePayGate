@@ -121,6 +121,10 @@ export interface ChartData {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
+  meta?: {
+    total?: number;
+    [key: string]: any;
+  };
   error?: {
     code: string;
     message: string;

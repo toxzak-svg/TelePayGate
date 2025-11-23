@@ -22,7 +22,7 @@ export const paymentService = {
     const { data } = await apiClient.get<ApiResponse<Payment[]>>('/payments', {
       params,
     });
-    return data.data;
+    return (data as any).data;
   },
 
   async getPayment(id: string): Promise<Payment> {
@@ -43,7 +43,7 @@ export const conversionService = {
       '/conversions',
       { params }
     );
-    return data.data;
+    return (data as any).data;
   },
 
   async getConversion(id: string): Promise<Conversion> {
@@ -138,7 +138,9 @@ export const p2pService = {
       '/p2p/orders',
       { params }
     );
-    return data.data;
+    // Return raw API payload; caller expects { items, meta } or an array fallback
+    // Some APIs return `{ success,data,meta }` while others return plain array.
+    return (data as any).data;
   },
 
   async createOrder(order: {
