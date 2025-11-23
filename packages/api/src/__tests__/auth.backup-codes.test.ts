@@ -4,6 +4,15 @@ describe('Backup Codes Integration', () => {
   let userId: string;
 
   beforeAll(async () => {
+    // Optionally start Testcontainers fixture when requested
+    if (process.env.USE_TESTCONTAINERS === 'true') {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startPostgresFixture } = require('./fixtures/postgresFixture');
+      const fixture = await startPostgresFixture();
+      process.env.DATABASE_URL = fixture.databaseUrl;
+      (global as any).__tc_fixture = fixture;
+    }
+
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) throw new Error('DATABASE_URL must be set for backup codes test');
     initDatabase(dbUrl);
@@ -13,6 +22,15 @@ describe('Backup Codes Integration', () => {
     const user = await db.one('INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at) VALUES ($1, $2, true, now(), now()) RETURNING id', ['test-backup@example.com', 'developer']);
     userId = user.id;
     await db.none('DELETE FROM backup_codes WHERE user_id = $1', [userId]);
+  });
+
+  afterAll(async () => {
+    const fixture = (global as any).__tc_fixture;
+    if (fixture) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { stopPostgresFixture } = require('./fixtures/postgresFixture');
+      await stopPostgresFixture(fixture);
+    }
   });
 
   test('should persist and verify backup codes', async () => {

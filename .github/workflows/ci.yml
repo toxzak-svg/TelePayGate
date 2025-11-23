@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tg_payment_ci
+        options: >-
+          --health-cmd="pg_isready -U postgres -d tg_payment_ci"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tg_payment_ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 5432; then
+              echo "Postgres is accepting connections" && break
+            fi
+            echo "Waiting for Postgres... ($i/30)";
+            sleep 1
+          done
+
+      - name: Build (optional)
+        run: npm run build --workspaces --if-present
+
+      - name: Run DB migrations (if available)
+        run: |
+          npm run migrate --if-present || node database/migrate.js || true
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Run tests
+        run: npm run test --workspaces --if-present
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+  e2e-fixture:
+    # This job is intended to run on a self-hosted runner with Docker available.
+    # It runs when manually triggered or when a pull request is labeled `run-e2e`.
+    runs-on: [self-hosted, linux, docker]
+    needs: test
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-e2e')
+      )
+    env:
+      USE_TESTCONTAINERS: 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Prepare DB and run tests (fixture-backed)
+        run: |
+          export DATABASE_URL="unused"
+          # The tests will start Testcontainers and run migrations themselves when USE_TESTCONTAINERS=true
+          npm run test --workspaces --if-present
+        env:
+          USE_TESTCONTAINERS: 'true'

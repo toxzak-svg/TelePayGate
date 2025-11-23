@@ -1,6 +1,30 @@
 
 process.env.FEATURE_PASSWORDLESS_AUTH = 'true';
 process.env.JWT_SECRET = 'dev-secret';
+// Allow tests to receive raw magic link token from controller responses
+process.env.EXPOSE_TEST_TOKENS = 'true';
+
+// Optionally run this test against a disposable Postgres container when
+// USE_TESTCONTAINERS=true. This is off by default to keep CI/environment
+// simple. When enabled, we start a container, run migrations, and set
+// DATABASE_URL accordingly.
+let containerFixture: any = null;
+if (process.env.USE_TESTCONTAINERS === 'true') {
+  // Lazy import to avoid pulling testcontainers when not used
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { startPostgresFixture } = require('./fixtures/postgresFixture');
+  beforeAll(async () => {
+    containerFixture = await startPostgresFixture();
+    process.env.DATABASE_URL = containerFixture.databaseUrl;
+  });
+  afterAll(async () => {
+    if (containerFixture) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { stopPostgresFixture } = require('./fixtures/postgresFixture');
+      await stopPostgresFixture(containerFixture);
+    }
+  });
+}
 import request from 'supertest';
 import { buildTestApp } from './integration/app.test-setup';
 import { getDatabase } from '@tg-payment/core';

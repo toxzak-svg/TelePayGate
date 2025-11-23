@@ -222,6 +222,22 @@ API will be available at `http://localhost:3000`
 └──────────────────────────────────────┘
 ```
 
+## 🧪 E2E Tests (Testcontainers)
+
+Some integration tests can be run against a disposable Postgres instance using Testcontainers (Docker).
+
+- Enable by setting `USE_TESTCONTAINERS=true` when running tests. Example:
+
+```bash
+USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests__/auth.magic-link.test.ts -i
+```
+
+- This requires Docker available on the machine running the tests.
+- CI: an optional `e2e-fixture` job has been added to `.github/workflows/ci.yml`. It is configured to run on `self-hosted` runners and must be triggered manually via `workflow_dispatch` by a maintainer. The self-hosted runner must have Docker available and be labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
+
+Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
+
+
 ### Technology Stack
 
 | Layer              | Technology       | Purpose                          |

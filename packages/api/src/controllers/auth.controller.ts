@@ -16,7 +16,8 @@ export default class AuthController {
       // In production, send email via SMTP provider. Here we return 202.
       // For tests and development, include the token in the response so test suites can verify flows without SMTP.
       const responseData: any = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
-      if (process.env.NODE_ENV !== 'production') {
+      // Only expose raw token when explicitly allowed (tests/dev), to avoid leaking tokens in CI/production.
+      if (process.env.EXPOSE_TEST_TOKENS === 'true') {
         responseData.token = result.token;
       }
       res.status(202).json({ success: true, data: responseData });
@@ -30,8 +31,7 @@ export default class AuthController {
 
     if (!FEATURE_FLAG) return res.status(404).json({ success: false, error: { code: 'FEATURE_DISABLED', message: 'Passwordless auth is disabled' } });
 
-    // Debug: log request body
-    console.log('verifyMagicLink req.body:', req.body);
+    // (no debug logs)
 
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, error: { code: 'MISSING_TOKEN', message: 'Token is required' } });

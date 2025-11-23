@@ -50,7 +50,8 @@
     "prettier": "^3.0.3",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "testcontainers": "^9.1.0"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
