@@ -3,10 +3,12 @@ import PaymentController from '../controllers/payment.controller';
 import { ConversionController } from '../controllers/conversion.controller';
 import UserController from '../controllers/user.controller';
 import AdminController from '../controllers/admin.controller';
+import { requireDashboardRole } from '../middleware/role.middleware';
 import FeeCollectionController from '../controllers/fee-collection.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import P2POrdersController from '../controllers/p2p-orders.controller';
 import webhookRoutes from './webhooks.routes';
+import AuthController from '../controllers/auth.controller';
 
 const router = Router();
 const conversionController = new ConversionController();
@@ -18,6 +20,13 @@ router.get('/health', (req, res) => {
 
 // Webhook routes
 router.use('/webhooks', webhookRoutes);
+
+// Auth (passwordless) routes — feature-flagged in controller
+router.post('/auth/magic-link', AuthController.requestMagicLink);
+router.post('/auth/magic-link/verify', AuthController.verifyMagicLink);
+router.post('/auth/totp/verify', AuthController.totpVerify);
+router.post('/auth/totp/enable', AuthController.enableTotp);
+router.post('/auth/logout', AuthController.logout);
 
 // Payment routes
 router.post('/payments/webhook', PaymentController.handleTelegramWebhook);
@@ -38,10 +47,10 @@ router.post('/users/api-keys/regenerate', authenticate, UserController.regenerat
 router.get('/users/stats', authenticate, UserController.getStats);
 
 // Admin routes
-router.get('/admin/stats', authenticate, AdminController.getStats);
-router.get('/admin/users', authenticate, AdminController.getUsers);
-router.get('/admin/revenue', authenticate, AdminController.getRevenue);
-router.get('/admin/revenue/summary', authenticate, AdminController.getRevenueSummary);
+router.get('/admin/stats', authenticate, requireDashboardRole('admin'), AdminController.getStats);
+router.get('/admin/users', authenticate, requireDashboardRole('admin'), AdminController.getUsers);
+router.get('/admin/revenue', authenticate, requireDashboardRole('admin'), AdminController.getRevenue);
+router.get('/admin/revenue/summary', authenticate, requireDashboardRole('admin'), AdminController.getRevenueSummary);
 router.get('/admin/config', authenticate, AdminController.getConfig);
 router.put('/admin/config', authenticate, AdminController.updateConfig);
 
