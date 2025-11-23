@@ -26,6 +26,25 @@ CI
 Triggering the e2e job
 - The `e2e-fixture` job is currently configured to run manually via `workflow_dispatch`. A maintainer can trigger it from the Actions UI on GitHub.
 
+Self-hosted runner bootstrap script
+
+We provide a convenience script to bootstrap an Ubuntu VM as a self-hosted runner and register it with this repository. It will install Docker and the runner, and register the runner using a token you obtain from GitHub.
+
+Usage example (run on the target VM):
+
+```bash
+# On your VM, set these environment variables and run the script
+REPO_URL="https://github.com/<owner>/<repo>" \
+RUNNER_TOKEN="<token-from-github>" \
+RUNNER_LABELS="self-hosted,linux,docker" \
+  ./scripts/setup-self-hosted-runner.sh
+```
+
+Notes:
+- Obtain `RUNNER_TOKEN` from GitHub: Repository Settings → Actions → Runners → New self-hosted runner → Generate token.
+- The script installs Docker and configures the runner as a systemd service.
+- Ensure the VM has at least 2 CPUs and 4GB memory for reliable e2e runs.
+
 Security
 - Tests may set `EXPOSE_TEST_TOKENS=true` which causes controllers to include raw magic tokens in JSON responses for deterministic testing. Do not enable this flag in public CI logs or production.
 

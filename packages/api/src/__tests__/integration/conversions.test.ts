@@ -3,7 +3,21 @@ import { buildTestApp } from './app.test-setup';
 import { cleanDatabase, disconnectDatabase } from './db-test-utils';
 
 describe('Conversions API', () => {
-  const app = buildTestApp();
+  let app = buildTestApp();
+  let fixture: any = null;
+
+  beforeAll(async () => {
+    if (process.env.USE_TESTCONTAINERS === 'true') {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startPostgresFixture } = require('../fixtures/postgresFixture');
+      fixture = await startPostgresFixture();
+      process.env.DATABASE_URL = fixture.databaseUrl;
+      // rebuild app to pick up DB-backed middleware
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require('./app.test-setup');
+      app = mod.buildTestApp();
+    }
+  });
 
   beforeEach(async () => {
     await cleanDatabase();
@@ -11,6 +25,11 @@ describe('Conversions API', () => {
 
   afterAll(async () => {
     await disconnectDatabase();
+    if (fixture) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { stopPostgresFixture } = require('../fixtures/postgresFixture');
+      await stopPostgresFixture(fixture);
+    }
   });
 
   test('GET /api/v1/conversions/rate - returns quote', async () => {

@@ -38,6 +38,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --workspaces
 
+      - name: Guard EXPOSE_TEST_TOKENS
+        run: |
+          if [ "${EXPOSE_TEST_TOKENS:-}" = "true" ]; then
+            echo "::error::EXPOSE_TEST_TOKENS must not be enabled in hosted CI"
+            exit 1
+          fi
+
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
@@ -56,6 +63,8 @@ jobs:
           npm run migrate --if-present || node database/migrate.js || true
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
       - name: Run tests
         run: npm run test --workspaces --if-present

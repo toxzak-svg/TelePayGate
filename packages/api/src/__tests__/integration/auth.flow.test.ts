@@ -2,21 +2,54 @@
 process.env.FEATURE_PASSWORDLESS_AUTH = 'true';
 process.env.JWT_SECRET = 'dev-secret';
 import request from 'supertest';
-import createServer from '../../server';
-import { initDatabase } from '@tg-payment/core';
-import { AuthService } from '@tg-payment/core';
+
+// We'll lazy-require server/core modules when starting the fixture so DB URL
+// can be injected before modules create DB connections.
+let createServer: any;
+let initDatabase: any;
+let AuthService: any;
 
 beforeAll(async () => {
+  jest.setTimeout(60_000);
+  // Optionally start Testcontainers fixture when requested
+  if (process.env.USE_TESTCONTAINERS === 'true') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { startPostgresFixture } = require('../fixtures/postgresFixture');
+    const fixture = await startPostgresFixture();
+    process.env.DATABASE_URL = fixture.databaseUrl;
+    (global as any).__tc_fixture = fixture;
+
+    // Now require modules that rely on DATABASE_URL
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    createServer = require('../../server').default;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    initDatabase = require('@tg-payment/core').initDatabase;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    AuthService = require('@tg-payment/core').AuthService;
+  } else {
+    // Non-fixture path: require modules normally
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    createServer = require('../../server').default;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    initDatabase = require('@tg-payment/core').initDatabase;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    AuthService = require('@tg-payment/core').AuthService;
+  }
+
   const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test';
   await initDatabase(DATABASE_URL as string);
 });
 
-afterAll(() => {
-  // nothing for now
+afterAll(async () => {
+  const fixture = (global as any).__tc_fixture;
+  if (fixture) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { stopPostgresFixture } = require('../fixtures/postgresFixture');
+    await stopPostgresFixture(fixture);
+  }
 });
 
 test('magic link verify -> session cookie -> /auth/me', async () => {
-
   const app = createServer();
   const agent = request.agent(app);
 
