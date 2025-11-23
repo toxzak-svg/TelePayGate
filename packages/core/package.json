@@ -16,6 +16,10 @@
     "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.4",
+    "speakeasy": "^2.0.0",
     "@dedust/sdk": "^0.8.7",
     "@ston-fi/sdk": "^2.7.0",
     "@ton/core": "^0.62.0",
