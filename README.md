@@ -1,5 +1,33 @@
 # Telegram Payment Gateway
 
+Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
+
+Quick links
+- Docs: `docs/`
+- Developer process: `docs/process/CONTRIBUTING.md`
+- Response helpers: `docs/process/response-helpers.md`
+
+Quick start (local dev)
+
+```bash
+npm install
+docker-compose up -d
+npm run migrate
+npm run dev
+```
+
+Testing
+
+```bash
+npm run test --workspace packages/api
+```
+
+Contributing
+- See `docs/process/CONTRIBUTING.md` for test and runner guidance.
+
+This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
+# Telegram Payment Gateway
+
 > **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)

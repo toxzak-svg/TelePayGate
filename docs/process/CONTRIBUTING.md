@@ -52,4 +52,7 @@ Security
 Contact
 - For questions about running fixture-backed tests in CI, reach out to the repository maintainers or open an issue.
 
+Response helpers
+- **New response helpers**: the API now centralizes HTTP responses via a helpers file. See `docs/process/response-helpers.md` for usage and migration guidance. Controllers should use `respondSuccess` / `respondError` (or `sendSuccess` / `sendError`) and avoid `res.replySuccess` / `res.replyError` where possible.
+
 ````
