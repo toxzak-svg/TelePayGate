@@ -30,7 +30,7 @@ export type AtomicSwap = {
 };
 
 export class StarsOrderModel {
-  constructor(private db: IDatabase<any>) {}
+  constructor(private db: IDatabase<unknown>) {}
 
   async createOrder(data: StarsOrder) {
     const row = await this.db.one(
@@ -60,7 +60,7 @@ export class StarsOrderModel {
     // For a buyer: oppositeType='sell' and we want sell.rate <= buyer.rate
     // For a seller: oppositeType='buy' and we want buy.rate >= seller.rate
     let query = 'SELECT * FROM stars_orders WHERE status = $1 AND type = $2';
-    const params: any[] = ['open', oppositeType];
+    const params: unknown[] = ['open', oppositeType];
     if (maxRate !== undefined) {
       query += ' AND rate <= $' + (params.length + 1);
       params.push(maxRate);
@@ -76,7 +76,7 @@ export class StarsOrderModel {
 
   async updateStatus(id: string, status: string, extra: Partial<StarsOrder> = {}) {
     const fields = ['status = $2'];
-    const params: any[] = [id, status];
+    const params: unknown[] = [id, status];
     let idx = 3;
     if (extra.locked_until !== undefined) {
       fields.push(`locked_until = $${idx++}`);

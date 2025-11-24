@@ -117,7 +117,7 @@ export class SettlementModel {
     }
   ): Promise<Settlement> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     Object.entries(updates).forEach(([key, value]) => {
@@ -158,7 +158,7 @@ export class SettlementModel {
     const { limit = 20, offset = 0, status } = options;
 
     let whereClause = 'WHERE user_id = $1';
-    const params: any[] = [userId];
+    const params: unknown[] = [userId];
 
     if (status) {
       whereClause += ' AND status = $2';
