@@ -26,3 +26,7 @@ export function sendError(res: Response, code: string, message: string, status =
 
 const defaultExport = { newRequestId, sendSuccess, sendCreated, sendBadRequest, sendError };
 export default defaultExport;
+
+// Backwards-compat aliases (some controllers use older names)
+export const respondSuccess = sendSuccess;
+export const respondError = sendError;
