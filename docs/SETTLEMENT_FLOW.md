@@ -72,10 +72,10 @@ These values are now surfaced under `config.fiatConnectors` inside `@tg-payment/
 
 ## 3. Webhook Events
 
-| Event | Trigger | Payload Highlights |
-|-------|---------|--------------------|
-| `deposit.confirmed` | `manual_deposits.status` transitions to `confirmed` | `depositId`, `paymentId`, `conversionId`, `txHash`, `amountTon`, `confirmations` |
-| `settlement.completed` | `settlements.status` becomes `completed` | `settlementId`, `conversionId`, `fiatAmount`, `currency` |
+| Event                  | Trigger                                             | Payload Highlights                                                               |
+| ---------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `deposit.confirmed`    | `manual_deposits.status` transitions to `confirmed` | `depositId`, `paymentId`, `conversionId`, `txHash`, `amountTon`, `confirmations` |
+| `settlement.completed` | `settlements.status` becomes `completed`            | `settlementId`, `conversionId`, `fiatAmount`, `currency`                         |
 
 Webhooks are queued through `WebhookService.queueEvent()` with the shared `WEBHOOK_SECRET`. A dedicated dispatcher worker (with retries/backoff) is still pending; until then, events enqueue for immediate delivery attempts.
 
@@ -103,7 +103,6 @@ Webhooks are queued through `WebhookService.queueEvent()` with the shared `WEBHO
    - Inspect `payments`, `conversions`, `settlements`, and `manual_deposits` tables to ensure statuses advanced.
 
 3. **Webhook verification**
-
    - Point a webhook URL at a request bin (runscope, webhook.site) while supplying the same `WEBHOOK_SECRET`.
    - Confirm headers `x-webhook-event` + `x-webhook-signature` (HMAC SHA-256) arrive and payloads match the schema described above.
 

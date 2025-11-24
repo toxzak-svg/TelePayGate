@@ -1,7 +1,7 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { 
-  PaymentGatewayConfig, 
-  EstimationParams, 
+import axios, { AxiosInstance, AxiosError } from "axios";
+import {
+  PaymentGatewayConfig,
+  EstimationParams,
   EstimationResult,
   ConversionParams,
   Conversion,
@@ -12,8 +12,8 @@ import {
   RateLock,
   ExchangeRates,
   UserProfile,
-  APIError
-} from './types';
+  APIError,
+} from "./types";
 
 export class TelegramPaymentGateway {
   private client: AxiosInstance;
@@ -25,12 +25,12 @@ export class TelegramPaymentGateway {
     this.apiSecret = config.apiSecret;
 
     this.client = axios.create({
-      baseURL: config.apiUrl || 'http://localhost:3000/api/v1',
+      baseURL: config.apiUrl || "http://localhost:3000/api/v1",
       timeout: config.timeout || 30000,
       headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
-        ...(this.apiSecret && { 'Authorization': `Bearer ${this.apiSecret}` }),
+        "Content-Type": "application/json",
+        "X-API-Key": this.apiKey,
+        ...(this.apiSecret && { Authorization: `Bearer ${this.apiSecret}` }),
       },
     });
 
@@ -39,7 +39,7 @@ export class TelegramPaymentGateway {
       (response) => response,
       (error: AxiosError) => {
         throw this.handleError(error);
-      }
+      },
     );
   }
 
@@ -56,10 +56,12 @@ export class TelegramPaymentGateway {
    * });
    * ```
    */
-  async estimateConversion(params: EstimationParams): Promise<EstimationResult> {
-    const response = await this.client.post('/conversions/estimate', {
+  async estimateConversion(
+    params: EstimationParams,
+  ): Promise<EstimationResult> {
+    const response = await this.client.post("/conversions/estimate", {
       sourceAmount: params.starsAmount,
-      sourceCurrency: 'STARS',
+      sourceCurrency: "STARS",
       targetCurrency: params.targetCurrency,
     });
 
@@ -78,9 +80,9 @@ export class TelegramPaymentGateway {
    * ```
    */
   async lockRate(params: RateLockParams): Promise<RateLock> {
-    const response = await this.client.post('/conversions/lock-rate', {
+    const response = await this.client.post("/conversions/lock-rate", {
       sourceAmount: params.starsAmount,
-      sourceCurrency: 'STARS',
+      sourceCurrency: "STARS",
       targetCurrency: params.targetCurrency,
       durationSeconds: params.durationSeconds || 300,
     });
@@ -100,7 +102,7 @@ export class TelegramPaymentGateway {
    * ```
    */
   async createConversion(params: ConversionParams): Promise<Conversion> {
-    const response = await this.client.post('/conversions/create', {
+    const response = await this.client.post("/conversions/create", {
       paymentIds: params.paymentIds,
       targetCurrency: params.targetCurrency,
       rateLockId: params.rateLockId,
@@ -113,7 +115,9 @@ export class TelegramPaymentGateway {
    * Get conversion status
    */
   async getConversionStatus(conversionId: string): Promise<ConversionStatus> {
-    const response = await this.client.get(`/conversions/${conversionId}/status`);
+    const response = await this.client.get(
+      `/conversions/${conversionId}/status`,
+    );
     return response.data;
   }
 
@@ -125,7 +129,7 @@ export class TelegramPaymentGateway {
     limit?: number;
     status?: string;
   }): Promise<{ conversions: Conversion[]; total: number; page: number }> {
-    const response = await this.client.get('/conversions', {
+    const response = await this.client.get("/conversions", {
       params: {
         page: options?.page || 1,
         limit: options?.limit || 20,
@@ -154,7 +158,7 @@ export class TelegramPaymentGateway {
     limit?: number;
     status?: string;
   }): Promise<{ payments: Payment[]; total: number; page: number }> {
-    const response = await this.client.get('/payments', {
+    const response = await this.client.get("/payments", {
       params: {
         page: options?.page || 1,
         limit: options?.limit || 20,
@@ -169,7 +173,7 @@ export class TelegramPaymentGateway {
    * Get payment statistics
    */
   async getPaymentStats(): Promise<PaymentStats> {
-    const response = await this.client.get('/payments/stats');
+    const response = await this.client.get("/payments/stats");
     return response.data.stats;
   }
 
@@ -179,7 +183,7 @@ export class TelegramPaymentGateway {
    * Get current user profile
    */
   async getProfile(): Promise<UserProfile> {
-    const response = await this.client.get('/users/me');
+    const response = await this.client.get("/users/me");
     return response.data.user;
   }
 
@@ -187,7 +191,7 @@ export class TelegramPaymentGateway {
    * Regenerate API keys
    */
   async regenerateApiKeys(): Promise<{ apiKey: string; apiSecret: string }> {
-    const response = await this.client.post('/users/api-keys/regenerate');
+    const response = await this.client.post("/users/api-keys/regenerate");
     return response.data;
   }
 
@@ -197,7 +201,7 @@ export class TelegramPaymentGateway {
    * Get current exchange rates
    */
   async getExchangeRates(): Promise<ExchangeRates> {
-    const response = await this.client.get('/rates/current');
+    const response = await this.client.get("/rates/current");
     return response.data.rates;
   }
 
@@ -208,23 +212,23 @@ export class TelegramPaymentGateway {
       // Server responded with error status
       const data = error.response.data as any;
       return {
-        message: data.error || data.message || 'API request failed',
-        code: data.code || 'UNKNOWN_ERROR',
+        message: data.error || data.message || "API request failed",
+        code: data.code || "UNKNOWN_ERROR",
         status: error.response.status,
         details: data.details,
       };
     } else if (error.request) {
       // Request made but no response
       return {
-        message: 'No response from server',
-        code: 'NETWORK_ERROR',
+        message: "No response from server",
+        code: "NETWORK_ERROR",
         status: 0,
       };
     } else {
       // Error setting up request
       return {
-        message: error.message || 'Request setup failed',
-        code: 'REQUEST_ERROR',
+        message: error.message || "Request setup failed",
+        code: "REQUEST_ERROR",
         status: 0,
       };
     }

@@ -3,6 +3,7 @@
 Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
 
 Quick links
+
 - Docs: `docs/`
 - Developer process: `docs/process/CONTRIBUTING.md`
 - Response helpers: `docs/process/response-helpers.md`
@@ -23,9 +24,11 @@ npm run test --workspace packages/api
 ```
 
 Contributing
+
 - See `docs/process/CONTRIBUTING.md` for test and runner guidance.
 
 This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
+
 # Telegram Payment Gateway
 
 > **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
@@ -62,6 +65,7 @@ A production-ready monorepo payment gateway enabling developers to accept Telegr
 ### Production Status
 
 **✅ Completed** (100%):
+
 - ✅ Core payment processing (Telegram Stars webhook integration)
 - ✅ TON blockchain integration (wallet management, deposit monitoring, polling)
 - ✅ DEX aggregation & P2P routing (DeDust, Ston.fi)
@@ -84,7 +88,7 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 ### Prerequisites
 
 - Node.js 20+
-- Docker & Docker Compose  
+- Docker & Docker Compose
 - PostgreSQL 16+
 - TON wallet with mnemonic
 
@@ -111,7 +115,7 @@ npm run migrate
 # Start development server
 npm run dev
 ```
- 
+
 ## 🧭 Developer Notes: Response Helpers
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
@@ -121,7 +125,6 @@ The API exposes a small set of shared response helpers at `packages/api/src/util
 - Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
 
 Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `respondSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`.
-
 
 API will be available at `http://localhost:3000`
 
@@ -276,18 +279,17 @@ USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests_
 
 Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
 
-
 ### Technology Stack
 
-| Layer              | Technology       | Purpose                          |
-|--------------------|------------------|----------------------------------|
-| **Language**       | TypeScript 5.2   | Type-safe development            |
-| **Runtime**        | Node.js 20+      | JavaScript execution             |
-| **API Framework**  | Express 4.x      | REST API server                  |
-| **Database**       | PostgreSQL 16    | Persistent data storage          |
-| **Blockchain**     | TonWeb, @ton/ton | TON blockchain interaction       |
-| **Containerization** | Docker Compose | Development & deployment env    |
-| **Package Manager**| npm workspaces   | Monorepo management              |
+| Layer                | Technology       | Purpose                      |
+| -------------------- | ---------------- | ---------------------------- |
+| **Language**         | TypeScript 5.2   | Type-safe development        |
+| **Runtime**          | Node.js 20+      | JavaScript execution         |
+| **API Framework**    | Express 4.x      | REST API server              |
+| **Database**         | PostgreSQL 16    | Persistent data storage      |
+| **Blockchain**       | TonWeb, @ton/ton | TON blockchain interaction   |
+| **Containerization** | Docker Compose   | Development & deployment env |
+| **Package Manager**  | npm workspaces   | Monorepo management          |
 
 ### Package Structure
 
@@ -342,14 +344,14 @@ telegram-payment-gateway/
 **Payment States:**
 
 ```text
-pending → received → awaiting_ton → ton_pending → 
+pending → received → awaiting_ton → ton_pending →
 ton_confirmed → converting → settled → completed
 ```
 
 **Conversion States:**
 
 ```text
-pending → rate_locked → awaiting_ton → ton_received → 
+pending → rate_locked → awaiting_ton → ton_received →
 converting_fiat → completed
 ```
 
@@ -748,11 +750,11 @@ curl https://your-domain.com/api/v1/health
 Structured JSON logging with Winston:
 
 ```typescript
-logger.info('Payment processed', {
-  paymentId: 'uuid',
+logger.info("Payment processed", {
+  paymentId: "uuid",
   amount: 1000,
-  currency: 'STARS',
-  status: 'completed'
+  currency: "STARS",
+  status: "completed",
 });
 ```
 
@@ -762,8 +764,8 @@ Integrate Sentry for error monitoring:
 
 ```typescript
 Sentry.captureException(error, {
-  tags: { service: 'payment-processor' },
-  extra: { paymentId, userId }
+  tags: { service: "payment-processor" },
+  extra: { paymentId, userId },
 });
 ```
 

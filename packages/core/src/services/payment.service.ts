@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool } from "pg";
 
 export interface PaymentRecord {
   id: string;
@@ -51,16 +51,16 @@ export class PaymentService {
    */
   async processSuccessfulPayment(
     userId: string,
-    payload: TelegramPaymentPayload
+    payload: TelegramPaymentPayload,
   ): Promise<PaymentRecord> {
     const payment = payload.message?.successful_payment;
-    
+
     if (!payment) {
-      throw new Error('Invalid payment payload');
+      throw new Error("Invalid payment payload");
     }
 
     const client = await this.pool.connect();
-    
+
     try {
       // Convert Telegram XTR (stars) to decimal amount
       // Telegram sends amount in smallest units (1 star = 1 unit)
@@ -86,12 +86,12 @@ export class PaymentService {
           payload.message?.from?.id,
           payload.message?.from?.username,
           starsAmount,
-          'received',
+          "received",
           JSON.stringify(payload),
-        ]
+        ],
       );
 
-      console.log('✅ Payment recorded:', {
+      console.log("✅ Payment recorded:", {
         id: result.rows[0].id,
         stars: starsAmount,
         user: payload.message?.from?.username,
@@ -99,7 +99,7 @@ export class PaymentService {
 
       return result.rows[0];
     } catch (error) {
-      console.error('❌ Failed to record payment:', error);
+      console.error("❌ Failed to record payment:", error);
       throw error;
     } finally {
       client.release();
@@ -111,15 +111,15 @@ export class PaymentService {
    */
   async verifyPreCheckout(
     userId: string,
-    payload: TelegramPaymentPayload
+    payload: TelegramPaymentPayload,
   ): Promise<boolean> {
     const query = payload.pre_checkout_query;
-    
+
     if (!query) {
       return false;
     }
 
-    console.log('🔍 Pre-checkout verification:', {
+    console.log("🔍 Pre-checkout verification:", {
       userId,
       amount: query.total_amount,
       currency: query.currency,
@@ -129,7 +129,7 @@ export class PaymentService {
     // - Check if user is allowed to make payment
     // - Verify amount is within limits
     // - Check for fraud indicators
-    
+
     return true;
   }
 
@@ -138,8 +138,8 @@ export class PaymentService {
    */
   async getPaymentById(paymentId: string): Promise<PaymentRecord | null> {
     const result = await this.pool.query(
-      'SELECT * FROM payments WHERE id = $1',
-      [paymentId]
+      "SELECT * FROM payments WHERE id = $1",
+      [paymentId],
     );
 
     return result.rows[0] || null;
@@ -151,14 +151,14 @@ export class PaymentService {
   async getUserPayments(
     userId: string,
     limit: number = 20,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<PaymentRecord[]> {
     const result = await this.pool.query(
       `SELECT * FROM payments 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
        LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
+      [userId, limit, offset],
     );
 
     return result.rows;
@@ -179,7 +179,7 @@ export class PaymentService {
         COUNT(CASE WHEN status = 'received' THEN 1 END) as successful_payments
        FROM payments 
        WHERE user_id = $1`,
-      [userId]
+      [userId],
     );
 
     return {

@@ -6,6 +6,7 @@
 ---
 
 ## ✅ COMPLETED
+
 - [x] Removed secrets from Git history
 - [x] Force-pushed cleaned repository to GitHub
 - [x] Updated `.gitignore` to prevent future exposure
@@ -19,6 +20,7 @@
 **Risk**: Anyone can deploy malicious code to your production service
 
 **Steps**:
+
 1. Go to: https://dashboard.render.com/u/settings#api-keys
 2. Find key starting with: `rnd_7YxluJY...`
 3. Click **"Revoke"** button
@@ -36,6 +38,7 @@
 **Steps**:
 
 #### A. Generate New Wallet
+
 ```bash
 cd /workspaces/telegram-payment-gateway
 npm run generate:wallet
@@ -44,6 +47,7 @@ npm run generate:wallet
 **Save the output** - write down the 24 words on paper!
 
 Example output:
+
 ```
 Generated TON Wallet:
 Mnemonic: word1 word2 word3 ... word24
@@ -51,6 +55,7 @@ Address: EQ_new_address_here
 ```
 
 #### B. Transfer Funds
+
 1. Open TonKeeper or TON Wallet app
 2. Import OLD wallet using exposed mnemonic (to check balance)
 3. Send 100% of TON balance to NEW wallet address
@@ -58,6 +63,7 @@ Address: EQ_new_address_here
 5. Verify on https://tonscan.org
 
 #### C. Update Render Environment
+
 1. Go to: https://dashboard.render.com
 2. Select service: **telegram-payment-gateway** (srv-d4d94fggjchc73dr0nug)
 3. Go to **Environment** tab
@@ -67,6 +73,7 @@ Address: EQ_new_address_here
 7. Service will auto-redeploy with new wallet
 
 #### D. Update Local .env
+
 ```bash
 # Edit .env file and replace:
 TON_WALLET_MNEMONIC="NEW_24_WORD_MNEMONIC_HERE"
@@ -82,6 +89,7 @@ PLATFORM_TON_WALLET="NEW_WALLET_ADDRESS_HERE"
 **Risk**: Anyone can send messages as your bot, intercept payments
 
 **Steps**:
+
 1. Open Telegram app
 2. Search for: `@BotFather`
 3. Send command: `/mybots`
@@ -93,12 +101,14 @@ PLATFORM_TON_WALLET="NEW_WALLET_ADDRESS_HERE"
 9. Copy new token (format: `123456789:ABCdefGHI...`)
 
 **Update Render**:
+
 1. Go to Render dashboard → Environment tab
 2. Find `TELEGRAM_BOT_TOKEN`
 3. Edit and paste NEW token
 4. Save changes
 
 **Update Local .env**:
+
 ```bash
 TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 ```
@@ -112,6 +122,7 @@ TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 **Risk**: Unauthorized access to CI/CD deployments
 
 **Steps**:
+
 1. Go to: https://cloud.trigger.dev
 2. Navigate to: Organizations → Your Org → Projects
 3. Select: **telegram-payment-gateway** (proj_fqtizcvgqqorjbcikxsa)
@@ -128,6 +139,7 @@ TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 ### 5. ROTATE EXCHANGE API KEYS (If Configured)
 
 #### Kraken (if you have account)
+
 1. Go to: https://www.kraken.com/u/security/api
 2. Find API keys in list
 3. Click **Delete** on all keys
@@ -135,12 +147,14 @@ TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 5. Update Render environment: `KRAKEN_API_KEY` and `KRAKEN_API_SECRET`
 
 #### CoinGecko (if configured)
+
 1. Go to: https://www.coingecko.com/en/api/pricing
 2. Navigate to your dashboard
 3. Regenerate API key
 4. Update Render: `COINGECKO_API_KEY`
 
 #### CoinMarketCap (if configured)
+
 1. Go to: https://pro.coinmarketcap.com/account
 2. Navigate to API Keys section
 3. Regenerate key
@@ -155,6 +169,7 @@ TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 After completing above steps, verify:
 
 ### ✓ Check Render Dashboard
+
 ```bash
 # Verify new environment variables are set
 curl -H "Authorization: Bearer NEW_RENDER_API_KEY" \
@@ -162,6 +177,7 @@ curl -H "Authorization: Bearer NEW_RENDER_API_KEY" \
 ```
 
 ### ✓ Check TON Wallet
+
 ```bash
 # Old wallet should be EMPTY (0 TON)
 # New wallet should have all funds
@@ -169,6 +185,7 @@ curl -H "Authorization: Bearer NEW_RENDER_API_KEY" \
 ```
 
 ### ✓ Check Telegram Bot
+
 ```bash
 # Send test message to your bot
 # Bot should respond (if auto-reply configured)
@@ -176,6 +193,7 @@ curl -H "Authorization: Bearer NEW_RENDER_API_KEY" \
 ```
 
 ### ✓ Check Deployment
+
 ```bash
 # After Render redeploys with new keys:
 curl https://your-service.onrender.com/health
@@ -186,21 +204,22 @@ curl https://your-service.onrender.com/health
 
 ## Timeline
 
-| Time | Action | Status |
-|------|--------|--------|
-| Now | Revoke Render API key | ❌ PENDING |
-| +5 min | Generate new TON wallet | ❌ PENDING |
-| +10 min | Transfer TON funds | ❌ PENDING |
-| +15 min | Revoke Telegram token | ❌ PENDING |
-| +20 min | Revoke Trigger.dev key | ❌ PENDING |
+| Time    | Action                     | Status     |
+| ------- | -------------------------- | ---------- |
+| Now     | Revoke Render API key      | ❌ PENDING |
+| +5 min  | Generate new TON wallet    | ❌ PENDING |
+| +10 min | Transfer TON funds         | ❌ PENDING |
+| +15 min | Revoke Telegram token      | ❌ PENDING |
+| +20 min | Revoke Trigger.dev key     | ❌ PENDING |
 | +25 min | Update all Render env vars | ❌ PENDING |
-| +30 min | Verify deployment works | ❌ PENDING |
+| +30 min | Verify deployment works    | ❌ PENDING |
 
 ---
 
 ## What If I Can't Complete This Now?
 
 ### Temporary Mitigation (DO THIS IMMEDIATELY)
+
 1. **Pause Render Service**:
    - Dashboard → Service → Settings → "Suspend Service"
    - This prevents unauthorized deployments
@@ -218,6 +237,7 @@ curl https://your-service.onrender.com/health
 ## Questions?
 
 If you need help:
+
 1. **TON Wallet Issues**: https://ton.org/docs/participate/wallets
 2. **Render Support**: https://render.com/docs
 3. **Telegram Bots**: https://core.telegram.org/bots
@@ -238,5 +258,4 @@ If you need help:
 ---
 
 **STATUS**: 🚨 CRITICAL - Action required within 1 hour
-
 ````

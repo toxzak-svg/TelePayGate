@@ -1,4 +1,4 @@
-import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
 
 /**
  * Create configurable rate limiter
@@ -15,9 +15,9 @@ function createRateLimiter(options?: {
     message: {
       success: false,
       error: {
-        code: 'RATE_LIMIT_EXCEEDED',
-        message: 'Too many requests, please try again later'
-      }
+        code: "RATE_LIMIT_EXCEEDED",
+        message: "Too many requests, please try again later",
+      },
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -29,7 +29,7 @@ function createRateLimiter(options?: {
 // Default global rate limiter - created once
 const globalLimiter = createRateLimiter({
   windowMs: 60000,
-  maxRequests: 60
+  maxRequests: 60,
 });
 
 export default globalLimiter;

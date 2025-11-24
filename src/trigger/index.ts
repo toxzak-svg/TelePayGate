@@ -1,6 +1,6 @@
 /**
  * Trigger.dev Tasks Index
- * 
+ *
  * All Trigger.dev tasks for the Telegram Payment Gateway
  */
 
@@ -18,7 +18,4 @@ export {
 export { scheduledDeployment } from "./scheduled-deploy";
 
 // Webhook handlers
-export {
-  githubPushWebhook,
-  manualDeploy,
-} from "./webhooks";
+export { githubPushWebhook, manualDeploy } from "./webhooks";

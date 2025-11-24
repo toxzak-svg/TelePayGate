@@ -253,15 +253,15 @@ console.log('Phase:', status.progress?.phase);
 console.log('Progress:', status.progress?.percentage + '%');
 
 if (status.status === 'completed') {
-  console.log('✅ Conversion complete!');
-  console.log('TON received:', status.conversion.targetAmount);
-  console.log('TX Hash:', status.conversion.tonTxHash);
-  break;
+console.log('✅ Conversion complete!');
+console.log('TON received:', status.conversion.targetAmount);
+console.log('TX Hash:', status.conversion.tonTxHash);
+break;
 }
 
 if (status.status === 'failed') {
-  console.error('❌ Conversion failed:', status.conversion.errorMessage);
-  break;
+console.error('❌ Conversion failed:', status.conversion.errorMessage);
+break;
 }
 
 // Wait 10 seconds before next check
@@ -286,13 +286,13 @@ Create a buy or sell order at a specific rate:
 ```javascript
 // Create a buy order: 5 TON for 1000 Stars (Rate: 0.005)
 const order = await gateway.createP2POrder({
-  type: 'buy',
+  type: "buy",
   starsAmount: 1000,
   tonAmount: 5.0,
-  rate: 0.005
+  rate: 0.005,
 });
 
-console.log('Order created:', order.orderId);
+console.log("Order created:", order.orderId);
 ```
 
 #### 7.2: List Open Orders
@@ -301,11 +301,11 @@ View your active orders:
 
 ```javascript
 const { orders } = await gateway.listP2POrders({
-  status: 'pending',
-  type: 'buy'
+  status: "pending",
+  type: "buy",
 });
 
-console.log('Active orders:', orders.length);
+console.log("Active orders:", orders.length);
 ```
 
 #### 7.3: Cancel Order
@@ -313,8 +313,8 @@ console.log('Active orders:', orders.length);
 Cancel an order if it hasn't been matched:
 
 ```javascript
-await gateway.cancelP2POrder('order-uuid');
-console.log('Order cancelled');
+await gateway.cancelP2POrder("order-uuid");
+console.log("Order cancelled");
 ```
 
 ---
@@ -359,17 +359,17 @@ break;
 
 text
 case 'conversion.completed':
-  console.log('Conversion completed:', data.conversionId);
-  console.log('TON amount:', data.tonAmount);
-  console.log('TX Hash:', data.txHash);
-  // Notify user, update balance, etc.
-  break;
-  
+console.log('Conversion completed:', data.conversionId);
+console.log('TON amount:', data.tonAmount);
+console.log('TX Hash:', data.txHash);
+// Notify user, update balance, etc.
+break;
+
 case 'conversion.failed':
-  console.log('Conversion failed:', data.conversionId);
-  console.log('Reason:', data.errorMessage);
-  // Handle failure
-  break;
+console.log('Conversion failed:', data.conversionId);
+console.log('Reason:', data.errorMessage);
+// Handle failure
+break;
 }
 
 res.json({ success: true });
@@ -440,23 +440,23 @@ limit: 1
 
 text
 const conversion = await gateway.createConversion({
-  paymentIds: [payments.id],
-  targetCurrency: 'TON'
+paymentIds: [payments.id],
+targetCurrency: 'TON'
 });
 
 // Wait for conversion
 const status = await waitForConversion(conversion.id);
 
 if (status.status === 'completed') {
-  const userId = ctx.from!.id;
-  const currentBalance = userBalances.get(userId) || 0;
-  userBalances.set(userId, currentBalance + status.conversion.targetAmount!);
-  
-  await ctx.reply(
-    `✅ Conversion complete!\n` +
-    `Received: ${status.conversion.targetAmount} TON\n` +
-    `Your balance: ${userBalances.get(userId)} TON`
-  );
+const userId = ctx.from!.id;
+const currentBalance = userBalances.get(userId) || 0;
+userBalances.set(userId, currentBalance + status.conversion.targetAmount!);
+
+await ctx.reply(
+`✅ Conversion complete!\n` +
+`Received: ${status.conversion.targetAmount} TON\n` +
+`Your balance: ${userBalances.get(userId)} TON`
+);
 }
 } catch (error) {
 await ctx.reply('❌ Conversion failed. Please contact support.');
@@ -574,6 +574,7 @@ text
 ### Issue: "Webhook not receiving events"
 
 **Solutions:**
+
 1. Verify webhook URL is publicly accessible
 2. Check webhook signature verification
 3. Ensure HTTPS is enabled

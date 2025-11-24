@@ -19,13 +19,13 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 
 ### Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Language** | TypeScript 5.x | Type-safe development |
-| **API Framework** | Express.js | REST API server |
-| **Database** | PostgreSQL 15 | Persistent data storage |
+| Layer                | Technology       | Purpose                  |
+| -------------------- | ---------------- | ------------------------ |
+| **Language**         | TypeScript 5.x   | Type-safe development    |
+| **API Framework**    | Express.js       | REST API server          |
+| **Database**         | PostgreSQL 15    | Persistent data storage  |
 | **Containerization** | Docker + Compose | Development & deployment |
-| **Package Manager** | npm workspaces | Monorepo management |
+| **Package Manager**  | npm workspaces   | Monorepo management      |
 
 ---
 
@@ -391,12 +391,12 @@ text
 
 ### Bottlenecks & Solutions
 
-| Component | Current Limit | Solution |
-|-----------|--------------|----------|
-| API instances | 1 | Load balancer + multiple instances |
-| Database connections | 20 | Increase pool size, add replicas |
-| Rate limiting | In-memory | Migrate to Redis |
-| DEX APIs | Rate limiting | Implement caching & fallback pools |
+| Component            | Current Limit | Solution                           |
+| -------------------- | ------------- | ---------------------------------- |
+| API instances        | 1             | Load balancer + multiple instances |
+| Database connections | 20            | Increase pool size, add replicas   |
+| Rate limiting        | In-memory     | Migrate to Redis                   |
+| DEX APIs             | Rate limiting | Implement caching & fallback pools |
 
 ---
 

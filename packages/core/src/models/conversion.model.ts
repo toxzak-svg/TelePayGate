@@ -1,4 +1,4 @@
-import { Database } from '../db/connection';
+import { Database } from "../db/connection";
 
 export interface Conversion {
   id: string;
@@ -22,23 +22,23 @@ export interface Conversion {
 }
 
 export enum Currency {
-  STARS = 'STARS',
-  TON = 'TON',
-  USD = 'USD',
-  EUR = 'EUR',
-  GBP = 'GBP'
+  STARS = "STARS",
+  TON = "TON",
+  USD = "USD",
+  EUR = "EUR",
+  GBP = "GBP",
 }
 
 export enum ConversionStatus {
-  PENDING = 'pending',
-  RATE_LOCKED = 'rate_locked',
-  PHASE1_PREPARED = 'phase1_prepared',
-  PHASE2_COMMITTED = 'phase2_committed',
-  PHASE3_CONFIRMED = 'phase3_confirmed',
-  IN_PROGRESS = 'in_progress',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
+  PENDING = "pending",
+  RATE_LOCKED = "rate_locked",
+  PHASE1_PREPARED = "phase1_prepared",
+  PHASE2_COMMITTED = "phase2_committed",
+  PHASE3_CONFIRMED = "phase3_confirmed",
+  IN_PROGRESS = "in_progress",
+  CONFIRMED = "confirmed",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export interface ConversionFees {
@@ -74,8 +74,8 @@ export class ConversionModel {
         data.sourceCurrency || Currency.STARS,
         data.targetCurrency,
         data.sourceAmount || 0,
-        data.status || ConversionStatus.PENDING
-      ]
+        data.status || ConversionStatus.PENDING,
+      ],
     );
 
     return this.mapToConversion(result);
@@ -87,8 +87,8 @@ export class ConversionModel {
   async findById(id: string): Promise<Conversion | null> {
     try {
       const result = await this.db.one(
-        'SELECT * FROM conversions WHERE id = $1',
-        [id]
+        "SELECT * FROM conversions WHERE id = $1",
+        [id],
       );
       return this.mapToConversion(result);
     } catch (error) {
@@ -114,7 +114,7 @@ export class ConversionModel {
       fees?: ConversionFees;
       errorMessage?: string;
       completedAt?: Date;
-    }
+    },
   ): Promise<Conversion> {
     const fields: string[] = [];
     const values: any[] = [];
@@ -122,12 +122,15 @@ export class ConversionModel {
 
     Object.entries(updates).forEach(([key, value]) => {
       if (value !== undefined) {
-        const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        const dbKey = key.replace(
+          /[A-Z]/g,
+          (letter) => `_${letter.toLowerCase()}`,
+        );
         fields.push(`${dbKey} = $${paramIndex}`);
-        
-        if (key === 'fees') {
+
+        if (key === "fees") {
           values.push(JSON.stringify(value));
-        } else if (key === 'completedAt') {
+        } else if (key === "completedAt") {
           values.push(value);
         } else {
           values.push(value);
@@ -142,10 +145,10 @@ export class ConversionModel {
 
     const result = await this.db.one(
       `UPDATE conversions 
-       SET ${fields.join(', ')} 
+       SET ${fields.join(", ")} 
        WHERE id = $${paramIndex} 
        RETURNING *`,
-      [...values, id]
+      [...values, id],
     );
 
     return this.mapToConversion(result);
@@ -160,16 +163,16 @@ export class ConversionModel {
       limit?: number;
       offset?: number;
       status?: ConversionStatus;
-    } = {}
+    } = {},
   ): Promise<{ conversions: Conversion[]; total: number }> {
     const { limit = 20, offset = 0, status } = options;
 
     // Join with payments to get user_id
-    let whereClause = 'WHERE p.user_id = $1';
+    let whereClause = "WHERE p.user_id = $1";
     const params: any[] = [userId];
 
     if (status) {
-      whereClause += ' AND c.status = $2';
+      whereClause += " AND c.status = $2";
       params.push(status);
     }
 
@@ -180,19 +183,19 @@ export class ConversionModel {
          ${whereClause}
          ORDER BY c.created_at DESC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, limit, offset]
+        [...params, limit, offset],
       ),
       this.db.one(
         `SELECT COUNT(DISTINCT c.id) as count FROM conversions c
          JOIN payments p ON p.id = ANY(c.payment_ids)
          ${whereClause}`,
-        params
-      )
+        params,
+      ),
     ]);
 
     return {
-      conversions: results.map(r => this.mapToConversion(r)),
-      total: parseInt(countResult.count)
+      conversions: results.map((r) => this.mapToConversion(r)),
+      total: parseInt(countResult.count),
     };
   }
 
@@ -205,38 +208,36 @@ export class ConversionModel {
     totalTargetAmount: number;
     byStatus: Record<ConversionStatus, number>;
   }> {
-    const whereClause = userId 
-      ? 'WHERE p.user_id = $1' 
-      : '';
+    const whereClause = userId ? "WHERE p.user_id = $1" : "";
     const params = userId ? [userId] : [];
 
     const [countResult, sumResults, statusResults] = await Promise.all([
       this.db.one(
         `SELECT COUNT(DISTINCT c.id) as count FROM conversions c
-         ${userId ? 'JOIN payments p ON p.id = ANY(c.payment_ids)' : ''}
+         ${userId ? "JOIN payments p ON p.id = ANY(c.payment_ids)" : ""}
          ${whereClause}`,
-        params
+        params,
       ),
       this.db.one(
         `SELECT 
            COALESCE(SUM(c.source_amount), 0) as source_total,
            COALESCE(SUM(c.target_amount), 0) as target_total
          FROM conversions c
-         ${userId ? 'JOIN payments p ON p.id = ANY(c.payment_ids)' : ''}
+         ${userId ? "JOIN payments p ON p.id = ANY(c.payment_ids)" : ""}
          ${whereClause}`,
-        params
+        params,
       ),
       this.db.any(
         `SELECT c.status, COUNT(*) as count FROM conversions c
-         ${userId ? 'JOIN payments p ON p.id = ANY(c.payment_ids)' : ''}
+         ${userId ? "JOIN payments p ON p.id = ANY(c.payment_ids)" : ""}
          ${whereClause}
          GROUP BY c.status`,
-        params
-      )
+        params,
+      ),
     ]);
 
     const byStatus: Record<string, number> = {};
-    statusResults.forEach(r => {
+    statusResults.forEach((r) => {
       byStatus[r.status] = parseInt(r.count);
     });
 
@@ -244,7 +245,7 @@ export class ConversionModel {
       totalConversions: parseInt(countResult.count),
       totalSourceAmount: parseFloat(sumResults.source_total),
       totalTargetAmount: parseFloat(sumResults.target_total),
-      byStatus: byStatus as Record<ConversionStatus, number>
+      byStatus: byStatus as Record<ConversionStatus, number>,
     };
   }
 
@@ -259,18 +260,24 @@ export class ConversionModel {
       sourceCurrency: row.source_currency as Currency,
       targetCurrency: row.target_currency as Currency,
       sourceAmount: parseFloat(row.source_amount),
-      targetAmount: row.target_amount ? parseFloat(row.target_amount) : undefined,
-      exchangeRate: row.exchange_rate ? parseFloat(row.exchange_rate) : undefined,
-      rateLockedUntil: row.rate_locked_until ? parseInt(row.rate_locked_until) : undefined,
+      targetAmount: row.target_amount
+        ? parseFloat(row.target_amount)
+        : undefined,
+      exchangeRate: row.exchange_rate
+        ? parseFloat(row.exchange_rate)
+        : undefined,
+      rateLockedUntil: row.rate_locked_until
+        ? parseInt(row.rate_locked_until)
+        : undefined,
       dexPoolId: row.dex_pool_id,
       dexProvider: row.dex_provider,
       dexTxHash: row.dex_tx_hash,
       tonTxHash: row.ton_tx_hash,
       status: row.status as ConversionStatus,
-      fees: typeof row.fees === 'string' ? JSON.parse(row.fees) : row.fees,
+      fees: typeof row.fees === "string" ? JSON.parse(row.fees) : row.fees,
       errorMessage: row.error_message,
       createdAt: new Date(row.created_at),
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined
+      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     };
   }
 }

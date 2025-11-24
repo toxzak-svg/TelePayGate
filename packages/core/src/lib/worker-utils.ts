@@ -4,7 +4,10 @@ export type PeriodicRunner = {
   isRunning: () => boolean;
 };
 
-export function createPeriodicRunner(task: () => Promise<void>, intervalMs: number): PeriodicRunner {
+export function createPeriodicRunner(
+  task: () => Promise<void>,
+  intervalMs: number,
+): PeriodicRunner {
   let intervalId: ReturnType<typeof setInterval> | undefined;
   let running = false;
 
@@ -19,12 +22,12 @@ export function createPeriodicRunner(task: () => Promise<void>, intervalMs: numb
         // swallow here; individual tasks should log
         // but we don't want to crash the runner
         // eslint-disable-next-line no-console
-        console.error('Periodic task error (initial run):', err);
+        console.error("Periodic task error (initial run):", err);
       }
       intervalId = setInterval(() => {
         task().catch((err) => {
           // eslint-disable-next-line no-console
-          console.error('Periodic task error:', err);
+          console.error("Periodic task error:", err);
         });
       }, intervalMs);
     },
@@ -47,16 +50,16 @@ export function installGracefulShutdown(stopFn: () => Promise<void>) {
   const shutdown = async () => {
     try {
       // eslint-disable-next-line no-console
-      console.log('\n🛑 Graceful shutdown requested...');
+      console.log("\n🛑 Graceful shutdown requested...");
       await stopFn();
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error during shutdown:', err);
+      console.error("Error during shutdown:", err);
     } finally {
       process.exit(0);
     }
   };
 
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }

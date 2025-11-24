@@ -1,9 +1,9 @@
-import { IDatabase } from 'pg-promise';
+import { IDatabase } from "pg-promise";
 
 export type StarsOrder = {
   id?: string;
   user_id: string;
-  type: 'sell' | 'buy';
+  type: "sell" | "buy";
   stars_amount?: number | null;
   ton_amount?: string | null;
   rate: string; // numeric string
@@ -42,40 +42,49 @@ export class StarsOrderModel {
         data.stars_amount ?? null,
         data.ton_amount ?? null,
         data.rate,
-        data.status ?? 'open',
+        data.status ?? "open",
         data.locked_until ?? null,
         data.counter_order_id ?? null,
         null,
         null,
-      ]
+      ],
     );
     return row;
   }
 
   async getById(id: string) {
-    return this.db.oneOrNone('SELECT * FROM stars_orders WHERE id = $1', [id]);
+    return this.db.oneOrNone("SELECT * FROM stars_orders WHERE id = $1", [id]);
   }
 
-  async findOpenOrders(oppositeType: 'sell' | 'buy', maxRate?: string, minRate?: string, limit = 10) {
+  async findOpenOrders(
+    oppositeType: "sell" | "buy",
+    maxRate?: string,
+    minRate?: string,
+    limit = 10,
+  ) {
     // For a buyer: oppositeType='sell' and we want sell.rate <= buyer.rate
     // For a seller: oppositeType='buy' and we want buy.rate >= seller.rate
-    let query = 'SELECT * FROM stars_orders WHERE status = $1 AND type = $2';
-    const params: any[] = ['open', oppositeType];
+    let query = "SELECT * FROM stars_orders WHERE status = $1 AND type = $2";
+    const params: any[] = ["open", oppositeType];
     if (maxRate !== undefined) {
-      query += ' AND rate <= $' + (params.length + 1);
+      query += " AND rate <= $" + (params.length + 1);
       params.push(maxRate);
     }
     if (minRate !== undefined) {
-      query += ' AND rate >= $' + (params.length + 1);
+      query += " AND rate >= $" + (params.length + 1);
       params.push(minRate);
     }
-    query += ' ORDER BY created_at ASC LIMIT $' + (params.length + 1);
+    query += " ORDER BY created_at ASC LIMIT $" + (params.length + 1);
     params.push(limit);
     return this.db.any(query, params);
   }
 
-  async updateStatus(id: string, status: string, extra: Partial<StarsOrder> = {}) {
-    const fields = ['status = $2'];
+  async updateStatus(
+    id: string,
+    status: string,
+    extra: Partial<StarsOrder> = {},
+  ) {
+    const fields = ["status = $2"];
     const params: any[] = [id, status];
     let idx = 3;
     if (extra.locked_until !== undefined) {
@@ -90,7 +99,7 @@ export class StarsOrderModel {
       fields.push(`completed_at = $${idx++}`);
       params.push(extra.completed_at);
     }
-    const q = `UPDATE stars_orders SET ${fields.join(', ')} WHERE id = $1 RETURNING *`;
+    const q = `UPDATE stars_orders SET ${fields.join(", ")} WHERE id = $1 RETURNING *`;
     return this.db.one(q, params);
   }
 
@@ -98,29 +107,58 @@ export class StarsOrderModel {
     return this.db.one(
       `INSERT INTO atomic_swaps(sell_order_id, buy_order_id, smart_contract_address, ton_tx_hash, telegram_tx_id, status, ton_amount, rate)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [data.sell_order_id, data.buy_order_id, data.smart_contract_address ?? null, data.ton_tx_hash ?? null, data.telegram_tx_id ?? null, data.status ?? 'pending', data.ton_amount, data.rate]
+      [
+        data.sell_order_id,
+        data.buy_order_id,
+        data.smart_contract_address ?? null,
+        data.ton_tx_hash ?? null,
+        data.telegram_tx_id ?? null,
+        data.status ?? "pending",
+        data.ton_amount,
+        data.rate,
+      ],
     );
   }
 
   async markOrdersMatched(sellId: string, buyId: string) {
-    await this.db.tx(async t => {
-      await t.none('UPDATE stars_orders SET status = $1, counter_order_id = $2 WHERE id = $3', ['matched', buyId, sellId]);
-      await t.none('UPDATE stars_orders SET status = $1, counter_order_id = $2 WHERE id = $3', ['matched', sellId, buyId]);
+    await this.db.tx(async (t) => {
+      await t.none(
+        "UPDATE stars_orders SET status = $1, counter_order_id = $2 WHERE id = $3",
+        ["matched", buyId, sellId],
+      );
+      await t.none(
+        "UPDATE stars_orders SET status = $1, counter_order_id = $2 WHERE id = $3",
+        ["matched", sellId, buyId],
+      );
     });
   }
 
   async cancelOrder(id: string) {
-    return this.updateStatus(id, 'cancelled', { completed_at: new Date() });
+    return this.updateStatus(id, "cancelled", { completed_at: new Date() });
   }
 
-  async listOpenOrders(type?: 'sell' | 'buy', limit = 50, offset = 0) {
-    if (type) return this.db.any('SELECT * FROM stars_orders WHERE status = $1 AND type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4', ['open', type, limit, offset]);
-    return this.db.any('SELECT * FROM stars_orders WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', ['open', limit, offset]);
+  async listOpenOrders(type?: "sell" | "buy", limit = 50, offset = 0) {
+    if (type)
+      return this.db.any(
+        "SELECT * FROM stars_orders WHERE status = $1 AND type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        ["open", type, limit, offset],
+      );
+    return this.db.any(
+      "SELECT * FROM stars_orders WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+      ["open", limit, offset],
+    );
   }
 
-  async countOpenOrders(type?: 'sell' | 'buy') {
-    if (type) return this.db.one('SELECT COUNT(*)::int as total FROM stars_orders WHERE status = $1 AND type = $2', ['open', type]);
-    return this.db.one('SELECT COUNT(*)::int as total FROM stars_orders WHERE status = $1', ['open']);
+  async countOpenOrders(type?: "sell" | "buy") {
+    if (type)
+      return this.db.one(
+        "SELECT COUNT(*)::int as total FROM stars_orders WHERE status = $1 AND type = $2",
+        ["open", type],
+      );
+    return this.db.one(
+      "SELECT COUNT(*)::int as total FROM stars_orders WHERE status = $1",
+      ["open"],
+    );
   }
 }
 
