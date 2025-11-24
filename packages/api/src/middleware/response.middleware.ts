@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { respondSuccess, respondError } from '../utils/response';
+import { respondSuccess, respondError, newRequestId } from '../utils/response';
 
 declare global {
   namespace Express {
@@ -11,6 +11,12 @@ declare global {
 }
 
 export function responseMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Generate a request id for tracing and attach to the request/response objects so
+  // handlers and helpers can rely on a single source of truth for request IDs.
+  const id = newRequestId();
+  (res as any).locals = Object.assign((res as any).locals || {}, { requestId: id });
+  (req as any).requestId = id;
+
   // Deprecated compatibility aliases. Prefer `sendSuccess`/`sendError` or `respondSuccess`/`respondError`.
   // See: `docs/process/response-helpers.md` for migration guidance.
   res.replySuccess = (data?: unknown, status = 200) => {

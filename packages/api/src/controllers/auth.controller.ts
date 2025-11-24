@@ -1,17 +1,16 @@
 import { Request, Response } from 'express';
 import { AuthService } from '@tg-payment/core';
 import { getDatabase } from '@tg-payment/core';
-import { respondSuccess, respondError, sendBadRequest, newRequestId } from '../utils/response';
+import { respondSuccess, respondError, sendBadRequest } from '../utils/response';
 
 const FEATURE_FLAG = process.env.FEATURE_PASSWORDLESS_AUTH === 'true';
 
 export default class AuthController {
   static async requestMagicLink(req: Request, res: Response) {
-    const requestId = newRequestId();
-    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404, requestId);
+    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     const { email } = req.body;
-    if (!email) return sendBadRequest(res, 'MISSING_EMAIL', 'Email is required', requestId);
+    if (!email) return sendBadRequest(res, 'MISSING_EMAIL', 'Email is required');
 
     try {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
@@ -19,24 +18,23 @@ export default class AuthController {
       if (process.env.EXPOSE_TEST_TOKENS === 'true') {
         (responseData as any).token = result.token;
       }
-      return respondSuccess(res, { data: responseData }, 202, requestId);
+      return respondSuccess(res, { data: responseData }, 202);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      return respondError(res, 'INTERNAL_ERROR', message || 'Failed to issue magic link', 500, requestId);
+      return respondError(res, 'INTERNAL_ERROR', message || 'Failed to issue magic link', 500);
     }
   }
 
   static async verifyMagicLink(req: Request, res: Response) {
-    const requestId = newRequestId();
-    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404, requestId);
+    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     const { token } = req.body;
-    if (!token) return sendBadRequest(res, 'MISSING_TOKEN', 'Token is required', requestId);
+    if (!token) return sendBadRequest(res, 'MISSING_TOKEN', 'Token is required');
 
     try {
       const result = await AuthService.verifyMagicLink(token);
       if (!result.ok) {
-        return respondError(res, 'INVALID_TOKEN', result.reason, 400, requestId);
+        return respondError(res, 'INVALID_TOKEN', result.reason, 400);
       }
 
       const isProd = process.env.NODE_ENV === 'production';
@@ -47,23 +45,22 @@ export default class AuthController {
         res.cookie('csrf_token', result.csrf_token, { httpOnly: false, secure: isProd, sameSite: 'lax', maxAge });
       }
 
-      return respondSuccess(res, { data: { user: result.user } }, 200, requestId);
+      return respondSuccess(res, { data: { user: result.user } }, 200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      return respondError(res, 'INTERNAL_ERROR', message || 'Verification failed', 500, requestId);
+      return respondError(res, 'INTERNAL_ERROR', message || 'Verification failed', 500);
     }
   }
 
   static async totpVerify(req: Request, res: Response) {
-    const requestId = newRequestId();
-    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404, requestId);
+    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     const { pending_token, code } = req.body;
-    if (!pending_token || !code) return sendBadRequest(res, 'MISSING_PARAMS', 'pending_token and code are required', requestId);
-    if (String(code).length !== 6) return respondError(res, 'INVALID_CODE', 'Invalid TOTP code', 401, requestId);
+    if (!pending_token || !code) return sendBadRequest(res, 'MISSING_PARAMS', 'pending_token and code are required');
+    if (String(code).length !== 6) return respondError(res, 'INVALID_CODE', 'Invalid TOTP code', 401);
 
     res.cookie('session_id', AuthService.generatePendingToken(), { httpOnly: true, secure: true, sameSite: 'strict' });
-    return respondSuccess(res, { data: { message: 'TOTP verified' } }, 200, requestId);
+    return respondSuccess(res, { data: { message: 'TOTP verified' } }, 200);
   }
 
   static async enableTotp(req: Request, res: Response) {
