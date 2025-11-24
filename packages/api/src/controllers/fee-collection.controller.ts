@@ -53,30 +53,24 @@ export class FeeCollectionController {
    * Get total uncollected platform fees
    */
   static async getUncollected(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
 
     try {
       const { feeCollectionService } = FeeCollectionController.getServices();
       const uncollected = await feeCollectionService.getUncollectedFees();
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         uncollected: {
           totalStars: uncollected.totalStars,
           totalTon: uncollected.totalTon,
           totalUsd: uncollected.totalUsd,
           feeCount: uncollected.feeCount
-        },
-        requestId
-      });
+        }
+      }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Get uncollected fees error:', error);
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'UNCOLLECTED_ERROR', message },
-        requestId
-      });
+      return sendError(res, 'UNCOLLECTED_ERROR', message, 500, requestId);
     }
   }
 

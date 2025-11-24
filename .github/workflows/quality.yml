@@ -22,7 +22,7 @@ jobs:
 
       - name: Run jscpd
         run: |
-          npx jscpd@latest --reporters json --output docs/reports/jscpd-latest.json --min-lines 5 --path packages src --ignore node_modules
+          npx jscpd@latest --config .jscpd.json --reporters json --output docs/reports/jscpd-latest.json
 
       - name: Fail on duplication threshold
         run: |
