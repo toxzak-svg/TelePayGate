@@ -1,4 +1,5 @@
 import { setupDexIntegrationTest } from '../../test-utils';
+import { DexAggregatorService } from '../../services/dex-aggregator.service';
 
 const { dexService: _dexService, runDexIntegrationTests } = setupDexIntegrationTest();
 const describeIfEnabled = runDexIntegrationTests ? describe : describe.skip;
