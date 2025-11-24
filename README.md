@@ -55,10 +55,6 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ### Prerequisites
 
-- Node.js 20+
-- Docker & Docker Compose  
-- PostgreSQL 16+
-- TON wallet with mnemonic
 
 ### Installation
 
@@ -107,8 +103,6 @@ API will be available at `http://localhost:3000`
 
    Replace the placeholder with your custodial TON address (must start with `EQ` or `UQ`).
 
-2. **Launch the automated fee collector** once you deploy or have test payments flowing:
-
    ```bash
    npm run worker:fees
    ```
@@ -132,7 +126,6 @@ API will be available at `http://localhost:3000`
 6. [Development Guide](#development-guide)
 7. [Deployment](#deployment)
 8. [Contributing](#contributing)
-
 ---
 
 ## ✨ Key Features
