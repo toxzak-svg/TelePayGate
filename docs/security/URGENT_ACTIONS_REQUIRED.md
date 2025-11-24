@@ -1,3 +1,4 @@
+````markdown
 # 🚨 URGENT SECURITY ACTIONS REQUIRED
 
 **IMMEDIATE ACTIONS NEEDED - Complete within 1 hour to prevent unauthorized access**
@@ -237,3 +238,5 @@ If you need help:
 ---
 
 **STATUS**: 🚨 CRITICAL - Action required within 1 hour
+
+````

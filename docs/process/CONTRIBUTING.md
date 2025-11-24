@@ -1,3 +1,4 @@
+````markdown
 # Contributing
 
 ## Running optional e2e (fixture-backed) tests
@@ -50,3 +51,5 @@ Security
 
 Contact
 - For questions about running fixture-backed tests in CI, reach out to the repository maintainers or open an issue.
+
+````

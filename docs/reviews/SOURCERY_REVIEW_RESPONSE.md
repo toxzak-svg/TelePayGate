@@ -1,3 +1,4 @@
+````markdown
 # Sourcery Code Review Response
 
 ## Summary
@@ -140,3 +141,5 @@ For issues that don't exist in the current code (TransactionMonitorService, getM
 1. Verifying the review was for the correct branch/commit
 2. Creating these functions with the recommended patterns when they are implemented
 3. Using this review as a checklist for future implementations
+
+````

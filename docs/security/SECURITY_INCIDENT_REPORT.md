@@ -1,3 +1,4 @@
+````markdown
 # 🚨 Security Incident Report
 
 **Date**: 2025-02-01  
@@ -198,3 +199,5 @@ scripts/*.pem
 ---
 
 **CRITICAL**: Complete all "USER ACTION REQUIRED" items immediately. Your TON wallet funds are at risk until the new wallet is created and funds transferred.
+
+````
