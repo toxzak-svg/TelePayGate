@@ -83,6 +83,17 @@ npm run migrate
 # Start development server
 npm run dev
 ```
+ 
+## 🧭 Developer Notes: Response Helpers
+
+The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
+
+- Use `newRequestId()` to generate a UUID v4 request id for tracing and pass it to responses when possible.
+- Use `sendSuccess(res, { data }, status, requestId)` or `respondSuccess(res, { data }, status, requestId)` to return successful JSON objects.
+- Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
+
+Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `respondSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`.
+
 
 API will be available at `http://localhost:3000`
 
