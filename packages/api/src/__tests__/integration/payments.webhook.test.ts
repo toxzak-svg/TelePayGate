@@ -3,7 +3,7 @@ import { Application } from 'express';
 
 describe('Payments API - webhook', () => {
   let app: Application | null = null;
-  let fixture: { databaseUrl: string } | null = null;
+  let fixture: { databaseUrl?: string } | null = null;
   let cleanDatabase: (() => Promise<void>) | undefined;
   let disconnectDatabase: (() => Promise<void>) | undefined;
 

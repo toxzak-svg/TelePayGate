@@ -8,7 +8,7 @@ import { resetPasswordlessStub } from './stubs/passwordless.stub.controller';
 
 describe('Passwordless Auth (Isolated or Fixture)', () => {
   let app: Application | null = null;
-  let fixture: { databaseUrl: string } | null = null;
+  let fixture: { databaseUrl?: string } | null = null;
 
   beforeAll(async () => {
     if (process.env.USE_TESTCONTAINERS === 'true') {

@@ -7,7 +7,7 @@ import { Application } from 'express';
 // We'll lazy-require server/core modules when starting the fixture so DB URL
 // can be injected before modules create DB connections.
 let createServer: (() => Application) | undefined;
-let initDatabase: ((dbUrl: string) => Promise<void>) | undefined;
+let initDatabase: any;
 let AuthService:
   | {
       requestMagicLink: (email: string, opts?: unknown) => Promise<{ token?: string }>;
