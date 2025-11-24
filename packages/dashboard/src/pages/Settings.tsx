@@ -47,8 +47,10 @@ export default function Settings() {
         <h2 className="text-lg font-semibold mb-4">Two-Factor Authentication (TOTP)</h2>
         {/* Replace with actual user email context if available */}
         <div className="max-w-lg">
-          {/* @ts-ignore-next-line */}
-          <import('../components/auth/TotpProvision').then(({ default: TotpProvision }) => <TotpProvision email={undefined} />)}
+          {/* Dynamically import TotpProvision using React.lazy */}
+          <React.Suspense fallback={<div>Loading TOTP Provision...</div>}>
+            <TotpProvision email={undefined} />
+          </React.Suspense>
         </div>
       </div>
 
@@ -56,10 +58,16 @@ export default function Settings() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-4">Backup Codes</h2>
         <div className="max-w-lg">
-          {/* @ts-ignore-next-line */}
-          <import('../components/auth/BackupCodes').then(({ default: BackupCodes }) => <BackupCodes email={undefined} />)}
+          {/* Dynamically import BackupCodes using React.lazy */}
+          <React.Suspense fallback={<div>Loading Backup Codes...</div>}>
+            <BackupCodes email={undefined} />
+          </React.Suspense>
         </div>
       </div>
     </div>
   );
 }
+
+// Dynamic imports for TOTP and BackupCodes
+const TotpProvision = React.lazy(() => import('../components/auth/TotpProvision'));
+const BackupCodes = React.lazy(() => import('../components/auth/BackupCodes'));

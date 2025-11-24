@@ -174,7 +174,7 @@ export class ConversionModel {
     }
 
     const [results, countResult] = await Promise.all([
-      this.db.any(
+      this.db.any<Conversion>(
         `SELECT DISTINCT c.* FROM conversions c
          JOIN payments p ON p.id = ANY(c.payment_ids)
          ${whereClause}
@@ -226,7 +226,7 @@ export class ConversionModel {
          ${whereClause}`,
         params
       ),
-      this.db.any(
+      this.db.any<{ status: ConversionStatus; count: string }>(
         `SELECT c.status, COUNT(*) as count FROM conversions c
          ${userId ? 'JOIN payments p ON p.id = ANY(c.payment_ids)' : ''}
          ${whereClause}
@@ -251,7 +251,7 @@ export class ConversionModel {
   /**
    * Map database row to Conversion object
    */
-  private mapToConversion(row: Record<string, unknown>): Conversion {
+  private mapToConversion(row: any): Conversion {
     return {
       id: row.id as string,
       paymentId: row.payment_id as string,

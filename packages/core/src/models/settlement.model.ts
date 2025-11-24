@@ -166,7 +166,7 @@ export class SettlementModel {
     }
 
     const [results, countResult] = await Promise.all([
-      this.db.any(
+      this.db.any<Settlement>(
         `SELECT * FROM settlements ${whereClause} 
          ORDER BY created_at DESC 
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -205,11 +205,11 @@ export class SettlementModel {
         `SELECT COALESCE(SUM(fiat_amount), 0) as total FROM settlements ${whereClause}`,
         params
       ),
-      this.db.any(
+      this.db.any<{ status: SettlementStatus; count: string }>(
         `SELECT status, COUNT(*) as count FROM settlements ${whereClause} GROUP BY status`,
         params
       ),
-      this.db.any(
+      this.db.any<{ fiat_currency: FiatCurrency; total: string }>(
         `SELECT fiat_currency, SUM(fiat_amount) as total FROM settlements ${whereClause} GROUP BY fiat_currency`,
         params
       )

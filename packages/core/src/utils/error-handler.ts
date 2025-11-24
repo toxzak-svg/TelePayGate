@@ -49,14 +49,14 @@ export enum ErrorCode {
 export class AppError extends Error {
   public readonly code: ErrorCode;
   public readonly statusCode: number;
-  public readonly details?: any;
+  public readonly details?: unknown;
   public readonly isOperational: boolean;
 
   constructor(
     message: string,
     code: ErrorCode,
     statusCode: number = 500,
-    details?: any,
+    details?: unknown,
     isOperational: boolean = true
   ) {
     super(message);
@@ -83,7 +83,7 @@ export class AppError extends Error {
 
 // Specific error classes
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, ErrorCode.VALIDATION_ERROR, 400, details);
   }
 }
@@ -107,7 +107,7 @@ export class NotFoundError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, ErrorCode.CONFLICT, 409, details);
   }
 }
@@ -119,7 +119,7 @@ export class RateLimitError extends AppError {
 }
 
 export class ExternalServiceError extends AppError {
-  constructor(service: string, message: string, details?: any) {
+  constructor(service: string, message: string, details?: unknown) {
     super(
       `External service error (${service}): ${message}`,
       ErrorCode.SERVICE_UNAVAILABLE,
@@ -130,7 +130,7 @@ export class ExternalServiceError extends AppError {
 }
 
 export class ConversionError extends AppError {
-  constructor(message: string, code: ErrorCode, details?: any) {
+  constructor(message: string, code: ErrorCode, details?: unknown) {
     super(message, code, 400, details);
   }
 }
@@ -172,7 +172,7 @@ export class ErrorHandler {
     error: {
       message: string;
       code: string;
-      details?: any;
+      details?: unknown;
     };
   } {
     if (error instanceof AppError) {

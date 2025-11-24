@@ -71,7 +71,7 @@ export class StarsOrderModel {
     }
     query += ' ORDER BY created_at ASC LIMIT $' + (params.length + 1);
     params.push(limit);
-    return this.db.any(query, params);
+    return this.db.any<StarsOrder>(query, params);
   }
 
   async updateStatus(id: string, status: string, extra: Partial<StarsOrder> = {}) {
@@ -114,8 +114,8 @@ export class StarsOrderModel {
   }
 
   async listOpenOrders(type?: 'sell' | 'buy', limit = 50, offset = 0) {
-    if (type) return this.db.any('SELECT * FROM stars_orders WHERE status = $1 AND type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4', ['open', type, limit, offset]);
-    return this.db.any('SELECT * FROM stars_orders WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', ['open', limit, offset]);
+    if (type) return this.db.any<StarsOrder>('SELECT * FROM stars_orders WHERE status = $1 AND type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4', ['open', type, limit, offset]);
+    return this.db.any<StarsOrder>('SELECT * FROM stars_orders WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', ['open', limit, offset]);
   }
 
   async countOpenOrders(type?: 'sell' | 'buy') {

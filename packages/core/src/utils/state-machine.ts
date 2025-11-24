@@ -14,7 +14,7 @@ export interface StateTransition {
   from: ConversionState;
   to: ConversionState;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ConversionStateMachine {
@@ -53,7 +53,7 @@ export class ConversionStateMachine {
   /**
    * Attempt to transition to a new state
    */
-  transition(newState: ConversionState, metadata?: Record<string, any>): boolean {
+  transition(newState: ConversionState, metadata?: Record<string, unknown>): boolean {
     if (!this.canTransition(newState)) {
       throw new Error(
         `Invalid transition from ${this.currentState} to ${newState}`

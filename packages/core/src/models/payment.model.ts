@@ -7,7 +7,7 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
-  rawPayload?: any;
+  rawPayload?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,7 +33,7 @@ export class PaymentModel {
     starsAmount: number;
     telegramPaymentId: string;
     status?: PaymentStatus;
-    rawPayload?: any;
+    rawPayload?: unknown;
   }): Promise<Payment> {
     const result = await this.db.one(
       `INSERT INTO payments (
@@ -91,7 +91,7 @@ export class PaymentModel {
   async findByIds(ids: string[]): Promise<Payment[]> {
     if (ids.length === 0) return [];
 
-    const results = await this.db.any(
+    const results = await this.db.any<Payment>(
       'SELECT * FROM payments WHERE id = ANY($1::uuid[])',
       [ids]
     );
@@ -113,7 +113,7 @@ export class PaymentModel {
     const { limit = 20, offset = 0, status } = options;
 
     let whereClause = 'WHERE user_id = $1';
-    const params: any[] = [userId];
+    const params: string[] = [userId];
 
     if (status) {
       whereClause += ' AND status = $2';
