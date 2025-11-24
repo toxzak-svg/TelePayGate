@@ -148,94 +148,46 @@ const FEATURE_FLAG = process.env.FEATURE_PASSWORDLESS_AUTH === 'true';
 
 export default class AuthController {
   static async requestMagicLink(req: Request, res: Response) {
-<<<<<<< HEAD
-    const requestId = newRequestId();
-    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404, requestId);
-
-    const { email } = req.body;
-    if (!email) return sendBadRequest(res, 'MISSING_EMAIL', 'Email is required', requestId);
-=======
     if (!FEATURE_FLAG) return res.replyError('FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
 
     const { email } = req.body;
     if (!email) return res.replyError('MISSING_EMAIL', 'Email is required', 400);
->>>>>>> origin/main
 
     try {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
-      // In production, send email via SMTP provider. Here we return 202.
-      // For tests and development, include the token in the response so test suites can verify flows without SMTP.
       const responseData = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
-      // Only expose raw token when explicitly allowed (tests/dev), to avoid leaking tokens in CI/production.
       if (process.env.EXPOSE_TEST_TOKENS === 'true') {
-        // explicit property only when allowed
         (responseData as any).token = result.token;
       }
-<<<<<<< HEAD
-      return respondSuccess(res, { data: responseData }, 202, requestId);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      return respondError(res, 'INTERNAL_ERROR', message || 'Failed to issue magic link', 500, requestId);
-=======
       res.replySuccess(responseData, 202);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       res.replyError('INTERNAL_ERROR', message || 'Failed to issue magic link', 500);
->>>>>>> origin/main
     }
   }
 
   static async verifyMagicLink(req: Request, res: Response) {
-
-<<<<<<< HEAD
-    const requestId = newRequestId();
-    if (!FEATURE_FLAG) return respondError(res, 'FEATURE_DISABLED', 'Passwordless auth is disabled', 404, requestId);
-=======
     if (!FEATURE_FLAG) return res.replyError('FEATURE_DISABLED', 'Passwordless auth is disabled', 404);
->>>>>>> origin/main
-
-    // (no debug logs)
 
     const { token } = req.body;
-<<<<<<< HEAD
-    if (!token) return sendBadRequest(res, 'MISSING_TOKEN', 'Token is required', requestId);
-=======
     if (!token) return res.replyError('MISSING_TOKEN', 'Token is required', 400);
->>>>>>> origin/main
 
     try {
       const result = await AuthService.verifyMagicLink(token);
       if (!result.ok) {
-<<<<<<< HEAD
-        return respondError(res, 'INVALID_TOKEN', result.reason, 400, requestId);
-=======
         return res.replyError('INVALID_TOKEN', result.reason, 400);
->>>>>>> origin/main
       }
 
-      // Set secure session cookie and CSRF cookie
       const isProd = process.env.NODE_ENV === 'production';
       const maxAge = result.expires_at ? Math.max(0, new Date(result.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
-
-      // session_id: HttpOnly, Secure in production, SameSite lax
       res.cookie('session_id', result.session_token, { httpOnly: true, secure: isProd, sameSite: 'lax', maxAge });
-
-      // csrf_token: accessible to JS (not HttpOnly) so single-page app can read and include in headers
       if (result.csrf_token) {
         res.cookie('csrf_token', result.csrf_token, { httpOnly: false, secure: isProd, sameSite: 'lax', maxAge });
       }
-
-<<<<<<< HEAD
-      return respondSuccess(res, { data: { user: result.user } }, 200, requestId);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      return respondError(res, 'INTERNAL_ERROR', message || 'Verification failed', 500, requestId);
-=======
       res.replySuccess({ user: result.user }, 200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       res.replyError('INTERNAL_ERROR', message || 'Verification failed', 500);
->>>>>>> origin/main
     }
   }
 

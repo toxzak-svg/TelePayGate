@@ -87,16 +87,8 @@ export class PaymentController {
     } catch (error: unknown) {
       console.error('❌ Webhook processing error:', error);
       let message = 'Unknown error';
-      let detail = null;
-      let code_pg = null;
       if (error instanceof Error) {
         message = error.message;
-      }
-      if (typeof error === 'object' && error !== null) {
-        // @ts-expect-error - dynamic error shape coming from pg or other libraries
-        detail = error.detail || null;
-        // @ts-expect-error - dynamic error shape coming from pg or other libraries
-        code_pg = error.code || null;
       }
       respondError(res, 'WEBHOOK_ERROR', message, 500, requestId);
     }

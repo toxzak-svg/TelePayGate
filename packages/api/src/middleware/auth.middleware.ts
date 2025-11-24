@@ -69,7 +69,7 @@ async function authenticateApiKey(
     req.headers['x-user-id'] = user.id;
 
     next();
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Authentication error:', error);
     res.status(500).json({
       success: false,

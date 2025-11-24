@@ -4,8 +4,7 @@ import { AppError, ErrorHandler } from '@tg-payment/core';
 export function errorHandler(
   error: Error,
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): void {
   // Log error
   ErrorHandler.logError(error);

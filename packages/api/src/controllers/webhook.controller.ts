@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { respondSuccess, respondError, newRequestId } from '../utils/response';
 
 export class WebhookController {
-  static async handleTonTransaction(req: Request, res: Response, next: NextFunction) {
+  static async handleTonTransaction(req: Request, res: Response) {
     const requestId = newRequestId();
     try {
       // For now, we just acknowledge the webhook.
