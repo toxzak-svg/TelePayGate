@@ -1,9 +1,8 @@
 import axios from 'axios';
-import { TonClient, WalletContractV4, Address, fromNano, toNano, Cell, beginCell } from '@ton/ton';
+import { WalletContractV4, Address, toNano } from '@ton/ton';
 import { mnemonicToPrivateKey } from '@ton/crypto';
 import { DeDustPool } from '../contracts/dedust.contract';
 import { StonfiRouter } from '../contracts/stonfi.contract';
-import { JettonMaster, JettonWallet } from '../contracts/jetton.contract';
 import { DexError, DexErrorCode, parseDexError, DexRetryHandler } from './dex-error-handler';
 import { TonBlockchainService } from './ton-blockchain.service';
 
@@ -291,7 +290,7 @@ export class DexAggregatorService {
     try {
       // Initialize wallet if not done
       await this.initializeWallet();
-      const { wallet, keyPair } = this.tonService.getWallet();
+      const { wallet, keyPair: _keyPair } = this.tonService.getWallet();
       const sender = this.tonService.getSender();
 
       console.log(`🔄 Executing DeDust swap: ${amount} ${fromToken} → ${toToken}`);
@@ -337,7 +336,7 @@ export class DexAggregatorService {
     }
     try {
       await this.initializeWallet();
-      const { wallet, keyPair } = this.tonService.getWallet();
+      const { wallet, keyPair: _keyPair } = this.tonService.getWallet();
       const sender = this.tonService.getSender();
 
       console.log(`🔄 Executing Ston.fi swap: ${amount} ${fromToken} → ${toToken}`);

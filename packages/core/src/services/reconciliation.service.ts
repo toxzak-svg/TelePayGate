@@ -1,4 +1,4 @@
-import { getDatabase, Database } from '../db/connection';
+import { Database } from '../db/connection';
 import { TonBlockchainService } from './ton-blockchain.service';
 import {
   ReconciliationRecord,

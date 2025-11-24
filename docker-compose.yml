@@ -40,6 +40,10 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       JWT_SECRET: ${JWT_SECRET:-dev_secret_key}
       API_SECRET_KEY: ${API_SECRET_KEY:-dev_api_key}
+      # MailHog (local dev / CI disposable SMTP)
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-mailhog}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-1025}
+      EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE:-false}
     ports:
       - "3000:3000"
     depends_on:
@@ -47,7 +51,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     command: node packages/api/dist/index.js
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: tg_payment_mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # HTTP
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8025/" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

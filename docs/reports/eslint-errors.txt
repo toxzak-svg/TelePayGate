@@ -1,0 +1,36 @@
+````plaintext
+npm WARN config cache-min This option has been deprecated in favor of `--prefer-offline`.
+
+> telegram-payment-gateway@0.1.0 lint
+> eslint . --ext .ts --fix --fix
+
+
+/workspaces/telegram-payment-gateway/packages/api/src/controllers/dex.controller.ts
+  1:29  error  'NextFunction' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspaces/telegram-payment-gateway/packages/api/src/controllers/p2p-orders.controller.ts
+  17:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/workspaces/telegram-payment-gateway/packages/api/src/controllers/payment.controller.ts
+   67:28  warning  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  106:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  108:9   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+/workspaces/telegram-payment-gateway/packages/api/src/controllers/user.controller.ts
+  56:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/workspaces/telegram-payment-gateway/packages/api/src/middleware/auth.middleware.ts
+  72:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/workspaces/telegram-payment-gateway/packages/api/src/middleware/csrf.middleware.ts
+  30:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/workspaces/telegram-payment-gateway/packages/api/src/middleware/error.middleware.ts
+  1:29  error  'NextFunction' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+(work omitted for brevity)
+
+✖ 205 problems (36 errors, 169 warnings)
+
+```

@@ -5,6 +5,7 @@ import DepositMonitorService from '../services/deposit-monitor.service';
 import SettlementService from '../services/settlement.service';
 import { Pool } from 'pg';
 import { WebhookService } from '../services/webhook.service';
+import { installGracefulShutdown } from '../lib/worker-utils';
 
 async function bootstrap() {
   if (!process.env.DATABASE_URL) {
@@ -30,16 +31,12 @@ async function bootstrap() {
   await depositMonitor.start();
   await settlementService.start();
 
-  const shutdown = async () => {
+  installGracefulShutdown(async () => {
     console.log('\n🛑 Shutting down deposit/settlement workers...');
     await depositMonitor.stop();
     await settlementService.stop();
     await pool.end();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 }
 
 bootstrap().catch((err) => {

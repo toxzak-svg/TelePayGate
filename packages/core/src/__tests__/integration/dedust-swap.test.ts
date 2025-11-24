@@ -1,40 +1,12 @@
+import { setupDexIntegrationTest } from '../../test-utils';
 import { DexAggregatorService } from '../../services/dex-aggregator.service';
-import { DexErrorCode } from '../../services/dex-error-handler';
 
-process.env.DEX_SIMULATION_MODE = process.env.DEX_SIMULATION_MODE || 'true';
-if (!process.env.RUN_DEX_INTEGRATION_TESTS && process.env.DEX_SIMULATION_MODE === 'true') {
-  process.env.RUN_DEX_INTEGRATION_TESTS = 'true';
-}
-process.env.TON_MAINNET = process.env.TON_MAINNET || 'false';
-
-const runDexIntegrationTests = process.env.RUN_DEX_INTEGRATION_TESTS === 'true';
+const { dexService: _dexService, runDexIntegrationTests } = setupDexIntegrationTest();
 const describeIfEnabled = runDexIntegrationTests ? describe : describe.skip;
 
-if (!runDexIntegrationTests) {
-  console.warn('⚠️ Skipping DeDust integration tests (set RUN_DEX_INTEGRATION_TESTS=true to enable).');
-} else if (process.env.DEX_SIMULATION_MODE === 'true') {
-  console.log('🧪 DeDust integration tests running in simulation mode');
-}
-
 describeIfEnabled('DeDust Swap Integration Tests', () => {
-  let dexService: DexAggregatorService;
-
-  beforeAll(() => {
-    // Ensure we're on testnet
-    if (process.env.TON_MAINNET === 'true') {
-      throw new Error('These tests should only run on testnet!');
-    }
-
-    process.env.DEDUST_API_URL = 'https://api.dedust.io';
-    process.env.STONFI_API_URL = 'https://api.ston.fi';
-
-    dexService = new DexAggregatorService();
-    (dexService as any).tonService = {
-      getWalletAddress: () => 'EQC-test-wallet-address',
-      initializeWallet: jest.fn(),
-      getTransaction: jest.fn(),
-    };
-  });
+  // use the shared test util's instance
+  const dexService = _dexService;
 
   describe('Wallet Initialization', () => {
     it('should initialize wallet from mnemonic', async () => {

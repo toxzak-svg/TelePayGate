@@ -1,5 +1,4 @@
 import { TransactionMonitorService } from '../services/transaction-monitor.service';
-import TonBlockchainService from '../services/ton-blockchain.service';
 
 describe('TransactionMonitorService', () => {
   let monitor: TransactionMonitorService;

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Unified payment processing for Telegram Stars → TON → Fiat conversions",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -14,16 +15,17 @@
     "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
-    "test:prepare": "PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true && DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.js reset",
+    "test:prepare": "PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true && DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.cjs reset",
     "dev": "npm run dev --workspaces --if-present",
+    "test:detect": "dotenv -e .env.test -- jest --detectOpenHandles --runInBand --forceExit",
     "clean": "bash ./scripts/clean.sh",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "worker:fees": "npm run worker:fees -w @tg-payment/core",
     "wallet:update": "node packages/core/scripts/update-platform-wallet.js",
-    "migrate": "node database/migrate.js up",
-    "migrate:status": "node database/migrate.js status",
-    "migrate:reset": "node database/migrate.js reset",
+    "migrate": "node database/migrate.cjs up",
+    "migrate:status": "node database/migrate.cjs status",
+    "migrate:reset": "node database/migrate.cjs reset",
     "db:setup": "npm run migrate",
     "docker:build": "docker build -t tg-payment-gateway .",
     "docker:up": "docker-compose up -d",
@@ -50,7 +52,8 @@
     "prettier": "^3.0.3",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "testcontainers": "^9.1.0"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
@@ -59,5 +62,9 @@
     "pg": "^8.11.3",
     "pg-promise": "^12.2.0",
     "tonweb": "^0.0.66"
+  }
+  ,
+  "optionalDependencies": {
+    "@aws-sdk/client-kms": "^3.382.0"
   }
 }

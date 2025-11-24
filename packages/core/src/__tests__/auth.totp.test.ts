@@ -1,13 +1,32 @@
 import { initDatabase, closeDatabase, getDatabase } from '../db/connection';
 import AuthService from '../services/auth.service';
 
-beforeAll(() => {
+beforeAll(async () => {
+  // Optionally start Testcontainers fixture when requested
+  if (process.env.USE_TESTCONTAINERS === 'true') {
+    // compute path to api fixture
+    const path = await import('path');
+    const fixturePath = path.resolve(__dirname, '../../../../api/src/__tests__/fixtures/postgresFixture');
+    const mod = await import(fixturePath);
+    const { startPostgresFixture } = mod;
+    const fixture = await startPostgresFixture();
+    process.env.DATABASE_URL = fixture.databaseUrl;
+    (global as any).__tc_fixture = fixture;
+  }
   // use test db URL
   initDatabase(process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test');
 });
 
-afterAll(() => {
-  try { closeDatabase(); } catch (e) {}
+afterAll(async () => {
+  try { closeDatabase(); } catch (e) { /* ignore cleanup errors */ }
+  const fixture = (global as any).__tc_fixture;
+  if (fixture) {
+    const path = await import('path');
+    const fixturePath = path.resolve(__dirname, '../../../../api/src/__tests__/fixtures/postgresFixture');
+    const mod = await import(fixturePath);
+    const { stopPostgresFixture } = mod;
+    await stopPostgresFixture(fixture);
+  }
 });
 
 test('persistTotpAndBackupCodes stores secret and backup codes', async () => {
@@ -32,7 +51,6 @@ test('persistTotpAndBackupCodes stores secret and backup codes', async () => {
   expect(codes.length).toBeGreaterThanOrEqual(3);
 
   // ensure hashed values don't equal plain codes
-  const match = codes.some((r: any) => r.code_hash === 'code1');
-  const match = codes.some((r: unknown) => (r as { code_hash: string }).code_hash === 'code1');
+  const match = codes.some((r: { code_hash: string }) => r.code_hash === 'code1');
   expect(match).toBe(false);
 });

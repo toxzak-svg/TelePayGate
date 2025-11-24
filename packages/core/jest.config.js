@@ -17,5 +17,7 @@ module.exports = {
       lines: 70,
       statements: 70
     }
-  }
+  },
+  globalSetup: '<rootDir>/jest.global-setup.js',
+  globalTeardown: '<rootDir>/jest.global-teardown.js',
 };

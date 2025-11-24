@@ -10,4 +10,6 @@ module.exports = {
   moduleNameMapper: {
     '^@tg-payment/core$': '<rootDir>/../core/src',
   },
+  globalSetup: '<rootDir>/jest.global-setup.js',
+  globalTeardown: '<rootDir>/jest.global-teardown.js',
 };

@@ -2,7 +2,6 @@ import { ConversionService } from '../services/conversion.service';
 import { ReconciliationService } from '../services/reconciliation.service';
 import { TonBlockchainService } from '../services/ton-blockchain.service';
 import { initDatabase, Database } from '../db/connection';
-import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -48,8 +47,8 @@ describe('Conversion and Reconciliation Integration Test', () => {
     } as any);
 
     // --- Mock DB ---
-    const dbOneSpy = jest.spyOn(db, 'one').mockResolvedValue({ total_stars: 1000 });
-    const dbNoneSpy = jest.spyOn(db, 'none').mockResolvedValue(undefined);
+    const _dbOneSpy = jest.spyOn(db, 'one').mockResolvedValue({ total_stars: 1000 });
+    const _dbNoneSpy = jest.spyOn(db, 'none').mockResolvedValue(undefined);
     const dbOneOrNoneSpy = jest.spyOn(db, 'oneOrNone').mockResolvedValue({ id: conversionId, target_amount: 1, ton_tx_hash: 'tx-hash' });
 
     // --- Execute ---

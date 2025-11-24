@@ -1,0 +1,38 @@
+name: Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  quality:
+    name: jscpd + eslint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run jscpd
+        run: |
+          npx jscpd@latest --config .jscpd.json --reporters json --output docs/reports/jscpd-latest.json
+
+      - name: Fail on duplication threshold
+        run: |
+          node -e "const fs=require('fs'); const p='docs/reports/jscpd-latest.json'; if(!fs.existsSync(p)){console.error('jscpd output missing'); process.exit(1);} const r=JSON.parse(fs.readFileSync(p)); const dup=(r.statistics && r.statistics.duplicates) || 0; console.log('jscpd duplicates:',dup); if(dup>50){console.error('Duplication threshold exceeded (>50 duplicates)'); process.exit(1);}"
+
+      - name: Run ESLint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Upload jscpd report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jscpd-report
+          path: docs/reports/jscpd-latest.json

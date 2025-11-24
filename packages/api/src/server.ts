@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import globalLimiter from './middleware/ratelimit.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import v1Routes from './routes/v1.routes';
+import { responseMiddleware } from './middleware/response.middleware';
 import './db/connection';
 
 export function createServer(): Application {
@@ -21,6 +22,9 @@ export function createServer(): Application {
 
   // Global rate limiting
   app.use(globalLimiter);
+
+  // Attach response helpers
+  app.use(responseMiddleware);
 
   // Health check endpoint (no additional auth required)
   app.get('/health', (req, res) => {
