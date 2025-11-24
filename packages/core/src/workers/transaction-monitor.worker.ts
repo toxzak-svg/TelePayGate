@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { initDatabase } from '../db/connection';
 import TonBlockchainService from '../services/ton-blockchain.service';
 import TransactionMonitorService from '../services/transaction-monitor.service';
+import { installGracefulShutdown } from '../lib/worker-utils';
 
 async function bootstrap() {
   if (!process.env.DATABASE_URL) {
@@ -25,14 +26,10 @@ async function bootstrap() {
 
   await transactionMonitor.start();
 
-  const shutdown = async () => {
+  installGracefulShutdown(async () => {
     console.log('\n🛑 Shutting down transaction monitor worker...');
     await transactionMonitor.stop();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 }
 
 bootstrap().catch((err) => {

@@ -7,6 +7,9 @@ Priority 1 (Low-risk, high-impact)
   - Action: extract `packages/core/src/test-utils.ts` (done for first two files) and `packages/api/src/test-utils.ts` where needed.
   - Estimated time: 2-6 hours (incremental PRs)
   - Estimated PRs: 3-6 (one per logical test area — e.g., dex-integration, auth/tests, fixtures)
+  - PRs:
+    - refactor/extract-test-utils (PR #21): extracts DEX integration setup into `packages/core/src/test-utils.ts` and updates two tests.
+    - refactor/worker-lifecycle (PR #22): adds worker-utils (periodic runner + graceful shutdown) and wires initial workers.
 
 Priority 2 (Low-risk)
 - Worker lifecycle code: repeated start/stop/shutdown handlers in `packages/core/src/workers/*`.
