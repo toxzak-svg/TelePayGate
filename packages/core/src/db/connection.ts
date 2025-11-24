@@ -1,5 +1,5 @@
-import pgPromise from 'pg-promise';
-import { Pool } from 'pg';
+import pgPromise from "pg-promise";
+import { Pool } from "pg";
 
 const pgp = pgPromise();
 
@@ -41,14 +41,14 @@ export function initPool(connectionString: string): Pool {
 
 export function getDatabase(): Database {
   if (!db) {
-    throw new Error('Database not initialized. Call initDatabase() first.');
+    throw new Error("Database not initialized. Call initDatabase() first.");
   }
   return db;
 }
 
 export function getPool(): Pool {
   if (!pool) {
-    throw new Error('Pool not initialized. Call initPool() first.');
+    throw new Error("Pool not initialized. Call initPool() first.");
   }
   return pool;
 }

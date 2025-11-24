@@ -1,4 +1,12 @@
-import { Address, beginCell, Cell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
+import {
+  Address,
+  beginCell,
+  Cell,
+  Contract,
+  ContractProvider,
+  Sender,
+  SendMode,
+} from "@ton/core";
 
 export interface DeDustPoolConfig {
   poolAddress: Address;
@@ -30,7 +38,7 @@ export interface PoolData {
 export class DeDustPool implements Contract {
   constructor(
     readonly address: Address,
-    readonly init?: { code: Cell; data: Cell }
+    readonly init?: { code: Cell; data: Cell },
   ) {}
 
   static createFromAddress(address: Address) {
@@ -41,7 +49,7 @@ export class DeDustPool implements Contract {
    * Get pool data including reserves and fees
    */
   async getPoolData(provider: ContractProvider): Promise<PoolData> {
-    const result = await provider.get('get_pool_data', []);
+    const result = await provider.get("get_pool_data", []);
     return {
       reserve0: result.stack.readBigNumber(),
       reserve1: result.stack.readBigNumber(),
@@ -63,7 +71,7 @@ export class DeDustPool implements Contract {
     provider: ContractProvider,
     via: Sender,
     params: SwapParams,
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(0x25938561, 32) // swap op code for DeDust
@@ -92,7 +100,7 @@ export class DeDustPool implements Contract {
     amountIn: bigint,
     reserveIn: bigint,
     reserveOut: bigint,
-    fee: number
+    fee: number,
   ): bigint {
     // Formula: (amountIn * (1 - fee) * reserveOut) / (reserveIn + amountIn * (1 - fee))
     const feeMultiplier = 10000 - Math.floor(fee * 10000);
@@ -122,7 +130,7 @@ export class DeDustVault implements Contract {
       amount: bigint;
       minLpOut: bigint;
     },
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(0x21eeb607, 32) // deposit op code

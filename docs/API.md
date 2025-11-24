@@ -82,7 +82,7 @@ Retrieve authenticated user's profile information.
 "user": {
 "id": "uuid-v4",
 "appName": "My Telegram Bot",
-"apiKey": "pk_***",
+"apiKey": "pk\_\*\*\*",
 "webhookUrl": "https://myapp.com/webhook",
 "kycStatus": "pending",
 "createdAt": "2025-11-12T18:00:00Z",
@@ -166,6 +166,7 @@ Receive notifications about TON blockchain transactions (deposits).
 **Authentication:** None (Public endpoint for blockchain scanners)
 
 **Request Body:**
+
 ```json
 {
   "tx_hash": "unmatched_tx_hash",
@@ -176,6 +177,7 @@ Receive notifications about TON blockchain transactions (deposits).
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -219,6 +221,7 @@ List all payments with pagination and filtering.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `page` (integer, default: 1) - Page number
 - `limit` (integer, default: 20, max: 100) - Results per page
 - `status` (string, optional) - Filter by status: `pending`, `received`, `converting`, `converted`, `settled`, `failed`
@@ -353,6 +356,7 @@ text
 text
 
 **Notes:**
+
 - Minimum lock duration: 60 seconds
 - Maximum lock duration: 600 seconds (10 minutes)
 - Rate locks cannot be extended
@@ -399,6 +403,7 @@ text
 text
 
 **Requirements:**
+
 - Minimum 1000 Stars per conversion
 - All payments must be in `received` status
 - Rate lock (if provided) must be valid
@@ -435,6 +440,7 @@ Check the status of an ongoing conversion.
 text
 
 **Status Values:**
+
 - `pending` - Conversion created
 - `rate_locked` - Rate locked
 - `phase1_prepared` - Payments verified
@@ -453,6 +459,7 @@ List all conversions with pagination and filtering.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `page` (integer, default: 1)
 - `limit` (integer, default: 20, max: 100)
 - `status` (string, optional)
@@ -483,11 +490,11 @@ text
 
 ## Rate Limits
 
-| Endpoint Type | Rate Limit |
-|--------------|------------|
-| User Registration | 10 req/min per IP |
-| Standard API | 60 req/min per user |
-| Webhooks | 100 req/min per user |
+| Endpoint Type     | Rate Limit           |
+| ----------------- | -------------------- |
+| User Registration | 10 req/min per IP    |
+| Standard API      | 60 req/min per user  |
+| Webhooks          | 100 req/min per user |
 
 **Rate Limit Headers:**
 X-RateLimit-Limit: 60
@@ -515,18 +522,18 @@ text
 
 ### Common Error Codes
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `UNAUTHORIZED` | 401 | Invalid or missing API key |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request data |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `MINIMUM_AMOUNT_NOT_MET` | 400 | Below 1000 Stars minimum |
-| `INSUFFICIENT_BALANCE` | 400 | Not enough funds |
-| `RATE_LOCK_EXPIRED` | 400 | Rate lock no longer valid |
-| `CONVERSION_IN_PROGRESS` | 409 | Conversion already processing |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                     | Status | Description                   |
+| ------------------------ | ------ | ----------------------------- |
+| `UNAUTHORIZED`           | 401    | Invalid or missing API key    |
+| `FORBIDDEN`              | 403    | Insufficient permissions      |
+| `NOT_FOUND`              | 404    | Resource not found            |
+| `VALIDATION_ERROR`       | 400    | Invalid request data          |
+| `RATE_LIMIT_EXCEEDED`    | 429    | Too many requests             |
+| `MINIMUM_AMOUNT_NOT_MET` | 400    | Below 1000 Stars minimum      |
+| `INSUFFICIENT_BALANCE`   | 400    | Not enough funds              |
+| `RATE_LOCK_EXPIRED`      | 400    | Rate lock no longer valid     |
+| `CONVERSION_IN_PROGRESS` | 409    | Conversion already processing |
+| `INTERNAL_ERROR`         | 500    | Server error                  |
 
 ---
 
@@ -542,11 +549,13 @@ Fetch current exchange rates from all supported DEX providers.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `fromToken` (string, required): Source token symbol (e.g., "TON", "USDT")
 - `toToken` (string, required): Target token symbol
 - `amount` (number, optional): Amount to convert for quote
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -589,11 +598,13 @@ Retrieve liquidity pool information for a specific token pair.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `token0` (string, required): First token symbol
 - `token1` (string, required): Second token symbol
 - `provider` (string, optional): Filter by provider ("dedust", "stonfi", or omit for all)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -628,6 +639,7 @@ Find the optimal swap route for a given token pair and amount.
 **Authentication:** Required
 
 **Request Body:**
+
 ```json
 {
   "fromToken": "TON",
@@ -638,6 +650,7 @@ Find the optimal swap route for a given token pair and amount.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -672,6 +685,7 @@ Execute a swap through the DEX (requires admin privileges).
 **Authentication:** Required (Admin)
 
 **Request Body:**
+
 ```json
 {
   "provider": "stonfi",
@@ -685,6 +699,7 @@ Execute a swap through the DEX (requires admin privileges).
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -720,6 +735,7 @@ Create a new buy or sell order for Stars/TON exchange.
 **Authentication:** Required
 
 **Request Body:**
+
 ```json
 {
   "type": "buy",
@@ -730,6 +746,7 @@ Create a new buy or sell order for Stars/TON exchange.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -756,11 +773,13 @@ List all P2P orders (own or available for matching).
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `type` (string, optional): Filter by "buy" or "sell"
 - `status` (string, optional): Filter by status
 - `own` (boolean, optional): Show only user's orders
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -793,6 +812,7 @@ Cancel a pending P2P order.
 **Authentication:** Required
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,

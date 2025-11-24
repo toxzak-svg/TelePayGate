@@ -31,24 +31,23 @@ text
 ### Initial Setup
 
 1. Clone repository
-git clone https://github.com/yourusername/telegram-payment-gateway.git
-cd telegram-payment-gateway
+   git clone https://github.com/yourusername/telegram-payment-gateway.git
+   cd telegram-payment-gateway
 
 2. Install dependencies
-npm install
+   npm install
 
 3. Create .env file
-cp .env.example .env
+   cp .env.example .env
 
-Edit .env with your credentials
-4. Start database
+Edit .env with your credentials 4. Start database
 docker-compose up -d postgres
 
 5. Verify database is ready
-docker logs tg_payment_postgres
+   docker logs tg_payment_postgres
 
 6. Start development server
-npm run dev --workspace=@tg-payment/api
+   npm run dev --workspace=@tg-payment/api
 
 text
 
@@ -70,7 +69,7 @@ Telegram (optional for development)
 TELEGRAM_BOT_TOKEN=your_bot_token
 
 TON (optional for development)
-TON_WALLET_ADDRESS=EQDtFpEwcFAEcRe5mLVh2N6C0x-_hJEM7W61_JLnSF74p4q2
+TON_WALLET_ADDRESS=EQDtFpEwcFAEcRe5mLVh2N6C0x-\_hJEM7W61_JLnSF74p4q2
 DEDUST_API_URL=https://api.dedust.io
 STONFI_API_URL=https://api.ston.fi
 
@@ -100,20 +99,22 @@ text
 ### Making Changes
 
 1. Create feature branch
-git checkout -b feature/your-feature-name
+   git checkout -b feature/your-feature-name
 
 2. Make changes
+
 - Edit files in packages/api or packages/core
 - API auto-reloads on save
+
 3. Test changes
-node packages/api/scripts/test-payment.js
+   node packages/api/scripts/test-payment.js
 
 4. Commit
-git add .
-git commit -m "feat: description of changes"
+   git add .
+   git commit -m "feat: description of changes"
 
 5. Push
-git push origin feature/your-feature-name
+   git push origin feature/your-feature-name
 
 text
 
@@ -215,20 +216,20 @@ const userId = (req as any).user?.id;
 
 text
 try {
-  // Your logic here
-  
-  return res.status(200).json({
-    success: true,
-    data: {},
-    requestId,
-  });
+// Your logic here
+
+return res.status(200).json({
+success: true,
+data: {},
+requestId,
+});
 } catch (error) {
-  console.error('Error:', error);
-  return res.status(500).json({
-    success: false,
-    error: { code: 'ERROR_CODE', message: 'Error message' },
-    requestId,
-  });
+console.error('Error:', error);
+return res.status(500).json({
+success: false,
+error: { code: 'ERROR_CODE', message: 'Error message' },
+requestId,
+});
 }
 }
 }
@@ -245,7 +246,7 @@ this.pool = pool;
 }
 
 async doSomething(): Promise<any> {
-const result = await this.pool.query('SELECT * FROM table');
+const result = await this.pool.query('SELECT \* FROM table');
 return result.rows;
 }
 }
@@ -275,13 +276,13 @@ text
 
 // Good - parameterized queries
 const result = await pool.query(
-'SELECT * FROM users WHERE id = $1',
+'SELECT \* FROM users WHERE id = $1',
 [userId]
 );
 
 // Bad - vulnerable to SQL injection
 const result = await pool.query(
-SELECT * FROM users WHERE id = '${userId}'
+SELECT \* FROM users WHERE id = '${userId}'
 );
 
 text
@@ -321,7 +322,7 @@ node packages/api/scripts/test-conversion.js
 node packages/api/scripts/test-auth.js
 
 With debugging
-NODE_ENV=test DEBUG=* npm test
+NODE_ENV=test DEBUG=\* npm test
 
 text
 
@@ -340,9 +341,9 @@ const user = await createTestUser();
 text
 // 2. Execute
 const response = await axios.post(`${API_URL}/endpoint`, {
-  data: 'test'
+data: 'test'
 }, {
-  headers: { 'X-API-Key': user.apiKey }
+headers: { 'X-API-Key': user.apiKey }
 });
 
 // 3. Verify
@@ -415,12 +416,12 @@ Connect to database
 docker exec -it tg_payment_postgres psql -U tg_user -d tg_payment_dev
 
 Useful queries
-SELECT * FROM users LIMIT 5;
-SELECT * FROM payments ORDER BY created_at DESC LIMIT 10;
-SELECT * FROM conversions WHERE status = 'pending';
+SELECT _ FROM users LIMIT 5;
+SELECT _ FROM payments ORDER BY created_at DESC LIMIT 10;
+SELECT \* FROM conversions WHERE status = 'pending';
 
 Check connection count
-SELECT count(*) FROM pg_stat_activity;
+SELECT count(\*) FROM pg_stat_activity;
 
 View slow queries
 SELECT query, calls, total_time
@@ -512,7 +513,7 @@ text
 ### Database Queries
 
 // ✅ Good - use connection pool
-const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+const result = await pool.query('SELECT \* FROM users WHERE id = $1', [userId]);
 
 // ✅ Good - release connections
 const client = await pool.connect();
@@ -639,13 +640,13 @@ CREATE INDEX idx_payments_user_created ON payments(user_id, created_at DESC);
 
 // ✅ Batch queries
 const payments = await pool.query(
-'SELECT * FROM payments WHERE id = ANY($1)',
+'SELECT \* FROM payments WHERE id = ANY($1)',
 [[id1, id2, id3]]
 );
 
 // ❌ Avoid N+1 queries
 for (const user of users) {
-await pool.query('SELECT * FROM payments WHERE user_id = $1', [user.id]);
+await pool.query('SELECT \* FROM payments WHERE user_id = $1', [user.id]);
 }
 
 text
@@ -669,6 +670,7 @@ text
 ## Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
+
 - Code style guide
 - Pull request process
 - Review checklist

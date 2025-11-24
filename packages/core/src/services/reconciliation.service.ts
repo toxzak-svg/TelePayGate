@@ -1,5 +1,5 @@
-import { Database } from '../db/connection';
-import { TonBlockchainService } from './ton-blockchain.service';
+import { Database } from "../db/connection";
+import { TonBlockchainService } from "./ton-blockchain.service";
 import {
   ReconciliationRecord,
   ReconciliationResult,
@@ -7,7 +7,7 @@ import {
   StaleConversion,
   StuckAtomicSwap,
   UnverifiedDeposit,
-} from '../types';
+} from "../types";
 
 export class ReconciliationService {
   private db: Database;
@@ -18,7 +18,7 @@ export class ReconciliationService {
     this.tonService = new TonBlockchainService(
       process.env.TON_API_URL!,
       process.env.TON_API_KEY,
-      process.env.TON_WALLET_MNEMONIC
+      process.env.TON_WALLET_MNEMONIC,
     );
   }
 
@@ -28,19 +28,20 @@ export class ReconciliationService {
   async reconcilePayment(paymentId: string): Promise<ReconciliationRecord> {
     // Get payment from database
     const payment = await this.db.oneOrNone(
-      'SELECT * FROM payments WHERE id = $1',
-      [paymentId]
+      "SELECT * FROM payments WHERE id = $1",
+      [paymentId],
     );
 
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new Error("Payment not found");
     }
 
     const expectedAmount = payment.stars_amount;
-    const actualAmount = payment.raw_payload?.successful_payment?.total_amount || 0;
+    const actualAmount =
+      payment.raw_payload?.successful_payment?.total_amount || 0;
     const difference = Math.abs(expectedAmount - actualAmount);
 
-    const status = difference === 0 ? 'matched' : 'mismatch';
+    const status = difference === 0 ? "matched" : "mismatch";
 
     // Record reconciliation
     const result = await this.db.one(
@@ -49,7 +50,7 @@ export class ReconciliationService {
         status, reconciliation_type, reconciled_at
       ) VALUES ($1, $2, $3, $4, $5, 'payment', NOW())
       RETURNING *`,
-      [paymentId, expectedAmount, actualAmount, difference, status]
+      [paymentId, expectedAmount, actualAmount, difference, status],
     );
 
     console.log(`✅ Payment reconciled: ${paymentId} - Status: ${status}`);
@@ -60,20 +61,22 @@ export class ReconciliationService {
   /**
    * Reconcile conversion against DEX and TON blockchain
    */
-  async reconcileConversion(conversionId: string): Promise<ReconciliationRecord> {
+  async reconcileConversion(
+    conversionId: string,
+  ): Promise<ReconciliationRecord> {
     // Get conversion from database
     const conversion = await this.db.oneOrNone(
-      'SELECT * FROM conversions WHERE id = $1',
-      [conversionId]
+      "SELECT * FROM conversions WHERE id = $1",
+      [conversionId],
     );
 
     if (!conversion) {
-      throw new Error('Conversion not found');
+      throw new Error("Conversion not found");
     }
 
     const expectedAmount = conversion.target_amount;
     let actualAmount = 0;
-    let status: 'matched' | 'mismatch' | 'pending' = 'pending';
+    let status: "matched" | "mismatch" | "pending" = "pending";
     let difference = 0;
 
     if (conversion.ton_tx_hash) {
@@ -81,10 +84,10 @@ export class ReconciliationService {
       if (tx && tx.confirmed) {
         actualAmount = tx.amount;
         difference = Math.abs(expectedAmount - actualAmount);
-        status = difference < 0.01 ? 'matched' : 'mismatch'; // Allow 0.01 TON tolerance
+        status = difference < 0.01 ? "matched" : "mismatch"; // Allow 0.01 TON tolerance
       }
     } else {
-      status = 'pending';
+      status = "pending";
     }
 
     const result = await this.db.one(
@@ -99,16 +102,18 @@ export class ReconciliationService {
         actualAmount,
         difference,
         status,
-        conversion.ton_tx_hash
-      ]
+        conversion.ton_tx_hash,
+      ],
     );
 
-    console.log(`✅ Conversion reconciled: ${conversionId} - Status: ${status}`);
+    console.log(
+      `✅ Conversion reconciled: ${conversionId} - Status: ${status}`,
+    );
 
     return this.mapToRecord(result);
   }
 
-    async checkStalePendingPayments(): Promise<StalePayment[]> {
+  async checkStalePendingPayments(): Promise<StalePayment[]> {
     const paymentResult = await this.db.any(
       `SELECT 
          p.id as payment_id,
@@ -118,7 +123,7 @@ export class ReconciliationService {
          p.created_at
        FROM payments p
        WHERE p.status = 'received' 
-         AND p.created_at < NOW() - INTERVAL '1 hour'`
+         AND p.created_at < NOW() - INTERVAL '1 hour'`,
     );
     return paymentResult.map((p) => ({
       paymentId: p.payment_id,
@@ -126,7 +131,7 @@ export class ReconciliationService {
       starsAmount: p.stars_amount,
       status: p.status,
       ageHours: Math.floor(
-        (new Date().getTime() - new Date(p.created_at).getTime()) / 3600000
+        (new Date().getTime() - new Date(p.created_at).getTime()) / 3600000,
       ),
     }));
   }
@@ -142,7 +147,7 @@ export class ReconciliationService {
          c.created_at
        FROM conversions c
        WHERE c.status = 'pending'
-         AND c.created_at < NOW() - INTERVAL '1 hour'`
+         AND c.created_at < NOW() - INTERVAL '1 hour'`,
     );
     return result.map((c) => ({
       conversionId: c.conversion_id,
@@ -151,7 +156,7 @@ export class ReconciliationService {
       targetAmount: c.target_amount,
       status: c.status,
       ageHours: Math.floor(
-        (new Date().getTime() - new Date(c.created_at).getTime()) / 3600000
+        (new Date().getTime() - new Date(c.created_at).getTime()) / 3600000,
       ),
     }));
   }
@@ -171,7 +176,7 @@ export class ReconciliationService {
        JOIN atomic_swaps a ON p.id = a.payment_id
        WHERE p.status = 'awaiting_ton' 
          AND a.status NOT IN ('completed', 'failed', 'expired')
-         AND a.created_at < NOW() - INTERVAL '24 hours'`
+         AND a.created_at < NOW() - INTERVAL '24 hours'`,
     );
 
     const conversionsResult = await this.db.any(
@@ -185,13 +190,13 @@ export class ReconciliationService {
        JOIN atomic_swaps a ON c.id = a.conversion_id
        WHERE c.status = 'awaiting_ton'
          AND a.status NOT IN ('completed', 'failed', 'expired')
-         AND a.created_at < NOW() - INTERVAL '24 hours'`
+         AND a.created_at < NOW() - INTERVAL '24 hours'`,
     );
 
     return [...paymentsResult, ...conversionsResult];
   }
 
-    async checkUnverifiedDeposits(): Promise<UnverifiedDeposit[]> {
+  async checkUnverifiedDeposits(): Promise<UnverifiedDeposit[]> {
     const result = await this.db.any(
       `SELECT 
          d.id as deposit_id,
@@ -202,7 +207,7 @@ export class ReconciliationService {
          d.created_at
        FROM deposits d
        WHERE d.status = 'awaiting_confirmation'
-         AND d.created_at < NOW() - INTERVAL '1 hour'`
+         AND d.created_at < NOW() - INTERVAL '1 hour'`,
     );
     return result;
   }
@@ -212,7 +217,7 @@ export class ReconciliationService {
    */
   async getReconciliationReport(
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<{
     summary: ReconciliationResult;
     records: ReconciliationRecord[];
@@ -221,17 +226,17 @@ export class ReconciliationService {
       `SELECT * FROM reconciliation_records
        WHERE created_at BETWEEN $1 AND $2
        ORDER BY created_at DESC`,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
-    const records = results.map(r => this.mapToRecord(r));
+    const records = results.map((r) => this.mapToRecord(r));
 
     const summary: ReconciliationResult = {
-      matched: records.filter(r => r.status === 'matched').length,
-      mismatched: records.filter(r => r.status === 'mismatch').length,
-      pending: records.filter(r => r.status === 'pending').length,
+      matched: records.filter((r) => r.status === "matched").length,
+      mismatched: records.filter((r) => r.status === "mismatch").length,
+      pending: records.filter((r) => r.status === "pending").length,
       totalChecked: records.length,
-      discrepancies: records.filter(r => r.status === 'mismatch')
+      discrepancies: records.filter((r) => r.status === "mismatch"),
     };
 
     return { summary, records };
@@ -253,7 +258,7 @@ export class ReconciliationService {
       externalReference: row.external_reference,
       notes: row.notes,
       reconciledAt: row.reconciled_at ? new Date(row.reconciled_at) : undefined,
-      createdAt: new Date(row.created_at)
+      createdAt: new Date(row.created_at),
     };
   }
 }

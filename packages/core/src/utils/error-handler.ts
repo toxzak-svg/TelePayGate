@@ -1,49 +1,49 @@
 export enum ErrorCode {
   // Authentication errors
-  UNAUTHORIZED = 'UNAUTHORIZED',
-  FORBIDDEN = 'FORBIDDEN',
-  INVALID_API_KEY = 'INVALID_API_KEY',
+  UNAUTHORIZED = "UNAUTHORIZED",
+  FORBIDDEN = "FORBIDDEN",
+  INVALID_API_KEY = "INVALID_API_KEY",
 
   // Validation errors
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  INVALID_INPUT = 'INVALID_INPUT',
-  MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
+  VALIDATION_ERROR = "VALIDATION_ERROR",
+  INVALID_INPUT = "INVALID_INPUT",
+  MISSING_REQUIRED_FIELD = "MISSING_REQUIRED_FIELD",
 
   // Payment errors
-  PAYMENT_NOT_FOUND = 'PAYMENT_NOT_FOUND',
-  INVALID_PAYMENT_STATUS = 'INVALID_PAYMENT_STATUS',
-  PAYMENT_ALREADY_CONVERTED = 'PAYMENT_ALREADY_CONVERTED',
+  PAYMENT_NOT_FOUND = "PAYMENT_NOT_FOUND",
+  INVALID_PAYMENT_STATUS = "INVALID_PAYMENT_STATUS",
+  PAYMENT_ALREADY_CONVERTED = "PAYMENT_ALREADY_CONVERTED",
 
   // Conversion errors
-  CONVERSION_NOT_FOUND = 'CONVERSION_NOT_FOUND',
-  MINIMUM_AMOUNT_NOT_MET = 'MINIMUM_AMOUNT_NOT_MET',
-  INSUFFICIENT_BALANCE = 'INSUFFICIENT_BALANCE',
-  RATE_LOCK_EXPIRED = 'RATE_LOCK_EXPIRED',
-  RATE_LOCK_NOT_FOUND = 'RATE_LOCK_NOT_FOUND',
-  CONVERSION_IN_PROGRESS = 'CONVERSION_IN_PROGRESS',
-  CONVERSION_FAILED = 'CONVERSION_FAILED',
-  INVALID_STATE_TRANSITION = 'INVALID_STATE_TRANSITION',
+  CONVERSION_NOT_FOUND = "CONVERSION_NOT_FOUND",
+  MINIMUM_AMOUNT_NOT_MET = "MINIMUM_AMOUNT_NOT_MET",
+  INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
+  RATE_LOCK_EXPIRED = "RATE_LOCK_EXPIRED",
+  RATE_LOCK_NOT_FOUND = "RATE_LOCK_NOT_FOUND",
+  CONVERSION_IN_PROGRESS = "CONVERSION_IN_PROGRESS",
+  CONVERSION_FAILED = "CONVERSION_FAILED",
+  INVALID_STATE_TRANSITION = "INVALID_STATE_TRANSITION",
 
   // Rate limit errors
-  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
-  TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS',
+  RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
+  TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
 
   // External service errors
-  TELEGRAM_API_ERROR = 'TELEGRAM_API_ERROR',
-  DEX_API_ERROR = 'DEX_API_ERROR',
-  TON_NETWORK_ERROR = 'TON_NETWORK_ERROR',
-  EXCHANGE_API_ERROR = 'EXCHANGE_API_ERROR',
+  TELEGRAM_API_ERROR = "TELEGRAM_API_ERROR",
+  DEX_API_ERROR = "DEX_API_ERROR",
+  TON_NETWORK_ERROR = "TON_NETWORK_ERROR",
+  EXCHANGE_API_ERROR = "EXCHANGE_API_ERROR",
 
   // System errors
-  DATABASE_ERROR = 'DATABASE_ERROR',
-  INTERNAL_ERROR = 'INTERNAL_ERROR',
-  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
-  TIMEOUT = 'TIMEOUT',
+  DATABASE_ERROR = "DATABASE_ERROR",
+  INTERNAL_ERROR = "INTERNAL_ERROR",
+  SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE",
+  TIMEOUT = "TIMEOUT",
 
   // Resource errors
-  NOT_FOUND = 'NOT_FOUND',
-  ALREADY_EXISTS = 'ALREADY_EXISTS',
-  CONFLICT = 'CONFLICT'
+  NOT_FOUND = "NOT_FOUND",
+  ALREADY_EXISTS = "ALREADY_EXISTS",
+  CONFLICT = "CONFLICT",
 }
 
 export class AppError extends Error {
@@ -57,10 +57,10 @@ export class AppError extends Error {
     code: ErrorCode,
     statusCode: number = 500,
     details?: any,
-    isOperational: boolean = true
+    isOperational: boolean = true,
   ) {
     super(message);
-    
+
     this.name = this.constructor.name;
     this.code = code;
     this.statusCode = statusCode;
@@ -75,8 +75,8 @@ export class AppError extends Error {
       error: {
         message: this.message,
         code: this.code,
-        details: this.details
-      }
+        details: this.details,
+      },
     };
   }
 }
@@ -89,13 +89,13 @@ export class ValidationError extends AppError {
 }
 
 export class AuthenticationError extends AppError {
-  constructor(message: string = 'Authentication failed') {
+  constructor(message: string = "Authentication failed") {
     super(message, ErrorCode.UNAUTHORIZED, 401);
   }
 }
 
 export class AuthorizationError extends AppError {
-  constructor(message: string = 'Access forbidden') {
+  constructor(message: string = "Access forbidden") {
     super(message, ErrorCode.FORBIDDEN, 403);
   }
 }
@@ -113,7 +113,7 @@ export class ConflictError extends AppError {
 }
 
 export class RateLimitError extends AppError {
-  constructor(message: string = 'Rate limit exceeded', retryAfter?: number) {
+  constructor(message: string = "Rate limit exceeded", retryAfter?: number) {
     super(message, ErrorCode.RATE_LIMIT_EXCEEDED, 429, { retryAfter });
   }
 }
@@ -124,7 +124,7 @@ export class ExternalServiceError extends AppError {
       `External service error (${service}): ${message}`,
       ErrorCode.SERVICE_UNAVAILABLE,
       503,
-      details
+      details,
     );
   }
 }
@@ -157,10 +157,10 @@ export class ErrorHandler {
       console.error(`[${error.code}] ${error.message}`, {
         statusCode: error.statusCode,
         details: error.details,
-        stack: error.stack
+        stack: error.stack,
       });
     } else {
-      console.error('Unexpected error:', error);
+      console.error("Unexpected error:", error);
     }
   }
 
@@ -181,8 +181,8 @@ export class ErrorHandler {
         error: {
           message: error.message,
           code: error.code,
-          details: error.details
-        }
+          details: error.details,
+        },
       };
     }
 
@@ -190,9 +190,9 @@ export class ErrorHandler {
     return {
       success: false,
       error: {
-        message: 'An unexpected error occurred',
-        code: ErrorCode.INTERNAL_ERROR
-      }
+        message: "An unexpected error occurred",
+        code: ErrorCode.INTERNAL_ERROR,
+      },
     };
   }
 

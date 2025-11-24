@@ -1,5 +1,5 @@
-import { Telegraf } from 'telegraf';
-import { PaymentModel, PaymentStatus, Payment } from '../models/payment.model';
+import { Telegraf } from "telegraf";
+import { PaymentModel, PaymentStatus, Payment } from "../models/payment.model";
 
 export interface TelegramPaymentPayload {
   update_id: number;
@@ -62,7 +62,9 @@ export interface TelegramServiceOptions {
   /** Expected prefix for invoice payloads to prevent spoofing */
   invoicePrefix?: string;
   /** Additional custom validator for pre-checkout queries */
-  customValidator?: (query: TelegramPaymentPayload['pre_checkout_query']) => Promise<boolean> | boolean;
+  customValidator?: (
+    query: TelegramPaymentPayload["pre_checkout_query"],
+  ) => Promise<boolean> | boolean;
   /** Optional static fallback user id when resolver cannot derive one */
   defaultUserId?: string;
 }
@@ -87,7 +89,7 @@ export class TelegramService {
       await this.bot.telegram.setWebhook(webhookUrl);
       console.log(`✅ Telegram webhook set to: ${webhookUrl}`);
     } catch (error) {
-      console.error('❌ Failed to set Telegram webhook:', error);
+      console.error("❌ Failed to set Telegram webhook:", error);
       throw error;
     }
   }
@@ -97,7 +99,7 @@ export class TelegramService {
    */
   private setupHandlers(): void {
     // Handle successful payments
-    this.bot.on('successful_payment', async (ctx) => {
+    this.bot.on("successful_payment", async (ctx) => {
       try {
         await this.processSuccessfulPayment({
           update_id: ctx.update.update_id,
@@ -106,12 +108,12 @@ export class TelegramService {
           },
         });
       } catch (error) {
-        console.error('❌ Error processing successful payment:', error);
+        console.error("❌ Error processing successful payment:", error);
       }
     });
 
     // Handle pre-checkout queries
-    this.bot.on('pre_checkout_query', async (ctx) => {
+    this.bot.on("pre_checkout_query", async (ctx) => {
       try {
         // FIXED: Added update_id to payload
         const isValid = await this.verifyPreCheckout({
@@ -122,11 +124,11 @@ export class TelegramService {
         if (isValid) {
           await ctx.answerPreCheckoutQuery(true);
         } else {
-          await ctx.answerPreCheckoutQuery(false, 'Payment validation failed');
+          await ctx.answerPreCheckoutQuery(false, "Payment validation failed");
         }
       } catch (error) {
-        console.error('❌ Error verifying pre-checkout:', error);
-        await ctx.answerPreCheckoutQuery(false, 'Internal server error');
+        console.error("❌ Error verifying pre-checkout:", error);
+        await ctx.answerPreCheckoutQuery(false, "Internal server error");
       }
     });
   }
@@ -134,13 +136,15 @@ export class TelegramService {
   /**
    * Process successful payment notification from Telegram
    */
-  async processSuccessfulPayment(payload: TelegramPaymentPayload): Promise<PaymentRecord> {
+  async processSuccessfulPayment(
+    payload: TelegramPaymentPayload,
+  ): Promise<PaymentRecord> {
     const payment = payload.message?.successful_payment;
     if (!payment) {
-      throw new Error('Invalid payment payload');
+      throw new Error("Invalid payment payload");
     }
 
-    console.log('💰 Processing payment:', {
+    console.log("💰 Processing payment:", {
       amount: payment.total_amount,
       currency: payment.currency,
       chargeId: payment.telegram_payment_charge_id,
@@ -148,28 +152,28 @@ export class TelegramService {
 
     const userId = this.resolveUserId(payload);
     if (!userId) {
-      throw new Error('Unable to resolve user ID for Telegram payment');
+      throw new Error("Unable to resolve user ID for Telegram payment");
     }
 
     if (this.options.paymentModel) {
       const stored = await this.options.paymentModel.create({
         userId,
-        telegramInvoiceId: payment.invoice_payload || 'unknown',
+        telegramInvoiceId: payment.invoice_payload || "unknown",
         starsAmount: payment.total_amount,
         telegramPaymentId: payment.telegram_payment_charge_id,
         status: PaymentStatus.RECEIVED,
         rawPayload: payload,
       });
 
-      console.log('✅ Telegram payment persisted:', stored.id);
+      console.log("✅ Telegram payment persisted:", stored.id);
       return this.mapPaymentRecord(stored, payment.provider_payment_charge_id);
     }
 
-    console.warn('⚠️ PaymentModel not configured, returning ephemeral record');
+    console.warn("⚠️ PaymentModel not configured, returning ephemeral record");
     return {
       id: payment.telegram_payment_charge_id,
       userId,
-      telegramInvoiceId: payment.invoice_payload || 'unknown',
+      telegramInvoiceId: payment.invoice_payload || "unknown",
       starsAmount: payment.total_amount,
       status: PaymentStatus.RECEIVED,
       telegramChargeId: payment.telegram_payment_charge_id,
@@ -188,40 +192,53 @@ export class TelegramService {
       return false;
     }
 
-    console.log('🔍 Verifying pre-checkout:', {
+    console.log("🔍 Verifying pre-checkout:", {
       userId: preCheckout.from.id,
       amount: preCheckout.total_amount,
       currency: preCheckout.currency,
     });
 
-    const minAmount = this.options.minStarsAmount ?? parseInt(process.env.MIN_CONVERSION_STARS || '0', 10);
+    const minAmount =
+      this.options.minStarsAmount ??
+      parseInt(process.env.MIN_CONVERSION_STARS || "0", 10);
     const maxAmount = this.options.maxStarsAmount ?? 0;
     const allowedCurrencies = this.options.allowedCurrencies;
 
-    if (allowedCurrencies && !allowedCurrencies.includes(preCheckout.currency)) {
+    if (
+      allowedCurrencies &&
+      !allowedCurrencies.includes(preCheckout.currency)
+    ) {
       console.warn(`⚠️ Currency ${preCheckout.currency} not allowed`);
       return false;
     }
 
     if (minAmount && preCheckout.total_amount < minAmount) {
-      console.warn(`⚠️ Amount ${preCheckout.total_amount} below minimum ${minAmount}`);
+      console.warn(
+        `⚠️ Amount ${preCheckout.total_amount} below minimum ${minAmount}`,
+      );
       return false;
     }
 
     if (maxAmount && preCheckout.total_amount > maxAmount) {
-      console.warn(`⚠️ Amount ${preCheckout.total_amount} exceeds maximum ${maxAmount}`);
+      console.warn(
+        `⚠️ Amount ${preCheckout.total_amount} exceeds maximum ${maxAmount}`,
+      );
       return false;
     }
 
-    if (this.options.invoicePrefix && preCheckout.invoice_payload && !preCheckout.invoice_payload.startsWith(this.options.invoicePrefix)) {
-      console.warn('⚠️ Invoice payload prefix mismatch');
+    if (
+      this.options.invoicePrefix &&
+      preCheckout.invoice_payload &&
+      !preCheckout.invoice_payload.startsWith(this.options.invoicePrefix)
+    ) {
+      console.warn("⚠️ Invoice payload prefix mismatch");
       return false;
     }
 
     if (this.options.customValidator) {
       const result = await this.options.customValidator(preCheckout);
       if (!result) {
-        console.warn('⚠️ Custom validator rejected pre-checkout');
+        console.warn("⚠️ Custom validator rejected pre-checkout");
         return false;
       }
     }
@@ -236,7 +253,7 @@ export class TelegramService {
     try {
       return await this.bot.telegram.getWebhookInfo();
     } catch (error) {
-      console.error('❌ Failed to get webhook info:', error);
+      console.error("❌ Failed to get webhook info:", error);
       throw error;
     }
   }
@@ -267,7 +284,10 @@ export class TelegramService {
     return null;
   }
 
-  private mapPaymentRecord(payment: Payment, providerChargeId?: string): PaymentRecord {
+  private mapPaymentRecord(
+    payment: Payment,
+    providerChargeId?: string,
+  ): PaymentRecord {
     return {
       id: payment.id,
       userId: payment.userId,

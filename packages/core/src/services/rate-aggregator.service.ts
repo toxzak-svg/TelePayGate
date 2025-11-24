@@ -1,1 +1,1 @@
-export { RateAggregatorService } from './rate.aggregator';
+export { RateAggregatorService } from "./rate.aggregator";

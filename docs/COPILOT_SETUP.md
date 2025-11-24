@@ -29,6 +29,7 @@ Pre-installs dependencies before Copilot starts working on tasks:
 - ✅ Environment variable setup
 
 **Benefits:**
+
 - Faster task execution (no trial-and-error dependency installation)
 - More reliable builds and tests
 - Consistent development environment
@@ -39,7 +40,7 @@ Pre-installs dependencies before Copilot starts working on tasks:
 ✅ **Clear Documentation**: Comprehensive architecture and code pattern documentation  
 ✅ **Testing Guidance**: Instructions specify when and how to run tests  
 ✅ **Incremental Progress**: Encourages using `report_progress` for commits  
-✅ **Security Focus**: Instructions include security validation requirements  
+✅ **Security Focus**: Instructions include security validation requirements
 
 ## Using GitHub Copilot with This Repository
 
@@ -60,12 +61,14 @@ When working with Copilot coding agent on this repository:
 ### Task Examples
 
 **Good tasks for Copilot:**
+
 - "Add a new API endpoint to retrieve payment history for a user"
 - "Fix the rate locking logic in ConversionService to handle expired locks"
 - "Add unit tests for WalletManagerService deposit confirmation"
 - "Update API documentation to include the new webhook payload format"
 
 **Tasks that need human oversight:**
+
 - Complex business logic changes
 - Security-sensitive authentication/authorization
 - Major architectural refactoring
@@ -115,6 +118,7 @@ For specialized workflows, you can create custom agent profiles in `.github/agen
 
 ```markdown
 # .github/agents/test-specialist.md
+
 You are a testing specialist for this repository...
 ```
 
@@ -142,6 +146,7 @@ bash scripts/validate-copilot-setup.sh
 ```
 
 This script checks:
+
 - ✅ Workflow file exists and has correct job name
 - ✅ Required setup steps are present
 - ✅ Instructions file exists and is under 1000 lines

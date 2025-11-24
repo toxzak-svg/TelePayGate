@@ -24,8 +24,8 @@ When `AWS_KMS_KEY_ID` is set, the core package will attempt to configure the AWS
 No change is necessary — the core package sets the provider when `AWS_KMS_KEY_ID` is present. To explicitly set a custom provider, call:
 
 ```ts
-import { setKmsProvider } from '@tg-payment/core/src/services/kms.service';
-import createAwsKmsProvider from '@tg-payment/core/src/services/kms.aws';
+import { setKmsProvider } from "@tg-payment/core/src/services/kms.service";
+import createAwsKmsProvider from "@tg-payment/core/src/services/kms.aws";
 
 setKmsProvider(createAwsKmsProvider());
 ```

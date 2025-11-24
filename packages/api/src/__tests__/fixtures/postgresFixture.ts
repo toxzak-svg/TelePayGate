@@ -1,7 +1,7 @@
-import { PostgreSqlContainer, StartedTestContainer } from 'testcontainers';
-import { execSync } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+import { PostgreSqlContainer, StartedTestContainer } from "testcontainers";
+import { execSync } from "child_process";
+import path from "path";
+import fs from "fs";
 
 type Fixture = {
   container?: StartedTestContainer;
@@ -12,11 +12,11 @@ export async function startPostgresFixture(): Promise<Fixture> {
   // If a global Jest fixture wrote DB info, reuse it instead of starting
   // a new container. This allows shared global setup to control lifecycle.
   try {
-    const _possible = path.resolve(__dirname, '../../jest.global-setup.js');
+    const _possible = path.resolve(__dirname, "../../jest.global-setup.js");
     // look for tmp/tc-db.json under package root
-    const rootTmp = path.resolve(__dirname, '../../tmp', 'tc-db.json');
+    const rootTmp = path.resolve(__dirname, "../../tmp", "tc-db.json");
     if (fs.existsSync(rootTmp)) {
-      const data = JSON.parse(fs.readFileSync(rootTmp, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(rootTmp, "utf8"));
       if (data && data.databaseUrl) {
         return { databaseUrl: data.databaseUrl };
       }
@@ -25,10 +25,10 @@ export async function startPostgresFixture(): Promise<Fixture> {
     // ignore and fall back to starting our own container
   }
 
-  const pg = new PostgreSqlContainer('postgres:16')
-    .withDatabase('tg_payment_tc')
-    .withUsername('tc_user')
-    .withPassword('tc_pass');
+  const pg = new PostgreSqlContainer("postgres:16")
+    .withDatabase("tg_payment_tc")
+    .withUsername("tc_user")
+    .withPassword("tc_pass");
 
   const container = await pg.start();
   const port = container.getMappedPort(5432);
@@ -40,7 +40,12 @@ export async function startPostgresFixture(): Promise<Fixture> {
     let migrateScript: string | null = null;
     const dir = __dirname;
     for (let i = 0; i < 8; i++) {
-      const candidate = path.resolve(dir, ...Array(i).fill('..'), 'database', 'migrate.js');
+      const candidate = path.resolve(
+        dir,
+        ...Array(i).fill(".."),
+        "database",
+        "migrate.js",
+      );
       if (fs.existsSync(candidate)) {
         migrateScript = candidate;
         break;
@@ -48,15 +53,18 @@ export async function startPostgresFixture(): Promise<Fixture> {
     }
     if (!migrateScript) {
       // as a fallback, try the repo-root relative path
-      const fallback = path.resolve(__dirname, '../../../../../../database/migrate.js');
+      const fallback = path.resolve(
+        __dirname,
+        "../../../../../../database/migrate.js",
+      );
       if (fs.existsSync(fallback)) migrateScript = fallback;
     }
     if (!migrateScript) {
       await container.stop();
-      throw new Error('Could not locate database/migrate.js in repository');
+      throw new Error("Could not locate database/migrate.js in repository");
     }
     execSync(`node ${migrateScript} up`, {
-      stdio: 'inherit',
+      stdio: "inherit",
       env: { ...process.env, DATABASE_URL: databaseUrl },
     });
   } catch (err) {

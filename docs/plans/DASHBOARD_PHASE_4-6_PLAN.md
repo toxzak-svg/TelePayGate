@@ -5,11 +5,13 @@
 ---
 
 ## Overview
+
 This document outlines the actionable plan to complete Dashboard Phases 4-6 for the Telegram Payment Gateway project.
 
 ---
 
 ## Phase 4: P2P Orders Page
+
 - Design and implement a dashboard page to view, filter, and manage P2P orders.
 - Features:
   - Order book display
@@ -22,6 +24,7 @@ This document outlines the actionable plan to complete Dashboard Phases 4-6 for 
 ---
 
 ## Phase 5: DEX Analytics & Webhooks
+
 - Build analytics dashboard for DEX swaps:
   - Volume, rates, slippage, liquidity
 - Add webhooks event log page:
@@ -32,6 +35,7 @@ This document outlines the actionable plan to complete Dashboard Phases 4-6 for 
 ---
 
 ## Phase 6: Dashboard Enhancements
+
 - Add pagination for large lists
 - Date range pickers for filtering
 - Export to CSV/PDF
@@ -44,16 +48,18 @@ This document outlines the actionable plan to complete Dashboard Phases 4-6 for 
 ---
 
 ## Timeline
+
 - **Total Duration:** 3 weeks (1 week per phase)
 - **Dependencies:** API endpoints for orders, swaps, analytics, and webhooks must be complete.
 
 ---
 
 ## Execution Checklist
+
 - [ ] Phase 4: P2P Orders Page
 - [ ] Phase 5: DEX Analytics & Webhooks
 - [ ] Phase 6: Dashboard Enhancements
 
 ---
 
-*Update this document as each phase is completed.*
+_Update this document as each phase is completed._

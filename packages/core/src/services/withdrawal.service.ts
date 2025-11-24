@@ -1,7 +1,7 @@
 export class ValidationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
@@ -12,7 +12,7 @@ export interface Withdrawal {
   amount: number;
   currency: string;
   walletAddress: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   txHash?: string;
   failureReason?: string;
   createdAt: Date;
@@ -22,16 +22,16 @@ export interface Withdrawal {
 export class WithdrawalService {
   validateWalletAddress(address: string, currency: string): boolean {
     if (!address || address.length < 20) {
-      throw new ValidationError('Invalid wallet address');
+      throw new ValidationError("Invalid wallet address");
     }
 
-    if (currency === 'TON') {
+    if (currency === "TON") {
       if (!address.match(/^[Uk]Q[A-Za-z0-9_-]{46}$/)) {
-        throw new ValidationError('Invalid TON wallet address format');
+        throw new ValidationError("Invalid TON wallet address format");
       }
-    } else if (currency === 'USDT') {
+    } else if (currency === "USDT") {
       if (!address.match(/^0x[a-fA-F0-9]{40}$/)) {
-        throw new ValidationError('Invalid Ethereum wallet address format');
+        throw new ValidationError("Invalid Ethereum wallet address format");
       }
     }
 
@@ -43,10 +43,10 @@ export class WithdrawalService {
     settlementId: string,
     amount: number,
     currency: string,
-    walletAddress: string
+    walletAddress: string,
   ): Promise<Withdrawal> {
     if (amount <= 0) {
-      throw new ValidationError('Withdrawal amount must be positive');
+      throw new ValidationError("Withdrawal amount must be positive");
     }
 
     this.validateWalletAddress(walletAddress, currency);
@@ -58,7 +58,7 @@ export class WithdrawalService {
       amount,
       currency,
       walletAddress,
-      status: 'pending',
+      status: "pending",
       createdAt: new Date(),
     };
 
@@ -66,15 +66,17 @@ export class WithdrawalService {
   }
 
   async processWithdrawal(withdrawal: Withdrawal): Promise<Withdrawal> {
-    if (withdrawal.status !== 'pending') {
-      throw new ValidationError(`Cannot process ${withdrawal.status} withdrawal`);
+    if (withdrawal.status !== "pending") {
+      throw new ValidationError(
+        `Cannot process ${withdrawal.status} withdrawal`,
+      );
     }
 
     const txHash = `0x${Math.random().toString(16).substr(2)}${Math.random().toString(16).substr(2)}`;
 
     const processed: Withdrawal = {
       ...withdrawal,
-      status: 'completed',
+      status: "completed",
       txHash,
       completedAt: new Date(),
     };
@@ -83,33 +85,36 @@ export class WithdrawalService {
   }
 
   async retryWithdrawal(withdrawal: Withdrawal): Promise<Withdrawal> {
-    if (withdrawal.status !== 'failed') {
-      throw new ValidationError('Can only retry failed withdrawals');
+    if (withdrawal.status !== "failed") {
+      throw new ValidationError("Can only retry failed withdrawals");
     }
 
     return {
       ...withdrawal,
-      status: 'pending',
+      status: "pending",
       failureReason: undefined,
     };
   }
 
-  async cancelWithdrawal(withdrawal: Withdrawal, reason: string): Promise<Withdrawal> {
-    if (withdrawal.status === 'completed') {
-      throw new ValidationError('Cannot cancel completed withdrawal');
+  async cancelWithdrawal(
+    withdrawal: Withdrawal,
+    reason: string,
+  ): Promise<Withdrawal> {
+    if (withdrawal.status === "completed") {
+      throw new ValidationError("Cannot cancel completed withdrawal");
     }
 
     return {
       ...withdrawal,
-      status: 'failed',
+      status: "failed",
       failureReason: reason,
     };
   }
 
   getWithdrawalFee(amount: number, currency: string): number {
-    if (currency === 'TON') {
+    if (currency === "TON") {
       return amount > 50000 ? 1 : 0.5;
-    } else if (currency === 'USDT') {
+    } else if (currency === "USDT") {
       return 2;
     }
     return 1;

@@ -1,5 +1,5 @@
-import axios from 'axios';
-import Redis from 'ioredis';
+import axios from "axios";
+import Redis from "ioredis";
 
 export interface RateSource {
   source: string;
@@ -18,17 +18,17 @@ export interface AggregatedRate {
 
 /**
  * Rate Aggregator Service
- * 
+ *
  * Fetches exchange rates from multiple sources and calculates weighted average
  * Sources: CoinGecko, DexScreener, CoinMarketCap
  */
 export class RateAggregatorService {
   private redis: Redis;
   private sources = {
-    coingecko: 'https://api.coingecko.com/api/v3',
-    dexscreener: 'https://api.dexscreener.com/latest/dex/tokens',
+    coingecko: "https://api.coingecko.com/api/v3",
+    dexscreener: "https://api.dexscreener.com/latest/dex/tokens",
     coinmarketcap: process.env.CMC_API_KEY
-      ? 'https://pro-api.coinmarketcap.com/v1'
+      ? "https://pro-api.coinmarketcap.com/v1"
       : null,
   };
 
@@ -43,10 +43,12 @@ export class RateAggregatorService {
   private simulationMode: boolean;
 
   constructor() {
-    const simulationFlag = process.env.RATE_SIMULATION_MODE ?? (process.env.NODE_ENV === 'test' ? 'true' : 'false');
-    this.simulationMode = simulationFlag === 'true';
+    const simulationFlag =
+      process.env.RATE_SIMULATION_MODE ??
+      (process.env.NODE_ENV === "test" ? "true" : "false");
+    this.simulationMode = simulationFlag === "true";
     if (this.simulationMode) {
-      console.log('🧪 RateAggregatorService running in simulation mode');
+      console.log("🧪 RateAggregatorService running in simulation mode");
     }
     // In simulation mode use a lightweight in-memory stub to avoid external
     // Redis connectivity causing test timeouts. In production/tests when
@@ -56,7 +58,7 @@ export class RateAggregatorService {
     // tests can spy on. When running in simulation mode in non-test
     // environments and no mocked client is available, fall back to a
     // lightweight in-memory stub to avoid external network hangs.
-    const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
     const isMockedGet = !!(client as any)?.get?._isMockFunction;
 
     if (this.simulationMode && !isMockedGet) {
@@ -71,14 +73,14 @@ export class RateAggregatorService {
 
   /**
    * Get aggregated exchange rate from multiple sources
-   * 
+   *
    * @param sourceCurrency - Source currency (e.g., "TON", "STARS")
    * @param targetCurrency - Target currency (e.g., "USD", "EUR")
    * @returns AggregatedRate with weighted average and individual sources
    */
   async getAggregatedRate(
     sourceCurrency: string,
-    targetCurrency: string
+    targetCurrency: string,
   ): Promise<AggregatedRate> {
     const cacheKey = `rate:${sourceCurrency}:${targetCurrency}`;
     const cachedRate = await this.redis.get(cacheKey);
@@ -91,7 +93,7 @@ export class RateAggregatorService {
     // Use simulation mode if enabled
     if (this.simulationMode) {
       const rate = await this.getSimulatedRate(sourceCurrency, targetCurrency);
-      await this.redis.set(cacheKey, JSON.stringify(rate), 'EX', 300);
+      await this.redis.set(cacheKey, JSON.stringify(rate), "EX", 300);
       return rate;
     }
 
@@ -105,29 +107,31 @@ export class RateAggregatorService {
 
       // Filter out null results
       const rates: RateSource[] = [cgRate, dexRate, cmcRate].filter(
-        (r): r is RateSource => r !== null
+        (r): r is RateSource => r !== null,
       );
 
       if (rates.length === 0) {
-        throw new Error('No rate data available from any source');
+        throw new Error("No rate data available from any source");
       }
 
-      console.log('✅ Rates fetched:', rates);
+      console.log("✅ Rates fetched:", rates);
 
       // Calculate weighted average
       const { sum: weightedSum, weightSum } = rates.reduce(
         (acc, rate) => {
-          const weight = this.weights[rate.source as keyof typeof this.weights] ?? this.defaultWeight;
+          const weight =
+            this.weights[rate.source as keyof typeof this.weights] ??
+            this.defaultWeight;
           return {
             sum: acc.sum + rate.value * weight,
             weightSum: acc.weightSum + weight,
           };
         },
-        { sum: 0, weightSum: 0 }
+        { sum: 0, weightSum: 0 },
       );
 
       const averageRate = weightedSum / weightSum;
-      const bestRate = Math.max(...rates.map(r => r.value));
+      const bestRate = Math.max(...rates.map((r) => r.value));
 
       const result: AggregatedRate = {
         bestRate,
@@ -138,11 +142,11 @@ export class RateAggregatorService {
         timestamp: Date.now(),
       };
 
-      await this.redis.set(cacheKey, JSON.stringify(result), 'EX', 300); // Cache for 5 minutes
+      await this.redis.set(cacheKey, JSON.stringify(result), "EX", 300); // Cache for 5 minutes
 
       return result;
     } catch (error) {
-      console.error('❌ Rate aggregation failed:', error);
+      console.error("❌ Rate aggregation failed:", error);
       throw error;
     }
   }
@@ -152,7 +156,7 @@ export class RateAggregatorService {
    */
   private async getCoinGeckoRate(
     source: string,
-    target: string
+    target: string,
   ): Promise<RateSource | null> {
     try {
       const sourceId = this.getCoinGeckoId(source);
@@ -162,19 +166,19 @@ export class RateAggregatorService {
       const response = await axios.get(url, { timeout: 5000 });
 
       const rate = response.data[sourceId]?.[targetId];
-      
+
       if (!rate) {
-        console.warn('⚠️ CoinGecko: No rate data');
+        console.warn("⚠️ CoinGecko: No rate data");
         return null;
       }
 
       return {
-        source: 'coingecko',
+        source: "coingecko",
         value: rate,
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('❌ CoinGecko fetch failed:', error);
+      console.error("❌ CoinGecko fetch failed:", error);
       return null;
     }
   }
@@ -184,15 +188,15 @@ export class RateAggregatorService {
    */
   private async getDexScreenerRate(
     source: string,
-    target: string
+    target: string,
   ): Promise<RateSource | null> {
     try {
       // DexScreener requires token address - this is a simplified implementation
       // In production, map currency codes to actual token addresses
       const tokenAddress = this.getDexScreenerAddress(source);
-      
+
       if (!tokenAddress) {
-        console.warn('⚠️ DexScreener: No token address mapping');
+        console.warn("⚠️ DexScreener: No token address mapping");
         return null;
       }
 
@@ -203,20 +207,20 @@ export class RateAggregatorService {
       const rate = parseFloat(pair?.priceUsd);
 
       if (!rate || isNaN(rate)) {
-        console.warn('⚠️ DexScreener: No rate data');
+        console.warn("⚠️ DexScreener: No rate data");
         return null;
       }
 
       // Convert to target currency if needed (simplified)
-      const finalRate = target.toUpperCase() === 'USD' ? rate : rate;
+      const finalRate = target.toUpperCase() === "USD" ? rate : rate;
 
       return {
-        source: 'dexscreener',
+        source: "dexscreener",
         value: finalRate,
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('❌ DexScreener fetch failed:', error);
+      console.error("❌ DexScreener fetch failed:", error);
       return null;
     }
   }
@@ -226,10 +230,10 @@ export class RateAggregatorService {
    */
   private async getCoinMarketCapRate(
     source: string,
-    target: string
+    target: string,
   ): Promise<RateSource | null> {
     if (!this.sources.coinmarketcap) {
-      console.warn('⚠️ CoinMarketCap: API key not configured');
+      console.warn("⚠️ CoinMarketCap: API key not configured");
       return null;
     }
 
@@ -241,7 +245,7 @@ export class RateAggregatorService {
           convert: target.toUpperCase(),
         },
         headers: {
-          'X-CMC_PRO_API_KEY': process.env.CMC_API_KEY!,
+          "X-CMC_PRO_API_KEY": process.env.CMC_API_KEY!,
         },
         timeout: 5000,
       });
@@ -250,17 +254,17 @@ export class RateAggregatorService {
       const rate = data?.quote[target.toUpperCase()]?.price;
 
       if (!rate) {
-        console.warn('⚠️ CoinMarketCap: No rate data');
+        console.warn("⚠️ CoinMarketCap: No rate data");
         return null;
       }
 
       return {
-        source: 'coinmarketcap',
+        source: "coinmarketcap",
         value: rate,
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('❌ CoinMarketCap fetch failed:', error);
+      console.error("❌ CoinMarketCap fetch failed:", error);
       return null;
     }
   }
@@ -270,10 +274,10 @@ export class RateAggregatorService {
    */
   private getCoinGeckoId(currency: string): string {
     const mapping: Record<string, string> = {
-      TON: 'the-open-network',
-      BTC: 'bitcoin',
-      ETH: 'ethereum',
-      USDT: 'tether',
+      TON: "the-open-network",
+      BTC: "bitcoin",
+      ETH: "ethereum",
+      USDT: "tether",
       // Add more as needed
     };
 
@@ -286,7 +290,7 @@ export class RateAggregatorService {
   private getDexScreenerAddress(currency: string): string | null {
     const mapping: Record<string, string> = {
       // TON mainnet addresses - update with actual addresses
-      TON: 'EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT', // Placeholder
+      TON: "EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT", // Placeholder
       // Add more token addresses
     };
 
@@ -299,7 +303,7 @@ export class RateAggregatorService {
   async getRateWithCache(
     source: string,
     target: string,
-    cacheDuration: number = 60 // 1 minute default
+    cacheDuration: number = 60, // 1 minute default
   ): Promise<number> {
     const cacheKey = `rate:${source}:${target}`;
     const cachedRate = await this.redis.get(cacheKey);
@@ -310,9 +314,9 @@ export class RateAggregatorService {
 
     const rate = await this.getAggregatedRate(source, target);
     if (rate.averageRate > 0) {
-      await this.redis.set(cacheKey, rate.averageRate, 'EX', cacheDuration);
+      await this.redis.set(cacheKey, rate.averageRate, "EX", cacheDuration);
     }
-    
+
     return rate.averageRate;
   }
 
@@ -322,7 +326,7 @@ export class RateAggregatorService {
    */
   private getSimulatedRate(
     sourceCurrency: string,
-    targetCurrency: string
+    targetCurrency: string,
   ): AggregatedRate {
     // Simulated rates for common pairs (test fixtures - not real market data)
     const rateMap: Record<string, Record<string, number>> = {
@@ -343,22 +347,24 @@ export class RateAggregatorService {
       },
     };
 
-    const baseRate = rateMap[sourceCurrency.toUpperCase()]?.[targetCurrency.toUpperCase()] || 1.0;
+    const baseRate =
+      rateMap[sourceCurrency.toUpperCase()]?.[targetCurrency.toUpperCase()] ||
+      1.0;
 
     // Simulate slight variations from different sources
     const rates: RateSource[] = [
       {
-        source: 'coingecko',
+        source: "coingecko",
         value: baseRate * 1.005, // +0.5%
         timestamp: Date.now(),
       },
       {
-        source: 'dexscreener',
+        source: "dexscreener",
         value: baseRate * 0.998, // -0.2%
         timestamp: Date.now(),
       },
       {
-        source: 'coinmarketcap',
+        source: "coinmarketcap",
         value: baseRate * 1.002, // +0.2%
         timestamp: Date.now(),
       },
@@ -369,16 +375,21 @@ export class RateAggregatorService {
     // Calculate weighted average
     const { sum: weightedSum, weightSum } = rates.reduce(
       (acc, rate) => {
-        const weight = this.weights[rate.source as keyof typeof this.weights] ?? this.defaultWeight;
+        const weight =
+          this.weights[rate.source as keyof typeof this.weights] ??
+          this.defaultWeight;
         return {
           sum: acc.sum + rate.value * weight,
           weightSum: acc.weightSum + weight,
         };
       },
-      { sum: 0, weightSum: 0 }
+      { sum: 0, weightSum: 0 },
     );
 
-    console.log(`🧪 Simulated rates for ${sourceCurrency} → ${targetCurrency}:`, rates);
+    console.log(
+      `🧪 Simulated rates for ${sourceCurrency} → ${targetCurrency}:`,
+      rates,
+    );
 
     return {
       bestRate,

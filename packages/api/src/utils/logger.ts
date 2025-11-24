@@ -1,7 +1,7 @@
 export const logger = {
-  info: (...args: any[]) => console.log('[INFO]', ...args),
-  error: (...args: any[]) => console.error('[ERROR]', ...args),
-  warn: (...args: any[]) => console.warn('[WARN]', ...args),
-  http: (...args: any[]) => console.log('[HTTP]', ...args),
-  debug: (...args: any[]) => console.log('[DEBUG]', ...args)
+  info: (...args: any[]) => console.log("[INFO]", ...args),
+  error: (...args: any[]) => console.error("[ERROR]", ...args),
+  warn: (...args: any[]) => console.warn("[WARN]", ...args),
+  http: (...args: any[]) => console.log("[HTTP]", ...args),
+  debug: (...args: any[]) => console.log("[DEBUG]", ...args),
 };

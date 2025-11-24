@@ -5,6 +5,7 @@
 **Location**: `packages/api/src/utils/response.ts`
 
 **Exports**:
+
 - `newRequestId()` — generate a UUID v4 request id for tracing.
 - `sendSuccess(res, data = {}, status = 200, requestId?)` — send a successful JSON response.
 - `sendCreated(res, data = {}, requestId?)` — shortcut for 201 created responses.
@@ -15,13 +16,13 @@
 **Usage examples**:
 
 ```ts
-import { respondSuccess, respondError, newRequestId } from '../utils/response';
+import { respondSuccess, respondError, newRequestId } from "../utils/response";
 
 const requestId = newRequestId();
 
 respondSuccess(res, { data: result }, 200, requestId);
 
-respondError(res, 'SOME_ERROR', 'Detailed message', 500, requestId);
+respondError(res, "SOME_ERROR", "Detailed message", 500, requestId);
 ```
 
 **Migration note**: Use `sendSuccess`/`sendError` (or the backward-compatible `respondSuccess`/`respondError`) and include a `requestId` to facilitate tracing and log correlation.

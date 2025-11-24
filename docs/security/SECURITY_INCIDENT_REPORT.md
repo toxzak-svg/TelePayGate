@@ -14,46 +14,54 @@ Sensitive credentials were accidentally committed to GitHub in commit `bb4e56e` 
 The following credentials were exposed in public Git history:
 
 ### 1. Render API Key
+
 - **Value**: `rnd_7YxluJYICx4hgSWWwithCY1RfH9t`
 - **Impact**: Full access to Render account, can deploy/delete services
 - **Action Required**: ✅ REVOKE IMMEDIATELY at https://dashboard.render.com/u/settings#api-keys
 
 ### 2. Trigger.dev API Key
+
 - **Value**: `tr_dev_OCQW8TT7s4trKn6jKnnY`
 - **Impact**: Access to Trigger.dev deployments
 - **Action Required**: ✅ REVOKE at https://cloud.trigger.dev
 
 ### 3. TON Wallet Mnemonic (CRITICAL)
+
 - **Value**: 24-word recovery phrase starting with "sister raise type pyramid..."
 - **Impact**: FULL CONTROL of wallet funds - can steal all TON cryptocurrency
-- **Action Required**: 
+- **Action Required**:
   1. ✅ Generate NEW wallet: `npm run generate:wallet`
   2. ✅ Transfer ALL funds from old wallet to new wallet
   3. ✅ Update `TON_WALLET_MNEMONIC` in Render dashboard
   4. ✅ Never use old wallet again
 
 ### 4. Telegram Bot Token
+
 - **Value**: `8341264832:AAFfTk2MD5XZe8TJJ41kIL52Kl1vgu0A3tg`
 - **Impact**: Full control of Telegram bot, can send messages as bot
 - **Action Required**: ✅ Revoke via @BotFather on Telegram, generate new token
 
 ### 5. Kraken API Keys (if configured)
+
 - **Impact**: Access to exchange account
 - **Action Required**: ✅ Revoke at https://www.kraken.com/u/security/api
 
 ### 6. CoinGecko API Key (if configured)
+
 - **Impact**: Rate limit abuse
 - **Action Required**: ✅ Regenerate at https://www.coingecko.com/en/api
 
 ## Remediation Completed
 
 ### ✅ Git History Cleaned
+
 - Used `git filter-branch` to remove `scripts/set-render-env.sh` from all commits
 - Force-pushed cleaned history to GitHub
 - All commit hashes rewritten
 - File added to `.gitignore` with pattern: `scripts/*-secrets*.sh`
 
 ### ✅ Git Repository State
+
 ```bash
 # Verified clean history
 git log --all --full-history -- scripts/set-render-env.sh
@@ -72,6 +80,7 @@ scripts/*.pem
 ### IMMEDIATE (Within 1 hour)
 
 1. **Revoke Render API Key**:
+
    ```bash
    # Go to: https://dashboard.render.com/u/settings#api-keys
    # Click "Revoke" next to: rnd_7YxluJYICx4hgSWWwithCY1RfH9t
@@ -79,6 +88,7 @@ scripts/*.pem
    ```
 
 2. **Revoke Trigger.dev API Key**:
+
    ```bash
    # Go to: https://cloud.trigger.dev/orgs/[your-org]/projects/proj_fqtizcvgqqorjbcikxsa/apikeys
    # Delete: tr_dev_OCQW8TT7s4trKn6jKnnY
@@ -86,6 +96,7 @@ scripts/*.pem
    ```
 
 3. **Generate New TON Wallet**:
+
    ```bash
    cd /workspaces/telegram-payment-gateway
    npm run generate:wallet
@@ -93,6 +104,7 @@ scripts/*.pem
    ```
 
 4. **Transfer TON Funds**:
+
    ```bash
    # Use TonKeeper or TON wallet app
    # Send ALL TON from old wallet to new wallet address
@@ -111,11 +123,12 @@ scripts/*.pem
 ### URGENT (Within 24 hours)
 
 6. **Update Render Environment Variables**:
+
    ```bash
    # Go to: https://dashboard.render.com
    # Select service: srv-d4d94fggjchc73dr0nug
    # Environment tab:
-   
+
    TON_WALLET_MNEMONIC=<NEW_24_WORD_MNEMONIC>
    TELEGRAM_BOT_TOKEN=<NEW_BOT_TOKEN>
    RENDER_API_KEY=<NEW_API_KEY>  # If used in code
@@ -123,6 +136,7 @@ scripts/*.pem
    ```
 
 7. **Update Local .env File**:
+
    ```bash
    # Update /workspaces/telegram-payment-gateway/.env with new keys
    # NEVER commit this file
@@ -199,5 +213,4 @@ scripts/*.pem
 ---
 
 **CRITICAL**: Complete all "USER ACTION REQUIRED" items immediately. Your TON wallet funds are at risk until the new wallet is created and funds transferred.
-
 ````

@@ -13,18 +13,30 @@ A decentralized payment gateway for converting Telegram Stars → TON → Fiat u
 **Tech Stack**: TypeScript, Node.js 20, Express 4, PostgreSQL 16, TON Blockchain, React 18, Redis
 
 **Recent Updates** (November 21, 2025):
+
 ## ✅ Completed Work (100% of Core Features)
+
 ### Phase 1-9: All Core Features ✅
+
 ### Phase 2: Payment Processing ✅
+
 ### Phase 3: TON Blockchain Integration ✅
+
 ### Phase 4: Fragment Removal & P2P/DEX ✅
+
 ### Phase 5: API Layer ✅
+
 ### Phase 6: Dashboard ✅
+
 ### Phase 7: Background Workers ✅
+
 ### Phase 8: DEX Smart Contract Integration ✅
+
 **Status**: **COMPLETE**
 **Implementation**:
+
 ### Phase 9: P2P Order Matching Engine ✅
+
 **Status**: **COMPLETE**
 **Implementation**:
 **Recent Updates** (June 6, 2024):
@@ -322,4 +334,4 @@ All important TODOs related to core functionality have been resolved. The next d
 
 ---
 
-*This document is the single source of truth for project status and roadmap. Update regularly as work progresses.*
+_This document is the single source of truth for project status and roadmap. Update regularly as work progresses._

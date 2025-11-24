@@ -1,28 +1,38 @@
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
-import { getDatabase } from '../db/connection';
-import { encryptSecret as kmsEncrypt, decryptSecret as kmsDecrypt } from './kms.service';
-import bcrypt from 'bcryptjs';
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import { getDatabase } from "../db/connection";
+import {
+  encryptSecret as kmsEncrypt,
+  decryptSecret as kmsDecrypt,
+} from "./kms.service";
+import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.API_SECRET_KEY || 'dev-secret';
+const JWT_SECRET =
+  process.env.JWT_SECRET || process.env.API_SECRET_KEY || "dev-secret";
 
 export class AuthService {
   // Generate a random JTI for tokens
   static generateJti(): string {
-    return crypto.randomBytes(16).toString('hex');
+    return crypto.randomBytes(16).toString("hex");
   }
 
   // Generate a short-lived pending token (opaque)
   static generatePendingToken(): string {
-    return crypto.randomBytes(24).toString('hex');
+    return crypto.randomBytes(24).toString("hex");
   }
 
   // Generate backup codes (cleartext returned to user once)
   static generateBackupCodes(count = 10): string[] {
     const codes: string[] = [];
     for (let i = 0; i < count; i++) {
-      codes.push(crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10));
+      codes.push(
+        crypto
+          .randomBytes(6)
+          .toString("base64")
+          .replace(/[^a-zA-Z0-9]/g, "")
+          .slice(0, 10),
+      );
     }
     return codes;
   }
@@ -33,7 +43,7 @@ export class AuthService {
       return await kmsEncrypt(plain);
     } catch (err) {
       // Fallback to base64 plaintext on error (dev only)
-      return Buffer.from(plain, 'utf8').toString('base64');
+      return Buffer.from(plain, "utf8").toString("base64");
     }
   }
 
@@ -41,20 +51,30 @@ export class AuthService {
     try {
       return await kmsDecrypt(blob);
     } catch (err) {
-      return Buffer.from(blob, 'base64').toString('utf8');
+      return Buffer.from(blob, "base64").toString("utf8");
     }
   }
 
   // Request a magic link: sign a JWT, persist jti into magic_links, and attempt to email
-  static async requestMagicLink(email: string, opts?: { ip?: string; userAgent?: string }) {
+  static async requestMagicLink(
+    email: string,
+    opts?: { ip?: string; userAgent?: string },
+  ) {
     const jti = AuthService.generateJti();
     // place `jti` into the JWT ID field (options.jwtid) and keep payload minimal
-    const token = jwt.sign({ email }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '15m', jwtid: jti });
+    const token = jwt.sign({ email }, JWT_SECRET, {
+      algorithm: "HS256",
+      expiresIn: "15m",
+      jwtid: jti,
+    });
 
     const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60; // seconds
     try {
       const db = getDatabase();
-      await db.none('INSERT INTO magic_links (email, token_jti, expires_at, ip, user_agent) VALUES ($1, $2, to_timestamp($3), $4, $5)', [email, jti, expiresAt, opts?.ip || null, opts?.userAgent || null]);
+      await db.none(
+        "INSERT INTO magic_links (email, token_jti, expires_at, ip, user_agent) VALUES ($1, $2, to_timestamp($3), $4, $5)",
+        [email, jti, expiresAt, opts?.ip || null, opts?.userAgent || null],
+      );
     } catch (err) {
       // ignore in tests
     }
@@ -67,20 +87,35 @@ export class AuthService {
       if (process.env.EMAIL_SMTP_HOST) {
         const transport = nodemailer.createTransport({
           host: process.env.EMAIL_SMTP_HOST,
-          port: parseInt(process.env.EMAIL_SMTP_PORT || '587', 10),
-          secure: process.env.EMAIL_SMTP_SECURE === 'true',
-          auth: process.env.EMAIL_SMTP_USER ? { user: process.env.EMAIL_SMTP_USER, pass: process.env.EMAIL_SMTP_PASS } : undefined,
+          port: parseInt(process.env.EMAIL_SMTP_PORT || "587", 10),
+          secure: process.env.EMAIL_SMTP_SECURE === "true",
+          auth: process.env.EMAIL_SMTP_USER
+            ? {
+                user: process.env.EMAIL_SMTP_USER,
+                pass: process.env.EMAIL_SMTP_PASS,
+              }
+            : undefined,
         });
-        const link = `${process.env.DASHBOARD_URL || 'http://localhost:5173'}/auth/verify?token=${encodeURIComponent(token)}`;
-        await transport.sendMail({ from: process.env.EMAIL_FROM || 'no-reply@example.com', to: email, subject: 'Your magic sign-in link', text: `Sign in: ${link}`, html: `<p>Sign in: <a href="${link}">${link}</a></p>` });
-      } else if (process.env.NODE_ENV !== 'production') {
-        console.log('Magic link (no SMTP):', token);
+        const link = `${process.env.DASHBOARD_URL || "http://localhost:5173"}/auth/verify?token=${encodeURIComponent(token)}`;
+        await transport.sendMail({
+          from: process.env.EMAIL_FROM || "no-reply@example.com",
+          to: email,
+          subject: "Your magic sign-in link",
+          text: `Sign in: ${link}`,
+          html: `<p>Sign in: <a href="${link}">${link}</a></p>`,
+        });
+      } else if (process.env.NODE_ENV !== "production") {
+        console.log("Magic link (no SMTP):", token);
       }
     } catch (err) {
-      console.warn('Failed to send magic link email', err);
+      console.warn("Failed to send magic link email", err);
     }
 
-    return { token, token_jti: jti, expires_at: new Date(expiresAt * 1000).toISOString() };
+    return {
+      token,
+      token_jti: jti,
+      expires_at: new Date(expiresAt * 1000).toISOString(),
+    };
   }
 
   // Verify magic link token (JWT). Creates dashboard_user if missing and session.
@@ -91,17 +126,30 @@ export class AuthService {
       const jti = payload.jti || payload.jti;
       const email = payload.email;
 
-      const row = await db.oneOrNone('SELECT * FROM magic_links WHERE token_jti = $1', [jti]);
-      if (!row) return { ok: false, reason: 'not_found' };
-      if (row.used_at) return { ok: false, reason: 'replay' };
-      if (new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
+      const row = await db.oneOrNone(
+        "SELECT * FROM magic_links WHERE token_jti = $1",
+        [jti],
+      );
+      if (!row) return { ok: false, reason: "not_found" };
+      if (row.used_at) return { ok: false, reason: "replay" };
+      if (new Date(row.expires_at) < new Date())
+        return { ok: false, reason: "expired" };
 
-      await db.none('UPDATE magic_links SET used_at = now() WHERE token_jti = $1', [jti]);
+      await db.none(
+        "UPDATE magic_links SET used_at = now() WHERE token_jti = $1",
+        [jti],
+      );
 
       // Ensure dashboard user exists
-      let dashUser = await db.oneOrNone('SELECT * FROM dashboard_users WHERE email = $1', [email]);
+      let dashUser = await db.oneOrNone(
+        "SELECT * FROM dashboard_users WHERE email = $1",
+        [email],
+      );
       if (!dashUser) {
-        dashUser = await db.one('INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at) VALUES ($1, $2, true, now(), now()) RETURNING *', [email, 'admin']);
+        dashUser = await db.one(
+          "INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at) VALUES ($1, $2, true, now(), now()) RETURNING *",
+          [email, "admin"],
+        );
       }
 
       // Create session with CSRF token stored in meta
@@ -109,22 +157,41 @@ export class AuthService {
       const csrfToken = AuthService.generatePendingToken();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const meta = { csrf_token: csrfToken };
-      await db.none('INSERT INTO sessions (user_id, session_token, created_at, last_seen_at, expires_at, meta) VALUES ($1, $2, now(), now(), $3, $4)', [dashUser.id, sessionToken, expiresAt, JSON.stringify(meta)]);
+      await db.none(
+        "INSERT INTO sessions (user_id, session_token, created_at, last_seen_at, expires_at, meta) VALUES ($1, $2, now(), now(), $3, $4)",
+        [dashUser.id, sessionToken, expiresAt, JSON.stringify(meta)],
+      );
 
-      return { ok: true, user: { id: dashUser.id, email: dashUser.email, role: dashUser.role }, session_token: sessionToken, csrf_token: csrfToken, expires_at: expiresAt.toISOString() };
+      return {
+        ok: true,
+        user: { id: dashUser.id, email: dashUser.email, role: dashUser.role },
+        session_token: sessionToken,
+        csrf_token: csrfToken,
+        expires_at: expiresAt.toISOString(),
+      };
     } catch (err: any) {
       // Log the verification error for debugging
       try {
-        console.warn('AuthService.verifyMagicLink: jwt.verify error:', err && err.message ? err.message : err);
+        console.warn(
+          "AuthService.verifyMagicLink: jwt.verify error:",
+          err && err.message ? err.message : err,
+        );
       } catch (e) {
         // ignore logging errors
       }
       // try fallback: if tokenOrJti looks like jti
-      const row = await db.oneOrNone('SELECT * FROM magic_links WHERE token_jti = $1', [tokenOrJti]);
-      if (!row) return { ok: false, reason: 'invalid' };
-      if (row.used_at) return { ok: false, reason: 'replay' };
-      if (new Date(row.expires_at) < new Date()) return { ok: false, reason: 'expired' };
-      await db.none('UPDATE magic_links SET used_at = now() WHERE token_jti = $1', [tokenOrJti]);
+      const row = await db.oneOrNone(
+        "SELECT * FROM magic_links WHERE token_jti = $1",
+        [tokenOrJti],
+      );
+      if (!row) return { ok: false, reason: "invalid" };
+      if (row.used_at) return { ok: false, reason: "replay" };
+      if (new Date(row.expires_at) < new Date())
+        return { ok: false, reason: "expired" };
+      await db.none(
+        "UPDATE magic_links SET used_at = now() WHERE token_jti = $1",
+        [tokenOrJti],
+      );
       return { ok: true, user: { email: row.email } };
     }
   }
@@ -132,19 +199,32 @@ export class AuthService {
   // Revoke a session by token
   static async revokeSession(sessionToken: string) {
     const db = getDatabase();
-    await db.none('UPDATE sessions SET revoked_at = now() WHERE session_token = $1', [sessionToken]);
+    await db.none(
+      "UPDATE sessions SET revoked_at = now() WHERE session_token = $1",
+      [sessionToken],
+    );
   }
 
   // Persist TOTP secret (encrypted) and hashed backup codes for a dashboard user
-  static async persistTotpAndBackupCodes(userId: string, encryptedSecretBase64: string, backupCodesPlain: string[]) {
+  static async persistTotpAndBackupCodes(
+    userId: string,
+    encryptedSecretBase64: string,
+    backupCodesPlain: string[],
+  ) {
     const db = getDatabase();
     // store encrypted secret (BYTEA)
-    await db.none('INSERT INTO totp_secrets (user_id, encrypted_secret, enabled_at, confirmed_at, created_at) VALUES ($1, $2, now(), now(), now()) ON CONFLICT (user_id) DO UPDATE SET encrypted_secret = EXCLUDED.encrypted_secret, enabled_at = EXCLUDED.enabled_at, confirmed_at = EXCLUDED.confirmed_at, created_at = now()', [userId, Buffer.from(encryptedSecretBase64, 'base64')]);
+    await db.none(
+      "INSERT INTO totp_secrets (user_id, encrypted_secret, enabled_at, confirmed_at, created_at) VALUES ($1, $2, now(), now(), now()) ON CONFLICT (user_id) DO UPDATE SET encrypted_secret = EXCLUDED.encrypted_secret, enabled_at = EXCLUDED.enabled_at, confirmed_at = EXCLUDED.confirmed_at, created_at = now()",
+      [userId, Buffer.from(encryptedSecretBase64, "base64")],
+    );
 
     // Hash backup codes and insert
     for (const code of backupCodesPlain) {
       const hash = await bcrypt.hash(code, 10);
-      await db.none('INSERT INTO backup_codes (user_id, code_hash, created_at) VALUES ($1, $2, now())', [userId, hash]);
+      await db.none(
+        "INSERT INTO backup_codes (user_id, code_hash, created_at) VALUES ($1, $2, now())",
+        [userId, hash],
+      );
     }
   }
 }

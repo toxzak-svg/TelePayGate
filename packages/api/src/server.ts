@@ -1,13 +1,13 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
-import globalLimiter from './middleware/ratelimit.middleware';
-import { errorHandler } from './middleware/error.middleware';
-import v1Routes from './routes/v1.routes';
-import { responseMiddleware } from './middleware/response.middleware';
-import './db/connection';
+import express, { Application } from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import globalLimiter from "./middleware/ratelimit.middleware";
+import { errorHandler } from "./middleware/error.middleware";
+import v1Routes from "./routes/v1.routes";
+import { responseMiddleware } from "./middleware/response.middleware";
+import "./db/connection";
 
 export function createServer(): Application {
   const app = express();
@@ -27,17 +27,17 @@ export function createServer(): Application {
   app.use(responseMiddleware);
 
   // Health check endpoint (no additional auth required)
-  app.get('/health', (req, res) => {
+  app.get("/health", (req, res) => {
     res.status(200).json({
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || "development",
     });
   });
 
   // API routes
-  app.use('/api/v1', v1Routes);
+  app.use("/api/v1", v1Routes);
 
   // Error handling (must be last)
   app.use(errorHandler);

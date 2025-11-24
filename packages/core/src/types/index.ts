@@ -9,7 +9,7 @@ export interface User {
   apiSecret: string;
   appName: string;
   webhookUrl?: string;
-  kycStatus: 'pending' | 'verified' | 'rejected';
+  kycStatus: "pending" | "verified" | "rejected";
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -21,7 +21,13 @@ export interface Payment {
   userId: string;
   telegramPaymentId: string;
   starsAmount: number;
-  status: 'pending' | 'received' | 'converting' | 'converted' | 'settled' | 'failed';
+  status:
+    | "pending"
+    | "received"
+    | "converting"
+    | "converted"
+    | "settled"
+    | "failed";
   rawPayload?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
@@ -32,13 +38,13 @@ export interface Conversion {
   id: string;
   userId: string;
   paymentIds: string[];
-  sourceCurrency: 'STARS';
-  targetCurrency: 'TON' | 'USD' | 'EUR';
+  sourceCurrency: "STARS";
+  targetCurrency: "TON" | "USD" | "EUR";
   sourceAmount: number;
   targetAmount?: number;
   exchangeRate?: number;
   rateLockedUntil?: number;
-  status: 'pending' | 'rate_locked' | 'completed' | 'failed';
+  status: "pending" | "rate_locked" | "completed" | "failed";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -113,28 +119,28 @@ export class PaymentGatewayError extends Error {
     public code: string,
     message: string,
     public statusCode: number = 400,
-    public details?: Record<string, any>
+    public details?: Record<string, any>,
   ) {
     super(message);
-    this.name = 'PaymentGatewayError';
+    this.name = "PaymentGatewayError";
   }
 }
 
 export class ValidationError extends PaymentGatewayError {
   constructor(message: string, details?: Record<string, any>) {
-    super('VALIDATION_ERROR', message, 400, details);
+    super("VALIDATION_ERROR", message, 400, details);
   }
 }
 
 export class ExternalApiError extends PaymentGatewayError {
   constructor(service: string, message: string) {
-    super('EXTERNAL_API_ERROR', `${service}: ${message}`, 502);
+    super("EXTERNAL_API_ERROR", `${service}: ${message}`, 502);
   }
 }
 
 export class ConversionError extends PaymentGatewayError {
   constructor(message: string, details?: Record<string, any>) {
-    super('CONVERSION_ERROR', message, 400, details);
+    super("CONVERSION_ERROR", message, 400, details);
   }
 }
 
@@ -204,8 +210,8 @@ export interface ReconciliationRecord {
   expectedAmount: number;
   actualAmount: number;
   difference: number;
-  status: 'matched' | 'mismatch' | 'pending';
-  reconciliationType: 'payment' | 'conversion' | 'settlement';
+  status: "matched" | "mismatch" | "pending";
+  reconciliationType: "payment" | "conversion" | "settlement";
   externalReference?: string;
   notes?: string;
   reconciledAt?: Date;

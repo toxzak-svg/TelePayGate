@@ -22,12 +22,15 @@ export class RateLockManager {
     sourceCurrency: string,
     targetCurrency: string,
     sourceAmount: number,
-    durationSeconds: number = 300
+    durationSeconds: number = 300,
   ): RateLock {
     // Validate duration
-    if (durationSeconds < this.MIN_DURATION || durationSeconds > this.MAX_DURATION) {
+    if (
+      durationSeconds < this.MIN_DURATION ||
+      durationSeconds > this.MAX_DURATION
+    ) {
       throw new Error(
-        `Lock duration must be between ${this.MIN_DURATION} and ${this.MAX_DURATION} seconds`
+        `Lock duration must be between ${this.MIN_DURATION} and ${this.MAX_DURATION} seconds`,
       );
     }
 
@@ -39,8 +42,8 @@ export class RateLockManager {
       targetCurrency,
       sourceAmount,
       lockedAt: now,
-      expiresAt: now + (durationSeconds * 1000),
-      durationSeconds
+      expiresAt: now + durationSeconds * 1000,
+      durationSeconds,
     };
 
     this.locks.set(lock.id, lock);
@@ -113,7 +116,7 @@ export class RateLockManager {
       throw new Error(`Cannot extend lock beyond ${this.MAX_DURATION} seconds`);
     }
 
-    lock.expiresAt = Date.now() + (newDuration * 1000);
+    lock.expiresAt = Date.now() + newDuration * 1000;
     lock.durationSeconds = newDuration;
 
     return lock;
@@ -131,7 +134,9 @@ export class RateLockManager {
    */
   getActiveLocks(): RateLock[] {
     const now = Date.now();
-    return Array.from(this.locks.values()).filter(lock => lock.expiresAt > now);
+    return Array.from(this.locks.values()).filter(
+      (lock) => lock.expiresAt > now,
+    );
   }
 
   /**

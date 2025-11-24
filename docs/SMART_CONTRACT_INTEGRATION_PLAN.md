@@ -34,6 +34,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 ### Phase 0: Documentation & Setup (Day 1)
 
 #### DeDust V2 Research
+
 - [ ] Read official docs: https://docs.dedust.io/docs/introduction
 - [ ] Study smart contract ABI: https://github.com/dedust-io/contracts
 - [ ] Understand pool structure and swap parameters
@@ -41,6 +42,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - [ ] Join DeDust Telegram group for support
 
 **Key Concepts to Understand**:
+
 - Pool types (constant product, stable swap)
 - Asset format (native TON vs jettons)
 - Swap routing (direct vs multi-hop)
@@ -48,6 +50,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - Gas fee calculation
 
 #### Ston.fi Research
+
 - [ ] Read docs: https://docs.ston.fi/
 - [ ] Study router contract: https://github.com/ston-fi/router-contracts
 - [ ] Understand swap path encoding
@@ -55,6 +58,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - [ ] Check API rate limits and restrictions
 
 **Key Concepts**:
+
 - Router vs direct pool interaction
 - Path encoding for multi-hop swaps
 - Deadline parameter for time-sensitive swaps
@@ -62,6 +66,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - Liquidity provider tokens
 
 #### TON SDK Deep Dive
+
 - [ ] Study TonWeb documentation: https://github.com/toncenter/tonweb
 - [ ] Understand wallet interaction patterns
 - [ ] Learn transaction building and signing
@@ -69,6 +74,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - [ ] Explore transaction parsing methods
 
 **Critical Skills**:
+
 - Building and signing transactions
 - Encoding smart contract calls
 - Parsing transaction results
@@ -76,6 +82,7 @@ Implement actual DEX swap execution on TON blockchain through DeDust V2 and Ston
 - Gas optimization
 
 #### Environment Setup
+
 ```bash
 # Install additional dependencies
 npm install @ton/ton @ton/core @ton/crypto tonweb
@@ -102,8 +109,16 @@ node scripts/check-wallet-balance.js
 **File**: `packages/core/src/contracts/dedust.contract.ts`
 
 ```typescript
-import { Address, beginCell, Cell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
-import { TonClient } from '@ton/ton';
+import {
+  Address,
+  beginCell,
+  Cell,
+  Contract,
+  ContractProvider,
+  Sender,
+  SendMode,
+} from "@ton/core";
+import { TonClient } from "@ton/ton";
 
 export interface DeDustPoolConfig {
   poolAddress: Address;
@@ -122,7 +137,7 @@ export interface SwapParams {
 export class DeDustPool implements Contract {
   constructor(
     readonly address: Address,
-    readonly init?: { code: Cell; data: Cell }
+    readonly init?: { code: Cell; data: Cell },
   ) {}
 
   static createFromAddress(address: Address) {
@@ -130,7 +145,7 @@ export class DeDustPool implements Contract {
   }
 
   async getPoolData(provider: ContractProvider) {
-    const result = await provider.get('get_pool_data', []);
+    const result = await provider.get("get_pool_data", []);
     return {
       reserve0: result.stack.readBigNumber(),
       reserve1: result.stack.readBigNumber(),
@@ -145,7 +160,7 @@ export class DeDustPool implements Contract {
     provider: ContractProvider,
     via: Sender,
     params: SwapParams,
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(0x25938561, 32) // swap op code
@@ -179,7 +194,7 @@ export class DeDustVault implements Contract {
       amount: bigint;
       minLpOut: bigint;
     },
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(0x21eeb607, 32) // deposit op code
@@ -312,7 +327,7 @@ async executeDeDustSwap(
     };
   } catch (error: any) {
     console.error('DeDust swap failed:', error);
-    
+
     // Handle specific error cases
     if (error.message.includes('insufficient funds')) {
       throw new Error('INSUFFICIENT_FUNDS: Wallet balance too low');
@@ -323,7 +338,7 @@ async executeDeDustSwap(
     if (error.message.includes('pool not found')) {
       throw new Error('POOL_NOT_FOUND: Invalid pool address');
     }
-    
+
     throw new Error(`DEX_SWAP_FAILED: ${error.message}`);
   }
 }
@@ -346,7 +361,7 @@ private async estimateGasFee(
 private async parseSwapOutput(transaction: any): Promise<bigint> {
   // Parse transaction to extract actual output amount
   // This is simplified - production code needs robust parsing
-  
+
   if (!transaction || !transaction.outMessages) {
     throw new Error('Invalid transaction structure');
   }
@@ -357,7 +372,7 @@ private async parseSwapOutput(transaction: any): Promise<bigint> {
     if (body && body.beginParse) {
       const slice = body.beginParse();
       const op = slice.loadUint(32);
-      
+
       // DeDust transfer notification op code
       if (op === 0x7362d09c) {
         return slice.loadCoins(); // Amount transferred
@@ -379,24 +394,24 @@ private delay(ms: number): Promise<void> {
 
 ```typescript
 export enum DexErrorCode {
-  INSUFFICIENT_LIQUIDITY = 'INSUFFICIENT_LIQUIDITY',
-  SLIPPAGE_EXCEEDED = 'SLIPPAGE_EXCEEDED',
-  INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS',
-  TRANSACTION_REVERTED = 'TRANSACTION_REVERTED',
-  GAS_ESTIMATION_FAILED = 'GAS_ESTIMATION_FAILED',
-  POOL_NOT_FOUND = 'POOL_NOT_FOUND',
-  DEADLINE_EXCEEDED = 'DEADLINE_EXCEEDED',
-  NETWORK_ERROR = 'NETWORK_ERROR',
+  INSUFFICIENT_LIQUIDITY = "INSUFFICIENT_LIQUIDITY",
+  SLIPPAGE_EXCEEDED = "SLIPPAGE_EXCEEDED",
+  INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS",
+  TRANSACTION_REVERTED = "TRANSACTION_REVERTED",
+  GAS_ESTIMATION_FAILED = "GAS_ESTIMATION_FAILED",
+  POOL_NOT_FOUND = "POOL_NOT_FOUND",
+  DEADLINE_EXCEEDED = "DEADLINE_EXCEEDED",
+  NETWORK_ERROR = "NETWORK_ERROR",
 }
 
 export class DexError extends Error {
   constructor(
     public code: DexErrorCode,
     message: string,
-    public metadata?: Record<string, any>
+    public metadata?: Record<string, any>,
   ) {
     super(message);
-    this.name = 'DexError';
+    this.name = "DexError";
   }
 }
 
@@ -406,7 +421,7 @@ export class DexRetryHandler {
 
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    retryableErrors: DexErrorCode[]
+    retryableErrors: DexErrorCode[],
   ): Promise<T> {
     let lastError: Error;
 
@@ -418,8 +433,10 @@ export class DexRetryHandler {
 
         // Check if error is retryable
         if (error instanceof DexError && retryableErrors.includes(error.code)) {
-          console.log(`Retry attempt ${attempt + 1}/${this.maxRetries} for ${error.code}`);
-          
+          console.log(
+            `Retry attempt ${attempt + 1}/${this.maxRetries} for ${error.code}`,
+          );
+
           if (attempt < this.maxRetries - 1) {
             await this.delay(this.retryDelays[attempt]);
             continue;
@@ -435,58 +452,58 @@ export class DexRetryHandler {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
 export function parseDexError(error: any): DexError {
   const message = error.message || error.toString();
 
-  if (message.includes('insufficient liquidity')) {
+  if (message.includes("insufficient liquidity")) {
     return new DexError(
       DexErrorCode.INSUFFICIENT_LIQUIDITY,
-      'Pool has insufficient liquidity for this swap',
-      { originalError: message }
+      "Pool has insufficient liquidity for this swap",
+      { originalError: message },
     );
   }
 
-  if (message.includes('slippage') || message.includes('min amount')) {
+  if (message.includes("slippage") || message.includes("min amount")) {
     return new DexError(
       DexErrorCode.SLIPPAGE_EXCEEDED,
-      'Price moved beyond slippage tolerance',
-      { originalError: message }
+      "Price moved beyond slippage tolerance",
+      { originalError: message },
     );
   }
 
-  if (message.includes('insufficient funds') || message.includes('balance')) {
+  if (message.includes("insufficient funds") || message.includes("balance")) {
     return new DexError(
       DexErrorCode.INSUFFICIENT_FUNDS,
-      'Wallet has insufficient balance',
-      { originalError: message }
+      "Wallet has insufficient balance",
+      { originalError: message },
     );
   }
 
-  if (message.includes('reverted') || message.includes('failed')) {
+  if (message.includes("reverted") || message.includes("failed")) {
     return new DexError(
       DexErrorCode.TRANSACTION_REVERTED,
-      'Transaction reverted on blockchain',
-      { originalError: message }
+      "Transaction reverted on blockchain",
+      { originalError: message },
     );
   }
 
-  if (message.includes('deadline')) {
+  if (message.includes("deadline")) {
     return new DexError(
       DexErrorCode.DEADLINE_EXCEEDED,
-      'Transaction deadline exceeded',
-      { originalError: message }
+      "Transaction deadline exceeded",
+      { originalError: message },
     );
   }
 
   // Default to network error
   return new DexError(
     DexErrorCode.NETWORK_ERROR,
-    'Unknown DEX error occurred',
-    { originalError: message }
+    "Unknown DEX error occurred",
+    { originalError: message },
   );
 }
 ```
@@ -496,29 +513,29 @@ export function parseDexError(error: any): DexError {
 **File**: `packages/core/src/__tests__/integration/dedust-swap.test.ts`
 
 ```typescript
-import { DexAggregatorService } from '../../services/dex-aggregator.service';
-import { Address } from '@ton/core';
+import { DexAggregatorService } from "../../services/dex-aggregator.service";
+import { Address } from "@ton/core";
 
-describe('DeDust Swap Integration', () => {
+describe("DeDust Swap Integration", () => {
   let dexService: DexAggregatorService;
 
   beforeAll(() => {
     // Ensure testnet environment
-    expect(process.env.TON_MAINNET).toBe('false');
+    expect(process.env.TON_MAINNET).toBe("false");
     expect(process.env.TON_WALLET_MNEMONIC).toBeDefined();
 
     dexService = new DexAggregatorService();
   });
 
-  describe('Small Swaps (< 1 TON)', () => {
-    it('should swap 0.1 TON to USDT', async () => {
+  describe("Small Swaps (< 1 TON)", () => {
+    it("should swap 0.1 TON to USDT", async () => {
       const result = await dexService.executeDeDustSwap(
-        'dedust',
-        'EQD_test_pool_address', // Testnet pool
-        'TON',
-        'USDT',
+        "dedust",
+        "EQD_test_pool_address", // Testnet pool
+        "TON",
+        "USDT",
         0.1,
-        0.09 // 10% slippage for testing
+        0.09, // 10% slippage for testing
       );
 
       expect(result.txHash).toBeDefined();
@@ -526,29 +543,29 @@ describe('DeDust Swap Integration', () => {
       expect(result.outputAmount).toBeGreaterThanOrEqual(0.09);
     }, 60000); // 60s timeout
 
-    it('should handle slippage protection', async () => {
+    it("should handle slippage protection", async () => {
       await expect(
         dexService.executeDeDustSwap(
-          'dedust',
-          'EQD_test_pool_address',
-          'TON',
-          'USDT',
+          "dedust",
+          "EQD_test_pool_address",
+          "TON",
+          "USDT",
           0.1,
-          999 // Unrealistic minimum
-        )
-      ).rejects.toThrow('SLIPPAGE_EXCEEDED');
+          999, // Unrealistic minimum
+        ),
+      ).rejects.toThrow("SLIPPAGE_EXCEEDED");
     });
   });
 
-  describe('Medium Swaps (1-10 TON)', () => {
-    it('should swap 5 TON to USDT', async () => {
+  describe("Medium Swaps (1-10 TON)", () => {
+    it("should swap 5 TON to USDT", async () => {
       const result = await dexService.executeDeDustSwap(
-        'dedust',
-        'EQD_test_pool_address',
-        'TON',
-        'USDT',
+        "dedust",
+        "EQD_test_pool_address",
+        "TON",
+        "USDT",
         5.0,
-        4.5 // 10% slippage
+        4.5, // 10% slippage
       );
 
       expect(result.txHash).toBeDefined();
@@ -556,37 +573,38 @@ describe('DeDust Swap Integration', () => {
     }, 60000);
   });
 
-  describe('Error Handling', () => {
-    it('should handle insufficient liquidity', async () => {
+  describe("Error Handling", () => {
+    it("should handle insufficient liquidity", async () => {
       await expect(
         dexService.executeDeDustSwap(
-          'dedust',
-          'EQD_test_pool_address',
-          'TON',
-          'USDT',
+          "dedust",
+          "EQD_test_pool_address",
+          "TON",
+          "USDT",
           10000, // Huge amount
-          9000
-        )
-      ).rejects.toThrow('INSUFFICIENT_LIQUIDITY');
+          9000,
+        ),
+      ).rejects.toThrow("INSUFFICIENT_LIQUIDITY");
     });
 
-    it('should handle invalid pool address', async () => {
+    it("should handle invalid pool address", async () => {
       await expect(
         dexService.executeDeDustSwap(
-          'dedust',
-          'EQD_invalid_address',
-          'TON',
-          'USDT',
+          "dedust",
+          "EQD_invalid_address",
+          "TON",
+          "USDT",
           0.1,
-          0.09
-        )
-      ).rejects.toThrow('POOL_NOT_FOUND');
+          0.09,
+        ),
+      ).rejects.toThrow("POOL_NOT_FOUND");
     });
   });
 });
 ```
 
 **Test Execution**:
+
 ```bash
 # Run testnet integration tests
 npm run test:integration -- dedust-swap.test.ts
@@ -608,7 +626,15 @@ node packages/core/scripts/test-dedust-swap.js \
 **File**: `packages/core/src/contracts/stonfi.contract.ts`
 
 ```typescript
-import { Address, beginCell, Cell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
+import {
+  Address,
+  beginCell,
+  Cell,
+  Contract,
+  ContractProvider,
+  Sender,
+  SendMode,
+} from "@ton/core";
 
 export interface StonfiSwapParams {
   amountIn: bigint;
@@ -628,14 +654,14 @@ export class StonfiRouter implements Contract {
   async getAmountsOut(
     provider: ContractProvider,
     amountIn: bigint,
-    path: Address[]
+    path: Address[],
   ): Promise<bigint[]> {
     const pathCell = beginCell();
-    path.forEach(addr => pathCell.storeAddress(addr));
+    path.forEach((addr) => pathCell.storeAddress(addr));
 
-    const result = await provider.get('get_amounts_out', [
-      { type: 'int', value: amountIn },
-      { type: 'cell', cell: pathCell.endCell() },
+    const result = await provider.get("get_amounts_out", [
+      { type: "int", value: amountIn },
+      { type: "cell", cell: pathCell.endCell() },
     ]);
 
     const amounts: bigint[] = [];
@@ -651,11 +677,11 @@ export class StonfiRouter implements Contract {
     provider: ContractProvider,
     via: Sender,
     params: StonfiSwapParams,
-    value: bigint
+    value: bigint,
   ) {
     // Encode path as cell
     const pathCell = beginCell();
-    params.path.forEach(addr => pathCell.storeAddress(addr));
+    params.path.forEach((addr) => pathCell.storeAddress(addr));
 
     const messageBody = beginCell()
       .storeUint(0x25938561, 32) // swapExactTokensForTokens op code
@@ -810,7 +836,7 @@ private async parseStonfiSwapOutput(transaction: any): Promise<bigint> {
     if (body && body.beginParse) {
       const slice = body.beginParse();
       const op = slice.loadUint(32);
-      
+
       // Ston.fi transfer notification op code
       if (op === 0xf8a7ea5) {
         slice.loadUint(64); // query_id
@@ -838,7 +864,7 @@ Similar test structure as DeDust, test file: `packages/core/src/__tests__/integr
 ```typescript
 async executeConversion(conversionId: string) {
   const conversion = await this.conversionModel.findById(conversionId);
-  
+
   if (!conversion) {
     throw new Error('Conversion not found');
   }
@@ -927,8 +953,8 @@ async executeConversion(conversionId: string) {
 ```typescript
 export class GasOptimizerService {
   async calculateOptimalGas(
-    operation: 'swap' | 'deposit' | 'withdraw',
-    complexity: 'simple' | 'complex'
+    operation: "swap" | "deposit" | "withdraw",
+    complexity: "simple" | "complex",
   ): Promise<bigint> {
     // Base gas amounts (in nanoTON)
     const baseGas = {
@@ -976,16 +1002,16 @@ export class GasOptimizerService {
 
       return 1.0; // Normal
     } catch (error) {
-      console.error('Failed to get network load:', error);
+      console.error("Failed to get network load:", error);
       return 1.2; // Default to slightly higher gas
     }
   }
 
   async estimateTotalCost(
-    operation: 'swap' | 'deposit',
-    amount: bigint
+    operation: "swap" | "deposit",
+    amount: bigint,
   ): Promise<{ amount: bigint; gas: bigint; total: bigint }> {
-    const gas = await this.calculateOptimalGas(operation, 'simple');
+    const gas = await this.calculateOptimalGas(operation, "simple");
     const total = amount + gas;
 
     return { amount, gas, total };
@@ -1000,6 +1026,7 @@ export class GasOptimizerService {
 #### Step 4.1: Mainnet Configuration (Day 11)
 
 **Environment Variables**:
+
 ```bash
 # .env.production
 
@@ -1035,7 +1062,7 @@ export class SafetyChecksService {
     const warnings: string[] = [];
 
     // 1. Check amount is within safe limits
-    const maxSingleSwap = parseFloat(process.env.MAX_SINGLE_SWAP || '100');
+    const maxSingleSwap = parseFloat(process.env.MAX_SINGLE_SWAP || "100");
     if (params.amount > maxSingleSwap) {
       warnings.push(`Amount ${params.amount} exceeds max ${maxSingleSwap} TON`);
       return { safe: false, warnings };
@@ -1057,7 +1084,10 @@ export class SafetyChecksService {
 
     // 4. Rate sanity check
     const expectedRate = await this.getExpectedRate(params.provider);
-    const actualRate = await this.dexService.getRate(params.provider, params.poolId);
+    const actualRate = await this.dexService.getRate(
+      params.provider,
+      params.poolId,
+    );
     const deviation = Math.abs(actualRate - expectedRate) / expectedRate;
     if (deviation > 0.05) {
       warnings.push(`Rate deviation: ${(deviation * 100).toFixed(2)}%`);
@@ -1068,13 +1098,15 @@ export class SafetyChecksService {
 
   async postSwapVerification(
     expectedOutput: number,
-    actualOutput: number
+    actualOutput: number,
   ): Promise<boolean> {
     const deviation = Math.abs(actualOutput - expectedOutput) / expectedOutput;
-    
+
     // Allow up to 2% deviation (1% slippage + 1% margin)
     if (deviation > 0.02) {
-      console.error(`Output mismatch: expected ${expectedOutput}, got ${actualOutput}`);
+      console.error(
+        `Output mismatch: expected ${expectedOutput}, got ${actualOutput}`,
+      );
       return false;
     }
 
@@ -1084,6 +1116,7 @@ export class SafetyChecksService {
 ```
 
 **Monitoring Setup**:
+
 ```typescript
 // packages/core/src/services/swap-monitoring.service.ts
 
@@ -1097,26 +1130,29 @@ export class SwapMonitoringService {
     gasUsed: number;
   }) {
     // Log to database
-    await db.query(`
+    await db.query(
+      `
       INSERT INTO swap_logs (conversion_id, provider, amount_in, amount_out, tx_hash, gas_used, created_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-    `, [
-      data.conversionId,
-      data.provider,
-      data.amountIn,
-      data.amountOut,
-      data.txHash,
-      data.gasUsed,
-    ]);
+    `,
+      [
+        data.conversionId,
+        data.provider,
+        data.amountIn,
+        data.amountOut,
+        data.txHash,
+        data.gasUsed,
+      ],
+    );
 
     // Send to monitoring service (Prometheus, Datadog, etc.)
-    this.metrics.increment('swaps.total', { provider: data.provider });
-    this.metrics.histogram('swaps.amount_in', data.amountIn);
-    this.metrics.histogram('swaps.amount_out', data.amountOut);
-    this.metrics.histogram('swaps.gas_used', data.gasUsed);
+    this.metrics.increment("swaps.total", { provider: data.provider });
+    this.metrics.histogram("swaps.amount_in", data.amountIn);
+    this.metrics.histogram("swaps.amount_out", data.amountOut);
+    this.metrics.histogram("swaps.gas_used", data.gasUsed);
   }
 
-  async getSwapMetrics(timeframe: '1h' | '24h' | '7d'): Promise<{
+  async getSwapMetrics(timeframe: "1h" | "24h" | "7d"): Promise<{
     totalSwaps: number;
     totalVolume: number;
     avgGasUsed: number;
@@ -1133,7 +1169,9 @@ export class SwapMonitoringService {
       WHERE created_at > NOW() - INTERVAL '${timeframe}'
     `);
 
-    return result || { totalSwaps: 0, totalVolume: 0, avgGasUsed: 0, successRate: 0 };
+    return (
+      result || { totalSwaps: 0, totalVolume: 0, avgGasUsed: 0, successRate: 0 }
+    );
   }
 }
 ```
@@ -1143,6 +1181,7 @@ export class SwapMonitoringService {
 ## ✅ Success Criteria
 
 ### DeDust Integration
+
 - [ ] Can execute swaps on testnet
 - [ ] Can execute swaps on mainnet
 - [ ] Transaction hash returned correctly
@@ -1153,6 +1192,7 @@ export class SwapMonitoringService {
 - [ ] Test coverage >80%
 
 ### Ston.fi Integration
+
 - [ ] Router contract interaction working
 - [ ] Multi-hop swaps supported
 - [ ] Path encoding correct
@@ -1161,6 +1201,7 @@ export class SwapMonitoringService {
 - [ ] Test coverage >80%
 
 ### Overall System
+
 - [ ] ConversionService updated
 - [ ] Safety checks in place
 - [ ] Monitoring implemented
@@ -1172,14 +1213,14 @@ export class SwapMonitoringService {
 
 ## 🚨 Risks & Mitigation
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Smart contract bugs | HIGH | MEDIUM | Thorough testing on testnet, code review |
-| Gas price volatility | MEDIUM | HIGH | Dynamic gas estimation, 20% buffer |
-| Slippage losses | MEDIUM | MEDIUM | Strict slippage limits, rate locking |
-| Transaction failures | LOW | LOW | Retry logic, error handling |
-| Pool liquidity drying up | MEDIUM | LOW | Monitor multiple DEXes, fallback pools |
-| API rate limits | LOW | MEDIUM | Request throttling, caching |
+| Risk                     | Impact | Probability | Mitigation                               |
+| ------------------------ | ------ | ----------- | ---------------------------------------- |
+| Smart contract bugs      | HIGH   | MEDIUM      | Thorough testing on testnet, code review |
+| Gas price volatility     | MEDIUM | HIGH        | Dynamic gas estimation, 20% buffer       |
+| Slippage losses          | MEDIUM | MEDIUM      | Strict slippage limits, rate locking     |
+| Transaction failures     | LOW    | LOW         | Retry logic, error handling              |
+| Pool liquidity drying up | MEDIUM | LOW         | Monitor multiple DEXes, fallback pools   |
+| API rate limits          | LOW    | MEDIUM      | Request throttling, caching              |
 
 ---
 
@@ -1208,6 +1249,7 @@ Week 2 (Days 8-12):
 ## 📝 Checklist
 
 ### Pre-Implementation
+
 - [ ] Read DeDust documentation
 - [ ] Read Ston.fi documentation
 - [ ] Setup testnet wallet with funds
@@ -1215,6 +1257,7 @@ Week 2 (Days 8-12):
 - [ ] Create test transaction manually (via TON wallet)
 
 ### Implementation
+
 - [ ] Create contract interfaces (DeDust, Ston.fi)
 - [ ] Implement executeDeDustSwap()
 - [ ] Implement executeStonfiSwap()
@@ -1227,6 +1270,7 @@ Week 2 (Days 8-12):
 - [ ] Setup monitoring
 
 ### Testing
+
 - [ ] Unit tests pass (all services)
 - [ ] Integration tests pass (testnet)
 - [ ] Manual testing successful
@@ -1235,6 +1279,7 @@ Week 2 (Days 8-12):
 - [ ] Error cases handled gracefully
 
 ### Deployment
+
 - [ ] Configure mainnet environment
 - [ ] Deploy to staging first
 - [ ] Run smoke tests on staging
@@ -1247,18 +1292,21 @@ Week 2 (Days 8-12):
 ## 📚 Resources
 
 ### Documentation
+
 - DeDust: https://docs.dedust.io/
 - Ston.fi: https://docs.ston.fi/
 - TON: https://docs.ton.org/develop/dapps/defi/coins
 - TonWeb: https://github.com/toncenter/tonweb
 
 ### Tools
+
 - TON Explorer: https://tonscan.org/
 - Testnet Explorer: https://testnet.tonscan.org/
 - TON SDK: https://github.com/ton-org/ton
 - Testnet Faucet: https://t.me/testgiver_ton_bot
 
 ### Support
+
 - DeDust Telegram: https://t.me/dedust
 - Ston.fi Telegram: https://t.me/ston_fi
 - TON Developers: https://t.me/tondev
