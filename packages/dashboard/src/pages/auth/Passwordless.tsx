@@ -22,7 +22,16 @@ export default function Passwordless() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      let data;
+      try {
+        if (res.headers.get('content-type')?.includes('application/json')) {
+          data = await res.json();
+        } else {
+          throw new Error('Server returned invalid response');
+        }
+      } catch {
+        throw new Error('Unexpected server response');
+      }
       if (!data.success) throw new Error(data.error?.message || 'Failed to send magic link');
       setStep('verify');
     } catch (err: any) {
@@ -42,7 +51,16 @@ export default function Passwordless() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-      const data = await res.json();
+      let data;
+      try {
+        if (res.headers.get('content-type')?.includes('application/json')) {
+          data = await res.json();
+        } else {
+          throw new Error('Server returned invalid response');
+        }
+      } catch {
+        throw new Error('Unexpected server response');
+      }
       if (data.success && data.data?.user) {
         navigate('/dashboard');
         return;
@@ -70,7 +88,16 @@ export default function Passwordless() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: totp, pending_token: pendingToken }),
       });
-      const data = await res.json();
+      let data;
+      try {
+        if (res.headers.get('content-type')?.includes('application/json')) {
+          data = await res.json();
+        } else {
+          throw new Error('Server returned invalid response');
+        }
+      } catch {
+        throw new Error('Unexpected server response');
+      }
       if (data.success) {
         navigate('/dashboard');
         return;
