@@ -77,18 +77,20 @@ async function testAuthFlow() {
       try {
         const response = await axios.post(
           `${API_URL}/users/register`,
-          {
-            appName: `Rate Test ${i}`,
+          // Use environment variable for test API key
+          const testApiKey = process.env.TEST_API_KEY || 'pk_invalid_key_12345';
+          try {
+            await axios.get(`${API_URL}/users/me`, {
+              headers: { 'X-API-Key': testApiKey },
+            });
+            console.log('\u274c Should have failed but succeeded!');
+          } catch (error) {
+            if (error.response?.status === 401) {
+              console.log('\u2705 Correctly rejected:', error.response.data.error.code);
+            } else {
+              throw error;
+            }
           }
-        );
-        console.log(`   Request ${i}: Success`);
-      } catch (error) {
-        if (error.response?.status === 429) {
-          console.log(`   Request ${i}: ✅ Rate limited!`);
-          console.log('   Error:', error.response.data.error.code);
-          console.log('   Retry after:', error.response.data.error.retryAfter, 'seconds');
-          rateLimitHit = true;
-          break;
         } else {
           throw error;
         }

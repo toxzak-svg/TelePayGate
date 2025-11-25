@@ -15,16 +15,16 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: tg_payment_ci
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         options: >-
-          --health-cmd="pg_isready -U postgres -d tg_payment_ci"
+          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tg_payment_ci
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
       - name: Checkout code
@@ -44,6 +44,8 @@ jobs:
             echo "::error::EXPOSE_TEST_TOKENS must not be enabled in hosted CI"
             exit 1
           fi
+        env:
+          EXPOSE_TEST_TOKENS: ${{ secrets.EXPOSE_TEST_TOKENS }}
 
       - name: Wait for Postgres
         run: |
@@ -62,14 +64,14 @@ jobs:
         run: |
           npm run migrate --if-present || node database/migrate.js || true
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
       - name: Run tests
         run: npm run test --workspaces --if-present
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   e2e-fixture:
     # This job is intended to run on a self-hosted runner with Docker available.

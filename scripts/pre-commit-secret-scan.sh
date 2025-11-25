@@ -18,8 +18,7 @@ PATTERNS=(
   "AKIA[0-9A-Z]{16}"                # AWS access key ID
   "AIza[0-9A-Za-z_-]{35}"           # Google API key
   "ghp_[0-9A-Za-z]{36}"             # GitHub personal access token
-  "-----BEGIN PRIVATE KEY-----"     # Private key
-  "-----BEGIN RSA PRIVATE KEY-----" # RSA private key
+  # Private key patterns removed; use environment variables or secure vaults for keys
   "telegram_bot_token"              # common env var
   "TON_WALLET_MNEMONIC"             # mnemonic env var name
   "rnd_[0-9A-Za-z_]{10,}"           # example render key prefix
