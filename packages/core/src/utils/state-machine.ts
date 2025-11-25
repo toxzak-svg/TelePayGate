@@ -99,8 +99,8 @@ export class ConversionStateMachine {
    * Check if conversion is in a terminal state
    */
   isTerminal(): boolean {
-    return this.currentState === ConversionState.COMPLETED || 
-           this.currentState === ConversionState.FAILED;
+    return this.currentState === ConversionState.COMPLETED ||
+      this.currentState === ConversionState.FAILED;
   }
 
   /**

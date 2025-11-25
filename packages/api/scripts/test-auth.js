@@ -30,7 +30,7 @@ async function testAuthFlow() {
     });
     apiKey = registerResponse.data.user.apiKey;
     console.log('✅ User registered');
-    console.log('   API Key:', apiKey);
+    console.log('   API Key: [REDACTED]');
 
     // 3. Test authenticated request
     console.log('\n3️⃣  Testing authenticated request...');

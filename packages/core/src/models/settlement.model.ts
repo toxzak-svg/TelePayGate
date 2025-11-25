@@ -51,7 +51,7 @@ export interface SettlementRecipient {
 }
 
 export class SettlementModel {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   /**
    * Create a new settlement

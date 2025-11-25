@@ -50,7 +50,7 @@ export interface ConversionFees {
 }
 
 export class ConversionModel {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   /**
    * Create a new conversion
@@ -124,7 +124,7 @@ export class ConversionModel {
       if (value !== undefined) {
         const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
         fields.push(`${dbKey} = $${paramIndex}`);
-        
+
         if (key === 'fees') {
           values.push(JSON.stringify(value));
         } else if (key === 'completedAt') {
@@ -205,8 +205,8 @@ export class ConversionModel {
     totalTargetAmount: number;
     byStatus: Record<ConversionStatus, number>;
   }> {
-    const whereClause = userId 
-      ? 'WHERE p.user_id = $1' 
+    const whereClause = userId
+      ? 'WHERE p.user_id = $1'
       : '';
     const params = userId ? [userId] : [];
 

@@ -23,7 +23,7 @@ FAIL src/__tests__/integration/auth.flow.test.ts
       at Object.<anonymous> (../core/src/index.ts:120:9)
 
     console.log
-      Magic link (no SMTP): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImludC10ZXN0LTE3NjM5MDc4MjUyMjVAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjM5MDc4MjUsImV4cCI6MTc2MzkwODcyNSwianRpIjoiNTExZGJmYTE3MzU1MGQ5Yzg0NmViNDE1MzhkYzVhZjcifQ.QjPz5ZMiQNbXnZmQXEma72yN6P2ibRjkZvB911SrpWU
+      Magic link (no SMTP): [REDACTED_JWT]
 
       at Function.requestMagicLink (../core/dist/services/auth.service.js:87:25)
 

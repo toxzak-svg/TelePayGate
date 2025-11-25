@@ -30,7 +30,7 @@ export type AtomicSwap = {
 };
 
 export class StarsOrderModel {
-  constructor(private db: IDatabase<unknown>) {}
+  constructor(private db: IDatabase<unknown>) { }
 
   async createOrder(data: StarsOrder) {
     const row = await this.db.one(

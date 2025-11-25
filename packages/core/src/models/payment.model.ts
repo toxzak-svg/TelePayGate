@@ -22,7 +22,7 @@ export enum PaymentStatus {
 }
 
 export class PaymentModel {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   /**
    * Create a new payment record
@@ -221,8 +221,8 @@ export class PaymentModel {
       starsAmount: parseFloat(row.stars_amount),
       status: row.status as PaymentStatus,
       telegramPaymentId: row.telegram_payment_id,
-      rawPayload: typeof row.raw_payload === 'string' 
-        ? JSON.parse(row.raw_payload) 
+      rawPayload: typeof row.raw_payload === 'string'
+        ? JSON.parse(row.raw_payload)
         : row.raw_payload,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
