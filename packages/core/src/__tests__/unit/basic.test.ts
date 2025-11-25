@@ -33,7 +33,7 @@ describe('Core basic tests', () => {
       status: 'received',
       telegramPaymentId: 'tg1',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     } as any;
 
     const created = await repo.create(payment);
