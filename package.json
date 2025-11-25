@@ -42,8 +42,8 @@
     "@types/cors": "^2.8.19",
     "@types/pg-promise": "^0.0.28",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.10.0",
-    "@typescript-eslint/parser": "^6.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
@@ -54,7 +54,7 @@
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
     "testcontainers": "^11.8.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
