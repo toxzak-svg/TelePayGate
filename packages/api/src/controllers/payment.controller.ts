@@ -23,7 +23,7 @@ export class PaymentController {
       const userId = req.headers['x-user-id'] as string;
 
       if (!userId) {
-        respondError(res, 'MISSING_USER_ID', 'X-User-Id header is required', 400);
+        sendError(res, 'MISSING_USER_ID', 'X-User-Id header is required', 400);
         return;
       }
 
