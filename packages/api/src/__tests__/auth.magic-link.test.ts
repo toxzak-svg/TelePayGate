@@ -36,7 +36,7 @@ describe('Magic Link Authentication', () => {
     const issueRes = await agent
       .post('/api/v1/auth/magic-link')
       .send({ email: testEmail });
-    const token = issueRes.body.data.token;
+    const {token} = issueRes.body.data;
 
     // Verify the magic link (capture cookies from response)
     const verifyRes = await request(app)
