@@ -35,7 +35,7 @@ function emitAliasWarning(oldName: string, newName: string) {
   // Don't spam logs: include a hint for search/grep so teams can find callsites.
   console.warn(
     `[DEPRECATION] ${oldName} is deprecated. Use ${newName} instead. ` +
-      `Search for \"${oldName}(${"}"\")\" to find callers to migrate.`
+      `Search for "${oldName}("")" to find callers to migrate.`
   );
 }
 
