@@ -1,11 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 
-declare global {
-  namespace Express {
-    interface Response {
-      replySuccess: (data?: unknown, status?: number) => Response;
-      replyError: (code: string, message: string, status?: number, meta?: unknown) => Response;
-    }
+declare module 'express-serve-static-core' {
+  interface Response {
+    replySuccess: (data?: unknown, status?: number) => Response;
+    replyError: (code: string, message: string, status?: number, meta?: unknown) => Response;
   }
 }
 

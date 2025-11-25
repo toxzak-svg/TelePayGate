@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { v4 as uuid } from 'uuid';
 import { getDatabase, FeeCollectionService } from '@tg-payment/core';
+import { newRequestId, sendSuccess, sendCreated, sendBadRequest, sendError } from '../utils/response';
 
 export class FeeCollectionController {
   private static getServices() {
@@ -13,20 +13,12 @@ export class FeeCollectionController {
    * GET /api/v1/fees/stats
    */
   static async getFeeStats(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     try {
-      return res.status(200).json({
-        success: true,
-        stats: { totalFees: 0, collectedFees: 0, pendingFees: 0 },
-        requestId,
-      });
+      return sendSuccess(res, { stats: { totalFees: 0, collectedFees: 0, pendingFees: 0 } }, 200, requestId);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'STATS_ERROR', message },
-        requestId,
-      });
+      return sendError(res, 'STATS_ERROR', message, 500, requestId);
     }
   }
 
@@ -34,20 +26,12 @@ export class FeeCollectionController {
    * GET /api/v1/fees/history
    */
   static async getFeeHistory(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     try {
-      return res.status(200).json({
-        success: true,
-        history: [],
-        requestId,
-      });
+      return sendSuccess(res, { history: [] }, 200, requestId);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'HISTORY_ERROR', message },
-        requestId,
-      });
+      return sendError(res, 'HISTORY_ERROR', message, 500, requestId);
     }
   }
 
@@ -55,20 +39,12 @@ export class FeeCollectionController {
    * POST /api/v1/fees/collect
    */
   static async collectFees(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     try {
-      return res.status(200).json({
-        success: true,
-        message: 'Fees collected',
-        requestId,
-      });
+      return sendSuccess(res, { message: 'Fees collected' }, 200, requestId);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'COLLECT_ERROR', message },
-        requestId,
-      });
+      return sendError(res, 'COLLECT_ERROR', message, 500, requestId);
     }
   }
 
@@ -77,30 +53,24 @@ export class FeeCollectionController {
    * Get total uncollected platform fees
    */
   static async getUncollected(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
 
     try {
       const { feeCollectionService } = FeeCollectionController.getServices();
       const uncollected = await feeCollectionService.getUncollectedFees();
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         uncollected: {
           totalStars: uncollected.totalStars,
           totalTon: uncollected.totalTon,
           totalUsd: uncollected.totalUsd,
           feeCount: uncollected.feeCount
-        },
-        requestId
-      });
+        }
+      }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Get uncollected fees error:', error);
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'UNCOLLECTED_ERROR', message },
-        requestId
-      });
+      return sendError(res, 'UNCOLLECTED_ERROR', message, 500, requestId);
     }
   }
 
@@ -109,7 +79,7 @@ export class FeeCollectionController {
    * Request fee collection/withdrawal
    */
   static async requestCollection(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     const userId = req.headers['x-user-id'] as string;
 
     try {
@@ -117,11 +87,7 @@ export class FeeCollectionController {
       const { targetAddress, feeIds } = req.body;
 
       if (!targetAddress) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'MISSING_ADDRESS', message: 'Target TON address required' },
-          requestId
-        });
+        return sendBadRequest(res, 'MISSING_ADDRESS', 'Target TON address required', requestId);
       }
 
       const collection = await feeCollectionService.createCollectionRequest(
@@ -129,8 +95,7 @@ export class FeeCollectionController {
         { targetAddress, feeIds }
       );
 
-      return res.status(201).json({
-        success: true,
+      return sendCreated(res, {
         collection: {
           id: collection.id,
           totalFeesTon: collection.totalFeesTon,
@@ -140,17 +105,12 @@ export class FeeCollectionController {
           targetAddress,
           createdAt: collection.createdAt
         },
-        message: 'Fee collection request created. Transfer will be processed shortly.',
-        requestId
-      });
+        message: 'Fee collection request created. Transfer will be processed shortly.'
+      }, requestId);
     } catch (error: unknown) {
       console.error('❌ Request collection error:', error);
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'COLLECTION_ERROR', message },
-        requestId
-      });
+      return sendError(res, 'COLLECTION_ERROR', message, 500, requestId);
     }
   }
 
@@ -159,7 +119,7 @@ export class FeeCollectionController {
    * Mark collection as completed (internal use after TON transfer)
    */
   static async markCompleted(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     const { id } = req.params;
     const { txHash } = req.body;
 
@@ -167,28 +127,16 @@ export class FeeCollectionController {
       const { feeCollectionService } = FeeCollectionController.getServices();
 
       if (!txHash) {
-        return res.status(400).json({
-          success: false,
-          error: { code: 'MISSING_TX_HASH', message: 'Transaction hash required' },
-          requestId
-        });
+        return sendBadRequest(res, 'MISSING_TX_HASH', 'Transaction hash required', requestId);
       }
 
       await feeCollectionService.markAsCollected(id, txHash);
 
-      return res.status(200).json({
-        success: true,
-        message: 'Fee collection marked as completed',
-        requestId
-      });
+      return sendSuccess(res, { message: 'Fee collection marked as completed' }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Mark completed error:', error);
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'COMPLETE_ERROR', message },
-        requestId
-      });
+      return sendError(res, 'COMPLETE_ERROR', message, 500, requestId);
     }
   }
 
@@ -197,7 +145,7 @@ export class FeeCollectionController {
    * Get collection history
    */
   static async getHistory(req: Request, res: Response) {
-    const requestId = uuid();
+    const requestId = newRequestId();
     const userId = req.headers['x-user-id'] as string;
 
     try {
@@ -206,27 +154,19 @@ export class FeeCollectionController {
 
       const collections = await feeCollectionService.getCollectionHistory(userId, limit);
 
-      return res.status(200).json({
-        success: true,
-        collections: collections.map(c => ({
-          id: c.id,
-          totalFeesTon: c.totalFeesTon,
-          totalFeesUsd: c.totalFeesUsd,
-          feesCollected: c.feesCollected,
-          status: c.status,
-          txHash: c.txHash,
-          createdAt: c.createdAt
-        })),
-        requestId
-      });
+      return sendSuccess(res, { collections: collections.map(c => ({
+        id: c.id,
+        totalFeesTon: c.totalFeesTon,
+        totalFeesUsd: c.totalFeesUsd,
+        feesCollected: c.feesCollected,
+        status: c.status,
+        txHash: c.txHash,
+        createdAt: c.createdAt
+      })) }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Get history error:', error);
       const message = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'HISTORY_ERROR', message },
-        requestId
-      });
+      return sendError(res, 'HISTORY_ERROR', message, 500, requestId);
     }
   }
 }

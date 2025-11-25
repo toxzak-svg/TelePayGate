@@ -22,7 +22,7 @@ export default function Settings() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
-      <div className="bg-white rounded-lg shadow p-6 max-w-lg">
+      <div className="bg-white rounded-lg shadow p-6 max-w-lg mb-8">
         <h2 className="text-lg font-semibold mb-4">API Key</h2>
         <div className="flex items-center gap-2 mb-4">
           <input
@@ -41,6 +41,33 @@ export default function Settings() {
           onClick={handleRegenerate}
         >Regenerate API Key</button>
       </div>
+
+      {/* TOTP Provisioning UI */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">Two-Factor Authentication (TOTP)</h2>
+        {/* Replace with actual user email context if available */}
+        <div className="max-w-lg">
+          {/* Dynamically import TotpProvision using React.lazy */}
+          <React.Suspense fallback={<div>Loading TOTP Provision...</div>}>
+            <TotpProvision email={undefined} />
+          </React.Suspense>
+        </div>
+      </div>
+
+      {/* Backup Codes UI */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">Backup Codes</h2>
+        <div className="max-w-lg">
+          {/* Dynamically import BackupCodes using React.lazy */}
+          <React.Suspense fallback={<div>Loading Backup Codes...</div>}>
+            <BackupCodes email={undefined} />
+          </React.Suspense>
+        </div>
+      </div>
     </div>
   );
 }
+
+// Dynamic imports for TOTP and BackupCodes
+const TotpProvision = React.lazy(() => import('../components/auth/TotpProvision'));
+const BackupCodes = React.lazy(() => import('../components/auth/BackupCodes'));

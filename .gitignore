@@ -57,3 +57,6 @@ docker-compose.override.yml
 temp/
 
 .trigger
+
+# Generated reports
+docs/reports/*.json

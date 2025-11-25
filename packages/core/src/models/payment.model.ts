@@ -7,7 +7,7 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
-  rawPayload?: any;
+  rawPayload?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,7 +22,7 @@ export enum PaymentStatus {
 }
 
 export class PaymentModel {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   /**
    * Create a new payment record
@@ -33,7 +33,7 @@ export class PaymentModel {
     starsAmount: number;
     telegramPaymentId: string;
     status?: PaymentStatus;
-    rawPayload?: any;
+    rawPayload?: unknown;
   }): Promise<Payment> {
     const result = await this.db.one(
       `INSERT INTO payments (
@@ -91,7 +91,7 @@ export class PaymentModel {
   async findByIds(ids: string[]): Promise<Payment[]> {
     if (ids.length === 0) return [];
 
-    const results = await this.db.any(
+    const results = await this.db.any<Payment>(
       'SELECT * FROM payments WHERE id = ANY($1::uuid[])',
       [ids]
     );
@@ -113,7 +113,7 @@ export class PaymentModel {
     const { limit = 20, offset = 0, status } = options;
 
     let whereClause = 'WHERE user_id = $1';
-    const params: any[] = [userId];
+    const params: string[] = [userId];
 
     if (status) {
       whereClause += ' AND status = $2';
@@ -221,8 +221,8 @@ export class PaymentModel {
       starsAmount: parseFloat(row.stars_amount),
       status: row.status as PaymentStatus,
       telegramPaymentId: row.telegram_payment_id,
-      rawPayload: typeof row.raw_payload === 'string' 
-        ? JSON.parse(row.raw_payload) 
+      rawPayload: typeof row.raw_payload === 'string'
+        ? JSON.parse(row.raw_payload)
         : row.raw_payload,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
