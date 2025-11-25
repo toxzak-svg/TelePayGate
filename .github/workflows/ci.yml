@@ -60,7 +60,13 @@ jobs:
 
       - name: Run DB migrations (if available)
         run: |
-          npm run migrate --if-present || node database/migrate.js || true
+          if npm run migrate --if-present; then
+            echo "npm migration succeeded";
+          elif [ -f database/migrate.js ]; then
+            node database/migrate.js;
+          else
+            echo "No migration script found, skipping migrations.";
+          fi
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 

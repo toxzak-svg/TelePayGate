@@ -14,9 +14,19 @@ export default class AuthController {
 
     try {
       const result = await AuthService.requestMagicLink(email, { ip: req.ip, userAgent: req.get('User-Agent') || undefined });
-      const responseData = { message: 'Magic link issued', token_jti: result.token_jti, expires_at: result.expires_at };
-      if (process.env.EXPOSE_TEST_TOKENS === 'true') {
-        (responseData as any).token = result.token;
+      const responseData: {
+        message: string;
+        token_jti: typeof result.token_jti;
+        expires_at: typeof result.expires_at;
+        token?: typeof result.token;
+      } = {
+        message: 'Magic link issued',
+        token_jti: result.token_jti,
+        expires_at: result.expires_at,
+      };
+      // Only expose raw token in non-production and when explicitly allowed
+      if (process.env.EXPOSE_TEST_TOKENS === 'true' && process.env.NODE_ENV !== 'production') {
+        responseData.token = result.token;
       }
       res.replySuccess(responseData, 202);
     } catch (err: unknown) {
