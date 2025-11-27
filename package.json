@@ -15,7 +15,7 @@
     "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
-    "test:prepare": "PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true && DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.cjs reset",
+    "test:prepare": "if [ -z \"$DATABASE_URL\" ]; then PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true; DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.cjs reset; else node database/migrate.cjs reset; fi",
     "dev": "npm run dev --workspaces --if-present",
     "test:detect": "dotenv -e .env.test -- jest --detectOpenHandles --runInBand --forceExit",
     "dev:all": "npm run docker:up && cd packages/dashboard && npm run dev",

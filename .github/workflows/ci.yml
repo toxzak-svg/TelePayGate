@@ -6,7 +6,27 @@ on:
   push:
     branches: [ main ]
 
+# Note: this workflow is careful to avoid failing for forked PRs where secrets are not available.
+
 jobs:
+  validate-secrets:
+    name: Validate required secrets (main branch only)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Check required secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          echo "Validating secrets for main branch run"
+          missing=0
+          if [ -z "${DATABASE_URL:-}" ]; then echo "::error::Missing SECRET: DATABASE_URL"; missing=1; fi
+          if [ -z "${POSTGRES_USER:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_USER (service fallback may work)"; fi
+          if [ -z "${POSTGRES_PASSWORD:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_PASSWORD (service fallback may work)"; fi
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+
   test:
     runs-on: ubuntu-latest
     services:
