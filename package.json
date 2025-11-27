@@ -48,13 +48,16 @@
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^8.53.0",
+    "eslint": "^8.57.1",
+    "jest": "^30.2.0",
     "postcss": "^8.5.6",
     "prettier": "^3.0.3",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
     "testcontainers": "^11.8.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.14"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
@@ -63,9 +66,7 @@
     "nodemailer": "7.0.10",
     "pg": "^8.11.3",
     "pg-promise": "^12.2.0",
-    "tonweb": "^0.0.66",
-    "vite": "7.2.4",
-    "vitest": "4.0.13"
+    "tonweb": "^0.0.66"
   },
   "optionalDependencies": {
     "@aws-sdk/client-kms": "^3.382.0"
