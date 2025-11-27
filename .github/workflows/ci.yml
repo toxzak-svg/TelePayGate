@@ -15,16 +15,18 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          # Use repository secrets when present, otherwise fall back to sensible defaults
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'postgres' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'postgres' }}
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}"
+          --health-cmd="pg_isready -U postgres -d postgres"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # Provide a sensible fallback DATABASE_URL when the secret is missing so hosted CI runs don't break
+      DATABASE_URL: ${{ secrets.DATABASE_URL || format('postgresql://{0}:{1}@localhost:5432/{2}', secrets.POSTGRES_USER || 'postgres', secrets.POSTGRES_PASSWORD || 'postgres', secrets.POSTGRES_DB || 'postgres') }}
 
     steps:
       - name: Checkout code
@@ -37,6 +39,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --workspaces
+
+      - name: Show DB diagnostics
+        run: |
+          echo "DATABASE_URL=${DATABASE_URL}"
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}"
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'postgres' }}"
 
       - name: Guard EXPOSE_TEST_TOKENS
         run: |
@@ -63,15 +71,11 @@ jobs:
       - name: Run DB migrations (if available)
         run: |
           npm run migrate --if-present || node database/migrate.js || true
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
       - name: Run tests
         run: npm run test --workspaces --if-present
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   e2e-fixture:
     # This job is intended to run on a self-hosted runner with Docker available.
