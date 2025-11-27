@@ -1,12 +1,20 @@
 # Dependencies
+# Node dependencies (ignore in all packages)
 node_modules/
+**/node_modules/
 
-# Build outputs
+# Build outputs / compiled files
 dist/
 build/
+out/
+lib/
+es/
 *.tsbuildinfo
+*.next/
+/.parcel-cache
+/.cache/
 
-# Environment variables
+# Environment variables (do NOT ignore .env.example or .env.template)
 .env
 .env.local
 .env.*.local
@@ -24,39 +32,86 @@ scripts/*.pem
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 logs/
 
-# OS files
+# Operating system files
 .DS_Store
 Thumbs.db
+desktop.ini
+Icon
 
-# IDE
+# IDEs / editors
 .vscode/
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 *.swp
 *.swo
 *~
+/.vscode/launch.json
+/.vscode/.history
 
 # Testing
 coverage/
 .nyc_output/
+.jest/
 *.test.js
+*.spec.js
+*.spec.ts
+jest-report.json
 
-# Database
+# Database / local db files
 postgres_data/
 pgadmin_data/
 *.db
 *.sqlite
+*.sqlite3
 
 # Docker
 docker-compose.override.yml
+docker-compose.*.local.yml
+*.dockerfile
 
 # Temporary files
 *.tmp
 .cache/
 temp/
+tmp/
+*.seed
 
+# Trigger folder / cli state
 .trigger
 
-# Generated reports
+# Generated reports (some report files may intentionally be committed; adjust as needed)
 docs/reports/*.json
+
+# Python artifacts (if any)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+venv/
+env/
+.venv/
+pip-wheel-metadata/
+
+# CI artifacts and local tooling
+.cache/
+.serverless/
+.vercel/
+.turbo/
+.nx/
+.parcel-cache/
+
+# Developer containers
+.devcontainer/
+
+# Secret manager files (exclude local secrets)
+.secrets/
+secrets.json
+
+# macOS alias/metadata
+._*
