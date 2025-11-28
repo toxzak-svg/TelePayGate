@@ -8,7 +8,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import PasswordlessLogin from './pages/PasswordlessLogin';
+import Passwordless from './pages/auth/Passwordless';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
 import P2POrders from './pages/P2POrders';
@@ -25,7 +25,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/auth/passwordless" element={<PasswordlessLogin />} />
+            <Route path="/auth/passwordless" element={<Passwordless />} />
             <Route
               path="/"
               element={

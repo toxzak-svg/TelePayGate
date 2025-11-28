@@ -6,7 +6,27 @@ on:
   push:
     branches: [ main ]
 
+# Note: this workflow is careful to avoid failing for forked PRs where secrets are not available.
+
 jobs:
+  validate-secrets:
+    name: Validate required secrets (main branch only)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Check required secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          echo "Validating secrets for main branch run"
+          missing=0
+          if [ -z "${DATABASE_URL:-}" ]; then echo "::error::Missing SECRET: DATABASE_URL"; missing=1; fi
+          if [ -z "${POSTGRES_USER:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_USER (service fallback may work)"; fi
+          if [ -z "${POSTGRES_PASSWORD:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_PASSWORD (service fallback may work)"; fi
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+
   test:
     runs-on: ubuntu-latest
     services:
@@ -15,16 +35,18 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: tg_payment_ci
+          # Use repository secrets when present, otherwise fall back to sensible defaults
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'postgres' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'postgres' }}
         options: >-
-          --health-cmd="pg_isready -U postgres -d tg_payment_ci"
+          --health-cmd="pg_isready -U postgres -d postgres"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tg_payment_ci
+      # Provide a sensible fallback DATABASE_URL when the secret is missing so hosted CI runs don't break
+      DATABASE_URL: ${{ secrets.DATABASE_URL || format('postgresql://{0}:{1}@localhost:5432/{2}', secrets.POSTGRES_USER || 'postgres', secrets.POSTGRES_PASSWORD || 'postgres', secrets.POSTGRES_DB || 'postgres') }}
 
     steps:
       - name: Checkout code
@@ -38,12 +60,20 @@ jobs:
       - name: Install dependencies
         run: npm ci --workspaces
 
+      - name: Show DB diagnostics
+        run: |
+          echo "DATABASE_URL=${DATABASE_URL}"
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}"
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'postgres' }}"
+
       - name: Guard EXPOSE_TEST_TOKENS
         run: |
           if [ "${EXPOSE_TEST_TOKENS:-}" = "true" ]; then
             echo "::error::EXPOSE_TEST_TOKENS must not be enabled in hosted CI"
             exit 1
           fi
+        env:
+          EXPOSE_TEST_TOKENS: ${{ secrets.EXPOSE_TEST_TOKENS }}
 
       - name: Wait for Postgres
         run: |
@@ -61,15 +91,11 @@ jobs:
       - name: Run DB migrations (if available)
         run: |
           npm run migrate --if-present || node database/migrate.js || true
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
 
       # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
       - name: Run tests
         run: npm run test --workspaces --if-present
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
 
   e2e-fixture:
     # This job is intended to run on a self-hosted runner with Docker available.

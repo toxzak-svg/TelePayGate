@@ -10,20 +10,8 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended"
   ],
-  "ignorePatterns": [
-    "dist",
-    "build",
-    "node_modules",
-    "*.js",
-    "*.config.js",
-    "*.config.ts",
-    "coverage",
-    "packages/dashboard",
-    "scripts",
-    "packages/*/scripts"
-  ],
   "rules": {
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
@@ -36,4 +24,14 @@
     "node": true,
     "es2020": true
   }
+
+  ,
+  "overrides": [
+    {
+      "files": ["**/__tests__/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

@@ -65,11 +65,13 @@ test('magic link verify -> session cookie -> /auth/me', async () => {
   const resVerify = await agent.post('/api/v1/auth/magic-link/verify').send({ token: req.token }).set('Content-Type', 'application/json');
   expect(resVerify.status).toBe(200);
 
-  // Use the returned cookie to call /auth/me explicitly
+  // Assert that verify response sets a session cookie
   const rawCookies = resVerify.headers['set-cookie'];
+  expect(rawCookies).toBeDefined();
   const cookieHeader = Array.isArray(rawCookies)
     ? rawCookies.map((c: string) => c.split(';')[0]).join('; ')
     : (typeof rawCookies === 'string' ? rawCookies.split(';')[0] : '');
+  expect(cookieHeader).toBeTruthy();
   const meRes = await agent.get('/api/v1/auth/me').set('Cookie', cookieHeader);
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);

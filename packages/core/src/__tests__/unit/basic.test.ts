@@ -4,7 +4,7 @@ import PaymentRepository from '../../models/payment.repository';
 
 describe('Core basic tests', () => {
   test('EncryptionUtil encrypts and decrypts correctly', () => {
-    const key = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'.slice(0,64);
+    const key = 'a'.repeat(64);
     const util = new EncryptionUtil(key);
     const secret = 'my private key';
     const payload = util.encrypt(secret);
@@ -33,7 +33,7 @@ describe('Core basic tests', () => {
       status: 'received',
       telegramPaymentId: 'tg1',
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     } as any;
 
     const created = await repo.create(payment);

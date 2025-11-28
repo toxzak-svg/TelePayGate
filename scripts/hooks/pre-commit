@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Installs the pre-commit checks to run before commits.
+# This is executed by the install script that copies this file to .git/hooks/pre-commit
+
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "$0")/../.." && pwd)
+HOOK_SCRIPT="$ROOT_DIR/scripts/pre-commit-secret-scan.sh"
+
+echo "Running repository pre-commit checks: secret scanner"
+if [ -x "$HOOK_SCRIPT" ]; then
+  bash "$HOOK_SCRIPT"
+else
+  echo "Warning: secret scanner not found ($HOOK_SCRIPT) — skipping"
+fi
+
+exit 0
