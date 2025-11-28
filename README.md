@@ -552,6 +552,42 @@ npm run format
 npm run build
 ```
 
+### Dev container / Docker Compose (important)
+
+When running services with Docker Compose in development, the codebase uses npm workspaces. To make workspace packages (for example `@tg-payment/core`) available inside the containers we install at the repository root so packages are hoisted into `/app/node_modules`.
+
+Important notes:
+- The `docker-compose.override.yml` dev configuration runs `npm ci` at the repository root inside the container before starting the workspace dev command. This ensures `@tg-payment/core` and other workspace packages resolve correctly.
+- Do not run `npm ci --prefix packages/api` inside the container if you expect workspace dependencies to be hoisted
+
+If you prefer to run the dev API inside Docker, use the helper script added in `scripts/dev-up.sh` which installs workspaces and brings up the stack in the correct order.
+
+### Dev helper scripts
+
+We provide two small helper scripts to make development Docker Compose startup easier:
+
+- `scripts/dev-up.sh` — installs workspace dependencies at the repo root, builds images, starts infrastructure (db, redis, mailhog), runs migrations, and brings up `api` and `dashboard` containers.
+- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API /health endpoint to become available (useful after running the compose stack).
+
+Usage:
+
+```bash
+# Make scripts executable first (one-time)
+chmod +x ./scripts/*.sh
+
+# Start the primary services, run migrations and bring up api/dashboard
+./scripts/dev-up.sh
+
+# or use docker compose directly then wait
+docker compose up -d
+./scripts/wait-for-services.sh
+```
+
+Notes:
+- If your host doesn't expose `pg_isready` or `nc`, the wait script falls back to basic TCP checks and curl. It is intended as a convenience for local dev environments.
+- Helper scripts are designed for dev only — production deployments should use your normal CI/CD pipelines and managed services.
+
+
 ### Testing
 
 ```bash
