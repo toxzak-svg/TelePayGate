@@ -11,6 +11,9 @@ jobs:
     name: Build Dockerfile builder stage
     runs-on: ubuntu-latest
     permissions: write-all
+    strategy:
+      matrix:
+        platform: [ 'linux/amd64', 'linux/arm64' ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,9 +24,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker 'builder' stage
-        run: |
-          # Force BuildKit for cache/mount features used in the Dockerfile
-          export DOCKER_BUILDKIT=1
-          # Build only the 'builder' stage to verify compile-time dependencies and tooling
-          docker build --target builder --progress=plain -t telepaygate-builder-stage:ci .
+      - name: Restore buildx cache
+        uses: actions/cache@v4
+        with:
+          # Persist the local Buildx cache directory between CI runs
+          path: /tmp/.buildx-cache
+          key: buildx-cache-${{ matrix.platform }}-${{ hashFiles('Dockerfile', '**/package-lock.json') }}
+          restore-keys: |
+            buildx-cache-${{ matrix.platform }}-
+
+      - name: Build Docker 'builder' stage (matrix)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          platforms: ${{ matrix.platform }}
+          target: builder
+          tags: telepaygate-builder-stage:ci-${{ matrix.platform }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+
