@@ -22,3 +22,16 @@ This file documents the repository secrets used by CI workflows and deployment s
 
 ## Troubleshooting
 - If CI fails due to database connection errors, confirm the `DATABASE_URL` matches the Postgres service credentials in the workflow (change service env or secret values to match).
+
+## Install local git hooks (recommended)
+
+This repo ships a lightweight pre-commit secret scanner to reduce accidental commits of secrets. To install the hooks locally run:
+
+```bash
+# from repo root
+npm run prepare
+# or install just the hooks
+bash scripts/install-git-hooks.sh
+```
+
+The pre-commit hook will run `scripts/pre-commit-secret-scan.sh` and abort commits when likely secrets are found.

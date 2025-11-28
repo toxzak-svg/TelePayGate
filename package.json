@@ -33,7 +33,8 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "trigger:dev": "npx trigger.dev@latest dev",
-    "trigger:deploy": "npx trigger.dev@latest deploy"
+    "trigger:deploy": "npx trigger.dev@latest deploy",
+    "prepare": "bash scripts/install-git-hooks.sh || true"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
