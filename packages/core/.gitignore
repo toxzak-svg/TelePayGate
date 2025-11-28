@@ -1,0 +1,15 @@
+# Package: packages/core
+node_modules
+dist
+lib
+build
+.env
+*.log
+logs/
+coverage/
+.nyc_output/
+.DS_Store
+.cache/
+tmp/
+.vscode/*
+!.vscode/extensions.json

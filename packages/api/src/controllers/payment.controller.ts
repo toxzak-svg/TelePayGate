@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PaymentModel, FeeService, PaymentStatus, getDatabase } from '@tg-payment/core';
 import type { Database } from '@tg-payment/core';
 import { TelegramService } from '@tg-payment/core';
-import { respondSuccess, respondError, newRequestId } from '../utils/response';
+import { sendSuccess, sendError, newRequestId } from '../utils/response';
 import { validate as validateUuid, v5 as uuidv5 } from 'uuid';
 
 const USER_ID_NAMESPACE = '3b9d87a2-54d7-4878-9d87-351edcb2564b';
@@ -23,7 +23,7 @@ export class PaymentController {
       const userId = req.headers['x-user-id'] as string;
 
       if (!userId) {
-        respondError(res, 'MISSING_USER_ID', 'X-User-Id header is required', 400);
+        sendError(res, 'MISSING_USER_ID', 'X-User-Id header is required', 400);
         return;
       }
 
@@ -65,7 +65,7 @@ export class PaymentController {
           console.error('⚠️ Fee calculation error:', feeError);
         }
 
-        respondSuccess(res, {
+        sendSuccess(res, {
           payment: {
             id: payment.id,
             starsAmount: payment.starsAmount,
@@ -79,18 +79,18 @@ export class PaymentController {
 
       // Process pre-checkout query
       if (payload.pre_checkout_query) {
-        respondSuccess(res, { verified: true }, 200, requestId);
+        sendSuccess(res, { verified: true }, 200, requestId);
         return;
       }
 
-      respondSuccess(res, { message: 'Webhook acknowledged' }, 200, requestId);
+      sendSuccess(res, { message: 'Webhook acknowledged' }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Webhook processing error:', error);
       let message = 'Unknown error';
       if (error instanceof Error) {
         message = error.message;
       }
-      respondError(res, 'WEBHOOK_ERROR', message, 500, requestId);
+      sendError(res, 'WEBHOOK_ERROR', message, 500, requestId);
     }
   }
 

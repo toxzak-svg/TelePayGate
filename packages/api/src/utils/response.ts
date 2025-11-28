@@ -28,5 +28,23 @@ const defaultExport = { newRequestId, sendSuccess, sendCreated, sendBadRequest, 
 export default defaultExport;
 
 // Backwards-compat aliases (some controllers use older names)
-export const respondSuccess = sendSuccess;
-export const respondError = sendError;
+// These are deprecated — they forward to the new helpers and emit a
+// console warning so callers can be migrated gradually.
+function emitAliasWarning(oldName: string, newName: string) {
+  // Use console.warn so the message is visible in most runtimes.
+  // Don't spam logs: include a hint for search/grep so teams can find callsites.
+  console.warn(
+    `[DEPRECATION] ${oldName} is deprecated. Use ${newName} instead. ` +
+      `Search for "${oldName}("")" to find callers to migrate.`
+  );
+}
+
+export const respondSuccess = (res: Response, data: Record<string, any> = {}, status = 200, requestId?: string) => {
+  emitAliasWarning('respondSuccess', 'sendSuccess');
+  return sendSuccess(res, data, status, requestId);
+};
+
+export const respondError = (res: Response, code: string, message: string, status = 500, requestId?: string) => {
+  emitAliasWarning('respondError', 'sendError');
+  return sendError(res, code, message, status, requestId);
+};

@@ -22,6 +22,7 @@ export const paymentService = {
     const { data } = await apiClient.get<ApiResponse<Payment[]>>('/payments', {
       params,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data as any;
   },
 
@@ -43,6 +44,7 @@ export const conversionService = {
       '/conversions',
       { params }
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data as any).data;
   },
 
@@ -138,6 +140,7 @@ export const p2pService = {
       '/p2p/orders',
       { params }
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return data as any;
   },
 

@@ -10,18 +10,18 @@
 - `sendCreated(res, data = {}, requestId?)` — shortcut for 201 created responses.
 - `sendBadRequest(res, code, message, requestId?)` — shortcut for 400 errors.
 - `sendError(res, code, message, status = 500, requestId?)` — generic error response.
-- `respondSuccess`, `respondError` — backwards-compatible aliases used in older controllers.
+- `respondSuccess`, `respondError` — backwards-compatible aliases used in older controllers. These aliases are deprecated; prefer `sendSuccess`/`sendError`.
 
 **Usage examples**:
 
 ```ts
-import { respondSuccess, respondError, newRequestId } from '../utils/response';
+import { sendSuccess, sendError, newRequestId } from '../utils/response';
 
 const requestId = newRequestId();
 
-respondSuccess(res, { data: result }, 200, requestId);
+sendSuccess(res, { data: result }, 200, requestId);
 
-respondError(res, 'SOME_ERROR', 'Detailed message', 500, requestId);
+sendError(res, 'SOME_ERROR', 'Detailed message', 500, requestId);
 ```
 
-**Migration note**: Use `sendSuccess`/`sendError` (or the backward-compatible `respondSuccess`/`respondError`) and include a `requestId` to facilitate tracing and log correlation.
+**Migration note**: Use `sendSuccess`/`sendError`. The older `respondSuccess`/`respondError` aliases are deprecated and will emit a runtime warning when called; update callers to the new names and include a `requestId` to facilitate tracing and log correlation.

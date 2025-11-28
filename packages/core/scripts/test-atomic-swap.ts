@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { initDatabase } from '../src/db/connection';
 import { StarsP2PService } from '../src/services/stars-p2p.service';
-import { TonPaymentService } from '../src/services/ton-payment.service';
+import { TonPaymentService as _TonPaymentService } from '../src/services/ton-payment.service';
 
 // Load env from root
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -44,7 +44,9 @@ async function main() {
     // I'll use a known valid address (e.g. the Ton Foundation address or a random valid one)
     // Or I can generate one using @ton/ton
     
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { mnemonicNew, mnemonicToPrivateKey } = require('@ton/crypto');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { WalletContractV4 } = require('@ton/ton');
     
     const mnemonic = await mnemonicNew();
