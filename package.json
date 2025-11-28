@@ -72,4 +72,8 @@
   "optionalDependencies": {
     "@aws-sdk/client-kms": "^3.382.0"
   }
+  ,
+  "optionalDependencies": {
+    "@aws-sdk/client-kms": "^3.382.0"
+  }
 }
