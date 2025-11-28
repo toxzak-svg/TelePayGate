@@ -86,19 +86,6 @@ services:
     networks:
       - tg_payment_network
 
-  
-  # named volumes for service persistence
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-
-networks:
-  tg_payment_network:
-    driver: bridge
-
-# utility service: run database migrations when you want to initialize the DB
   migrations:
     build:
       context: .
@@ -115,3 +102,15 @@ networks:
     command: sh -c "npm run migrate || true"
     networks:
       - tg_payment_network
+
+  # named volumes for service persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  tg_payment_network:
+    driver: bridge
+ 
