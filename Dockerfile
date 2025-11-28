@@ -18,7 +18,11 @@ COPY packages/sdk/package*.json ./packages/sdk/
 
 # Install dependencies (with cache mount for faster builds)
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production=false --ignore-scripts
+    # Install full workspace deps (including devDependencies) so build tools
+    # (TypeScript, ts-node, ts-jest, etc.) and workspace lifecycle scripts run
+    # correctly during the build stage. We will prune dev deps later in the
+    # multi-stage build to keep the runtime image small.
+    npm ci --no-audit --prefer-offline --progress=false
 
 # Copy source code and database migrations
 COPY packages ./packages

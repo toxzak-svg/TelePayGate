@@ -1,0 +1,46 @@
+name: Build — builder-stage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  builder-stage:
+    name: Build Dockerfile builder stage
+    runs-on: ubuntu-latest
+    permissions: write-all
+    strategy:
+      matrix:
+        platform: [ 'linux/amd64', 'linux/arm64' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Restore buildx cache
+        uses: actions/cache@v4
+        with:
+          # Persist the local Buildx cache directory between CI runs
+          path: /tmp/.buildx-cache
+          key: buildx-cache-${{ matrix.platform }}-${{ hashFiles('Dockerfile', '**/package-lock.json') }}
+          restore-keys: |
+            buildx-cache-${{ matrix.platform }}-
+
+      - name: Build Docker 'builder' stage (matrix)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          platforms: ${{ matrix.platform }}
+          target: builder
+          tags: telepaygate-builder-stage:ci-${{ matrix.platform }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+
