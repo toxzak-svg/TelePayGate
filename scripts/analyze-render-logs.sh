@@ -9,7 +9,8 @@
 set -e
 
 SERVICE_ID="srv-d4d94fggjchc73dr0nug"
-RENDER_API_KEY="${RENDER_API_KEY:-rnd_7YxluJYICx4hgSWWwithCY1RfH9t}"
+# DO NOT hardcode real API keys. Use environment variable or placeholder.
+RENDER_API_KEY="${RENDER_API_KEY:-<REDACTED_RENDER_API_KEY>}"
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
 echo "║        📊 RENDER DEPLOYMENT ANALYSIS                              ║"

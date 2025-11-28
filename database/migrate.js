@@ -142,45 +142,69 @@ async function migrateStatus() {
 }
 
 async function migrateReset() {
-  const readline = require('readline').createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  
-  return new Promise((resolve) => {
-    log('red', '\n⚠️  WARNING: This will DROP ALL TABLES!');
-    readline.question('Type "yes" to continue: ', async (answer) => {
-      readline.close();
-      
-      if (answer !== 'yes') {
-        console.log('Aborted.');
-        resolve();
-        return;
-      }
-      
-      const client = await createClient();
-      
-      try {
-        log('yellow', '\n🗑️  Dropping all tables...');
-        
-        await client.query('DROP SCHEMA public CASCADE');
-        await client.query('CREATE SCHEMA public');
-        await client.query(`GRANT ALL ON SCHEMA public TO ${process.env.DB_USER || 'tg_user'}`);
-        await client.query('GRANT ALL ON SCHEMA public TO public');
-        
-        log('green', '✓ Database reset complete\n');
-        await client.end();
-        
-        log('yellow', 'Running migrations...');
-        await migrateUp();
-      } catch (error) {
-        log('red', `✗ Reset failed: ${error.message}`);
-        process.exit(1);
-      }
-      
-      resolve();
+  // Allow non-interactive resets in CI/test or when explicitly requested.
+  const autoConfirm = process.env.AUTO_CONFIRM_MIGRATE === 'true'
+    || process.env.CI === 'true'
+    || process.env.NODE_ENV === 'test'
+    || (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('_test'));
+
+  if (!autoConfirm) {
+    const readline = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout
     });
-  });
+    return new Promise((resolve) => {
+      log('red', '\n⚠️  WARNING: This will DROP ALL TABLES!');
+      readline.question('Type "yes" to continue: ', async (answer) => {
+        readline.close();
+
+        if (answer !== 'yes') {
+          console.log('Aborted.');
+          resolve();
+          return;
+        }
+
+        try {
+          const client = await createClient();
+          log('yellow', '\n🗑️  Dropping all tables...');
+          await client.query('DROP SCHEMA public CASCADE');
+          await client.query('CREATE SCHEMA public');
+          await client.query(`GRANT ALL ON SCHEMA public TO ${process.env.DB_USER || 'tg_user'}`);
+          await client.query('GRANT ALL ON SCHEMA public TO public');
+          log('green', '✓ Database reset complete\n');
+          await client.end();
+
+          log('yellow', 'Running migrations...');
+          await migrateUp();
+        } catch (error) {
+          log('red', `✗ Reset failed: ${error.message}`);
+          process.exit(1);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  // Non-interactive path
+  log('red', '\n⚠️  WARNING: This will DROP ALL TABLES! (auto-confirmed)');
+  try {
+    const client = await createClient();
+    log('yellow', '\n🗑️  Dropping all tables...');
+    await client.query('DROP SCHEMA public CASCADE');
+    await client.query('CREATE SCHEMA public');
+    await client.query(`GRANT ALL ON SCHEMA public TO ${process.env.DB_USER || 'tg_user'}`);
+    await client.query('GRANT ALL ON SCHEMA public TO public');
+    log('green', '✓ Database reset complete\n');
+    await client.end();
+
+    log('yellow', 'Running migrations...');
+    await migrateUp();
+  } catch (error) {
+    log('red', `✗ Reset failed: ${error.message}`);
+    process.exit(1);
+  }
+  return;
 }
 
 // Main

@@ -10,7 +10,7 @@ function generateToken() {
 }
 
 export const PasswordlessStubController = {
-  async requestMagicLink(req: Request, res: Response, next?: NextFunction) {
+  async requestMagicLink(req: Request, res: Response, _next?: NextFunction) {
     const { email } = req.body || {};
     if (!email) return res.status(400).json({ success: false, error: { code: 'MISSING_EMAIL' } });
     const token = generateToken();
@@ -19,7 +19,7 @@ export const PasswordlessStubController = {
     res.status(200).json({ success: true, token });
   },
 
-  async verifyMagicLink(req: Request, res: Response, next?: NextFunction) {
+  async verifyMagicLink(req: Request, res: Response, _next?: NextFunction) {
     const { token } = req.body || {};
     if (!token) return res.status(400).json({ success: false, error: { code: 'MISSING_TOKEN' } });
     const email = tokenMap.get(token);
@@ -34,7 +34,7 @@ export const PasswordlessStubController = {
     res.status(200).json({ success: true, session: { session_id: sessionToken, expires_at: new Date(expiresAt).toISOString() }, user: { email } });
   },
 
-  async me(req: Request, res: Response, next?: NextFunction) {
+  async me(req: Request, res: Response, _next?: NextFunction) {
     const cookie = req.cookies?.session_id;
     if (!cookie) return res.status(401).json({ success: false, error: { code: 'NO_SESSION' } });
     const session = sessionMap.get(cookie);

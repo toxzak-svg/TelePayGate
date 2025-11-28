@@ -13,10 +13,28 @@ describe('TOTP Setup and Verification', () => {
   let secret: string;
 
   beforeAll(async () => {
+    // Optionally use Testcontainers fixture if requested
+    if (process.env.USE_TESTCONTAINERS === 'true') {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startPostgresFixture } = require('./fixtures/postgresFixture');
+      const fixture = await startPostgresFixture();
+      process.env.DATABASE_URL = fixture.databaseUrl;
+      // store fixture container on global so afterAll can stop it (best-effort)
+      (global as any).__tc_fixture = fixture;
+    }
     const db = getDatabase();
     await db.none('DELETE FROM dashboard_users WHERE email = $1', [testEmail]);
     const user = await db.one('INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at) VALUES ($1, $2, true, now(), now()) RETURNING *', [testEmail, 'developer']);
     userId = user.id;
+  });
+
+  afterAll(async () => {
+    const fixture = (global as any).__tc_fixture;
+    if (fixture) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { stopPostgresFixture } = require('./fixtures/postgresFixture');
+      await stopPostgresFixture(fixture);
+    }
   });
 
   test('should provision TOTP secret and otpauth', async () => {

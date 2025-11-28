@@ -15,7 +15,7 @@ describe('WalletManagerService', () => {
     const mockTonService: jest.Mocked<Partial<TonPaymentService>> = {
       initializeWallet: jest.fn().mockResolvedValue(undefined),
       getWalletAddress: jest.fn().mockReturnValue('EQCwalletaddress'),
-      generatePaymentLink: jest.fn().mockImplementation((addr, amnt) => `${addr}`),
+      generatePaymentLink: jest.fn().mockImplementation((addr, _amnt) => `${addr}`),
       checkIncomingPayments: jest.fn().mockResolvedValue(false),
     };
 

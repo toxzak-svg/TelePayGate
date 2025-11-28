@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PaymentModel, FeeService, PaymentStatus, getDatabase } from '@tg-payment/core';
 import type { Database } from '@tg-payment/core';
 import { TelegramService } from '@tg-payment/core';
+import { sendSuccess, sendError, newRequestId } from '../utils/response';
 import { validate as validateUuid, v5 as uuidv5 } from 'uuid';
 
 const USER_ID_NAMESPACE = '3b9d87a2-54d7-4878-9d87-351edcb2564b';
@@ -15,18 +16,14 @@ export class PaymentController {
     req: Request,
     res: Response
   ): Promise<void> {
+    const requestId = newRequestId();
+
     try {
       const payload = req.body;
       const userId = req.headers['x-user-id'] as string;
 
       if (!userId) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: 'MISSING_USER_ID',
-            message: 'X-User-Id header is required'
-          }
-        });
+        sendError(res, 'MISSING_USER_ID', 'X-User-Id header is required', 400);
         return;
       }
 
@@ -64,59 +61,36 @@ export class PaymentController {
           const feeService = new FeeService(db);
           await feeService.calculateFeesForPayment(payment.id);
           console.log('💰 Platform fee created for payment:', payment.id);
-        } catch (feeError: any) {
-          console.error('⚠️ Fee calculation error:', feeError.message);
+        } catch (feeError: unknown) {
+          console.error('⚠️ Fee calculation error:', feeError);
         }
 
-        res.status(200).json({
-          success: true,
+        sendSuccess(res, {
           payment: {
             id: payment.id,
             starsAmount: payment.starsAmount,
             status: payment.status,
             createdAt: payment.createdAt
           },
-          message: 'Payment processed successfully',
-        });
+          message: 'Payment processed successfully'
+        }, 200, requestId);
         return;
       }
 
       // Process pre-checkout query
       if (payload.pre_checkout_query) {
-        res.status(200).json({
-          success: true,
-          verified: true,
-        });
+        sendSuccess(res, { verified: true }, 200, requestId);
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'Webhook acknowledged',
-      });
+      sendSuccess(res, { message: 'Webhook acknowledged' }, 200, requestId);
     } catch (error: unknown) {
       console.error('❌ Webhook processing error:', error);
       let message = 'Unknown error';
-      let detail = null;
-      let code_pg = null;
       if (error instanceof Error) {
         message = error.message;
       }
-      if (typeof error === 'object' && error !== null) {
-        // @ts-ignore
-        detail = error.detail || null;
-        // @ts-ignore
-        code_pg = error.code || null;
-      }
-      res.status(500).json({
-        success: false,
-        error: {
-          code: 'WEBHOOK_ERROR',
-          message,
-          detail,
-          code_pg
-        }
-      });
+      sendError(res, 'WEBHOOK_ERROR', message, 500, requestId);
     }
   }
 

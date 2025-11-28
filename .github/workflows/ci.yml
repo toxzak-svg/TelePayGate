@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+# Note: this workflow is careful to avoid failing for forked PRs where secrets are not available.
+
+jobs:
+  validate-secrets:
+    name: Validate required secrets (main branch only)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Check required secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          echo "Validating secrets for main branch run"
+          missing=0
+          if [ -z "${DATABASE_URL:-}" ]; then echo "::error::Missing SECRET: DATABASE_URL"; missing=1; fi
+          if [ -z "${POSTGRES_USER:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_USER (service fallback may work)"; fi
+          if [ -z "${POSTGRES_PASSWORD:-}" ]; then echo "::warning::Missing SECRET: POSTGRES_PASSWORD (service fallback may work)"; fi
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          # Use repository secrets when present, otherwise fall back to sensible defaults
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'postgres' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'postgres' }}
+        options: >-
+          --health-cmd="pg_isready -U postgres -d postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      # Provide a sensible fallback DATABASE_URL when the secret is missing so hosted CI runs don't break
+      DATABASE_URL: ${{ secrets.DATABASE_URL || format('postgresql://{0}:{1}@localhost:5432/{2}', secrets.POSTGRES_USER || 'postgres', secrets.POSTGRES_PASSWORD || 'postgres', secrets.POSTGRES_DB || 'postgres') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Show DB diagnostics
+        run: |
+          echo "DATABASE_URL=${DATABASE_URL}"
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}"
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB || 'postgres' }}"
+
+      - name: Guard EXPOSE_TEST_TOKENS
+        run: |
+          if [ "${EXPOSE_TEST_TOKENS:-}" = "true" ]; then
+            echo "::error::EXPOSE_TEST_TOKENS must not be enabled in hosted CI"
+            exit 1
+          fi
+        env:
+          EXPOSE_TEST_TOKENS: ${{ secrets.EXPOSE_TEST_TOKENS }}
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 5432; then
+              echo "Postgres is accepting connections" && break
+            fi
+            echo "Waiting for Postgres... ($i/30)";
+            sleep 1
+          done
+
+      - name: Build (optional)
+        run: npm run build --workspaces --if-present
+
+      - name: Run DB migrations (if available)
+        run: |
+          npm run migrate --if-present || node database/migrate.js || true
+
+      # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
+
+      - name: Run tests
+        run: npm run test --workspaces --if-present
+
+  e2e-fixture:
+    # This job is intended to run on a self-hosted runner with Docker available.
+    # It runs when manually triggered or when a pull request is labeled `run-e2e`.
+    runs-on: [self-hosted, linux, docker]
+    needs: test
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-e2e')
+      )
+    env:
+      USE_TESTCONTAINERS: 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --workspaces
+
+      - name: Prepare DB and run tests (fixture-backed)
+        run: |
+          export DATABASE_URL="unused"
+          # The tests will start Testcontainers and run migrations themselves when USE_TESTCONTAINERS=true
+          npm run test --workspaces --if-present
+        env:
+          USE_TESTCONTAINERS: 'true'

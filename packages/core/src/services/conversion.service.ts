@@ -1,5 +1,4 @@
-import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+// uuid not used here
 import { P2PLiquidityService } from './p2p-liquidity.service';
 import { FeeService } from './fee.service';
 import { TonBlockchainService } from './ton-blockchain.service';
@@ -247,7 +246,7 @@ export class ConversionService {
    */
   private async executeP2PConversion(
     conversionId: string,
-    paymentIds: string[]
+    _paymentIds: string[]
   ): Promise<void> {
     try {
       await this.db.none(
@@ -313,7 +312,7 @@ export class ConversionService {
   private pollConversionStatus(
     conversionId: string,
     txHash: string,
-    attempt: number = 1
+    _attempt: number = 1
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const maxPolls = 60; // 5 minutes (5s intervals)

@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ConversionService } from '../services/conversion.service';
 import { initDatabase, Database } from '../db/connection';
-import { Pool } from 'pg';
 
 
 

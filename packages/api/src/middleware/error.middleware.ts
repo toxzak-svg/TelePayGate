@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { AppError, ErrorHandler } from '@tg-payment/core';
 
 export function errorHandler(
@@ -22,7 +22,12 @@ export function errorHandler(
       timestamp: new Date().toISOString(),
     };
 
-    res.status(error.statusCode).json(errorResponse);
+    if (typeof res.status === 'function') {
+      res.status(error.statusCode).json(errorResponse);
+    } else {
+      // Fallback for non-Express response objects
+      res.json ? res.json(errorResponse) : res.send?.(JSON.stringify(errorResponse));
+    }
     return;
   }
 
@@ -30,9 +35,22 @@ export function errorHandler(
   const statusCode = ErrorHandler.getStatusCode(error);
   const errorResponse = ErrorHandler.formatError(error);
 
-  res.status(statusCode).json({
-    ...errorResponse,
-    requestId: req.headers['x-request-id'],
-    timestamp: new Date().toISOString(),
-  });
+  if (typeof res.status === 'function') {
+    res.status(statusCode).json({
+      ...errorResponse,
+      requestId: req.headers['x-request-id'],
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    // Fallback for non-Express response objects
+    res.json ? res.json({
+      ...errorResponse,
+      requestId: req.headers['x-request-id'],
+      timestamp: new Date().toISOString(),
+    }) : res.send?.(JSON.stringify({
+      ...errorResponse,
+      requestId: req.headers['x-request-id'],
+      timestamp: new Date().toISOString(),
+    }));
+  }
 }

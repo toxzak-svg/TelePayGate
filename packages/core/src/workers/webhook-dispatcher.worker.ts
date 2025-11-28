@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Pool } from 'pg';
 import { WebhookService } from '../services/webhook.service';
+import { createPeriodicRunner, installGracefulShutdown } from '../lib/worker-utils';
 
 /**
  * Webhook Dispatcher Worker
@@ -9,8 +10,7 @@ import { WebhookService } from '../services/webhook.service';
 class WebhookDispatcherWorker {
   private pool: Pool;
   private webhookService: WebhookService;
-  private isRunning = false;
-  private intervalId?: NodeJS.Timeout;
+  private runner = createPeriodicRunner(() => Promise.resolve(), 0);
   
   // Configuration
   private readonly CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
@@ -24,34 +24,23 @@ class WebhookDispatcherWorker {
    * Start the webhook dispatcher worker
    */
   async start(): Promise<void> {
-    if (this.isRunning) {
+    if (this.runner.isRunning()) {
       console.warn('⚠️ Webhook dispatcher worker already running');
       return;
     }
 
-    this.isRunning = true;
     console.log('🚀 Webhook dispatcher worker started');
     console.log(`⏰ Check interval: ${this.CHECK_INTERVAL_MS / 1000}s`);
 
-    // Run immediately on start
-    await this.processRetries();
-
-    // Schedule periodic checks
-    this.intervalId = setInterval(
-      () => this.processRetries(),
-      this.CHECK_INTERVAL_MS
-    );
+    this.runner = createPeriodicRunner(() => this.processRetries(), this.CHECK_INTERVAL_MS);
+    await this.runner.start();
   }
 
   /**
    * Stop the worker
    */
   async stop(): Promise<void> {
-    this.isRunning = false;
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = undefined;
-    }
+    await this.runner.stop();
     console.log('🛑 Webhook dispatcher worker stopped');
   }
 
@@ -92,15 +81,11 @@ async function bootstrap() {
 
   await worker.start();
 
-  const shutdown = async () => {
+  installGracefulShutdown(async () => {
     console.log('\n🛑 Shutting down webhook dispatcher worker...');
     await worker.stop();
     await pool.end();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 }
 
 // Only run if executed directly

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Simple pre-commit hook to run local secret scan script
+# Enable with: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOOK_SCRIPT="$HOOK_DIR/../scripts/pre-commit-secret-scan.sh"
+
+if [ -x "$HOOK_SCRIPT" ]; then
+  "$HOOK_SCRIPT"
+else
+  echo "⚠️  Pre-commit secret scan script not found or not executable: $HOOK_SCRIPT"
+  echo "⚠️  To enable local secret scanning, make $HOOK_SCRIPT executable."
+fi

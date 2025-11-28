@@ -55,10 +55,6 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ### Prerequisites
 
-- Node.js 20+
-- Docker & Docker Compose  
-- PostgreSQL 16+
-- TON wallet with mnemonic
 
 ### Installation
 
@@ -83,6 +79,17 @@ npm run migrate
 # Start development server
 npm run dev
 ```
+ 
+## 🧭 Developer Notes: Response Helpers
+
+The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
+
+- Use `newRequestId()` to generate a UUID v4 request id for tracing and pass it to responses when possible.
+- Prefer `sendSuccess(res, { data }, status, requestId)` to return successful JSON objects. The older `respondSuccess` alias is deprecated and will emit a runtime warning; update controllers to use `sendSuccess`.
+- Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
+
+Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `sendSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`. Replace any `respondSuccess`/`respondError` usages with `sendSuccess`/`sendError`.
+
 
 API will be available at `http://localhost:3000`
 
@@ -95,8 +102,6 @@ API will be available at `http://localhost:3000`
    ```
 
    Replace the placeholder with your custodial TON address (must start with `EQ` or `UQ`).
-
-2. **Launch the automated fee collector** once you deploy or have test payments flowing:
 
    ```bash
    npm run worker:fees
@@ -121,7 +126,6 @@ API will be available at `http://localhost:3000`
 6. [Development Guide](#development-guide)
 7. [Deployment](#deployment)
 8. [Contributing](#contributing)
-
 ---
 
 ## ✨ Key Features
@@ -221,6 +225,22 @@ API will be available at `http://localhost:3000`
 │  - Record audit logs                 │
 └──────────────────────────────────────┘
 ```
+
+## 🧪 E2E Tests (Testcontainers)
+
+Some integration tests can be run against a disposable Postgres instance using Testcontainers (Docker).
+
+- Enable by setting `USE_TESTCONTAINERS=true` when running tests. Example:
+
+```bash
+USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests__/auth.magic-link.test.ts -i
+```
+
+- This requires Docker available on the machine running the tests.
+- CI: an optional `e2e-fixture` job has been added to `.github/workflows/ci.yml`. It is configured to run on `self-hosted` runners and must be triggered manually via `workflow_dispatch` by a maintainer. The self-hosted runner must have Docker available and be labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
+
+Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
+
 
 ### Technology Stack
 
@@ -531,6 +551,42 @@ npm run format
 # Build for production
 npm run build
 ```
+
+### Dev container / Docker Compose (important)
+
+When running services with Docker Compose in development, the codebase uses npm workspaces. To make workspace packages (for example `@tg-payment/core`) available inside the containers we install at the repository root so packages are hoisted into `/app/node_modules`.
+
+Important notes:
+- The `docker-compose.override.yml` dev configuration runs `npm ci` at the repository root inside the container before starting the workspace dev command. This ensures `@tg-payment/core` and other workspace packages resolve correctly.
+- Do not run `npm ci --prefix packages/api` inside the container if you expect workspace dependencies to be hoisted
+
+If you prefer to run the dev API inside Docker, use the helper script added in `scripts/dev-up.sh` which installs workspaces and brings up the stack in the correct order.
+
+### Dev helper scripts
+
+We provide two small helper scripts to make development Docker Compose startup easier:
+
+- `scripts/dev-up.sh` — installs workspace dependencies at the repo root, builds images, starts infrastructure (db, redis, mailhog), runs migrations, and brings up `api` and `dashboard` containers.
+- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API /health endpoint to become available (useful after running the compose stack).
+
+Usage:
+
+```bash
+# Make scripts executable first (one-time)
+chmod +x ./scripts/*.sh
+
+# Start the primary services, run migrations and bring up api/dashboard
+./scripts/dev-up.sh
+
+# or use docker compose directly then wait
+docker compose up -d
+./scripts/wait-for-services.sh
+```
+
+Notes:
+- If your host doesn't expose `pg_isready` or `nc`, the wait script falls back to basic TCP checks and curl. It is intended as a convenience for local dev environments.
+- Helper scripts are designed for dev only — production deployments should use your normal CI/CD pipelines and managed services.
+
 
 ### Testing
 

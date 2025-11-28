@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { getDatabase, Database } from '../db/connection';
 import { FeeService } from '../services/fee.service';
 import TonBlockchainService from '../services/ton-blockchain.service';
+import { createPeriodicRunner, installGracefulShutdown } from '../lib/worker-utils';
 
 /**
  * Fee Collection Worker
@@ -12,8 +13,7 @@ class FeeCollectionWorker {
   private db: Database;
   private feeService: FeeService;
   private tonService: TonBlockchainService;
-  private isRunning = false;
-  private intervalId?: NodeJS.Timeout;
+  private runner = createPeriodicRunner(() => Promise.resolve(), 0);
   
   // Configuration
   private readonly CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
@@ -34,35 +34,25 @@ class FeeCollectionWorker {
    * Start the fee collection worker
    */
   async start(): Promise<void> {
-    if (this.isRunning) {
+    if (this.runner.isRunning()) {
       console.warn('⚠️ Fee collection worker already running');
       return;
     }
 
-    this.isRunning = true;
     console.log('🚀 Fee collection worker started');
     console.log(`⏰ Check interval: ${this.CHECK_INTERVAL_MS / 1000}s`);
     console.log(`💰 Min collection amount: ${this.MIN_COLLECTION_AMOUNT_TON} TON`);
 
-    // Run immediately on start
-    await this.collectFeesIfNeeded();
-
-    // Schedule periodic checks
-    this.intervalId = setInterval(
-      () => this.collectFeesIfNeeded(),
-      this.CHECK_INTERVAL_MS
-    );
+    // create runner bound to this.collectFeesIfNeeded
+    this.runner = createPeriodicRunner(() => this.collectFeesIfNeeded(), this.CHECK_INTERVAL_MS);
+    await this.runner.start();
   }
 
   /**
    * Stop the worker
    */
   async stop(): Promise<void> {
-    this.isRunning = false;
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = undefined;
-    }
+    await this.runner.stop();
     console.log('🛑 Fee collection worker stopped');
   }
 
@@ -246,14 +236,10 @@ async function bootstrap() {
 
   await worker.start();
 
-  const shutdown = async () => {
+  installGracefulShutdown(async () => {
     console.log('\n🛑 Shutting down fee collection worker...');
     await worker.stop();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 }
 
 // Only run if executed directly

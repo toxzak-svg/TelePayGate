@@ -1,4 +1,4 @@
-import { Address, beginCell, Cell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
+import { Address, beginCell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
 
 export interface StonfiSwapParams {
   amountIn: bigint;

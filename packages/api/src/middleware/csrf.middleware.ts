@@ -27,7 +27,7 @@ export default async function csrfProtect(req: Request, res: Response, next: Nex
       return res.status(403).json({ success: false, error: { code: 'CSRF_FAILED', message: 'Invalid CSRF token' } });
     }
     return next();
-  } catch (err: any) {
+  } catch (err) {
     console.error('CSRF middleware error', err);
     return res.status(500).json({ success: false, error: { code: 'CSRF_ERROR', message: 'CSRF verification failed' } });
   }

@@ -50,7 +50,7 @@ export interface ConversionFees {
 }
 
 export class ConversionModel {
-  constructor(private db: Database) {}
+  constructor(private db: Database) { }
 
   /**
    * Create a new conversion
@@ -117,14 +117,14 @@ export class ConversionModel {
     }
   ): Promise<Conversion> {
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     Object.entries(updates).forEach(([key, value]) => {
       if (value !== undefined) {
         const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
         fields.push(`${dbKey} = $${paramIndex}`);
-        
+
         if (key === 'fees') {
           values.push(JSON.stringify(value));
         } else if (key === 'completedAt') {
@@ -166,7 +166,7 @@ export class ConversionModel {
 
     // Join with payments to get user_id
     let whereClause = 'WHERE p.user_id = $1';
-    const params: any[] = [userId];
+    const params: unknown[] = [userId];
 
     if (status) {
       whereClause += ' AND c.status = $2';
@@ -174,7 +174,7 @@ export class ConversionModel {
     }
 
     const [results, countResult] = await Promise.all([
-      this.db.any(
+      this.db.any<Conversion>(
         `SELECT DISTINCT c.* FROM conversions c
          JOIN payments p ON p.id = ANY(c.payment_ids)
          ${whereClause}
@@ -205,8 +205,8 @@ export class ConversionModel {
     totalTargetAmount: number;
     byStatus: Record<ConversionStatus, number>;
   }> {
-    const whereClause = userId 
-      ? 'WHERE p.user_id = $1' 
+    const whereClause = userId
+      ? 'WHERE p.user_id = $1'
       : '';
     const params = userId ? [userId] : [];
 
@@ -226,7 +226,7 @@ export class ConversionModel {
          ${whereClause}`,
         params
       ),
-      this.db.any(
+      this.db.any<{ status: ConversionStatus; count: string }>(
         `SELECT c.status, COUNT(*) as count FROM conversions c
          ${userId ? 'JOIN payments p ON p.id = ANY(c.payment_ids)' : ''}
          ${whereClause}
@@ -253,24 +253,24 @@ export class ConversionModel {
    */
   private mapToConversion(row: any): Conversion {
     return {
-      id: row.id,
-      paymentId: row.payment_id,
-      paymentIds: row.payment_ids,
+      id: row.id as string,
+      paymentId: row.payment_id as string,
+      paymentIds: Array.isArray(row.payment_ids) ? row.payment_ids as string[] : [],
       sourceCurrency: row.source_currency as Currency,
       targetCurrency: row.target_currency as Currency,
-      sourceAmount: parseFloat(row.source_amount),
-      targetAmount: row.target_amount ? parseFloat(row.target_amount) : undefined,
-      exchangeRate: row.exchange_rate ? parseFloat(row.exchange_rate) : undefined,
-      rateLockedUntil: row.rate_locked_until ? parseInt(row.rate_locked_until) : undefined,
-      dexPoolId: row.dex_pool_id,
-      dexProvider: row.dex_provider,
-      dexTxHash: row.dex_tx_hash,
-      tonTxHash: row.ton_tx_hash,
+      sourceAmount: row.source_amount ? parseFloat(row.source_amount as string) : 0,
+      targetAmount: row.target_amount ? parseFloat(row.target_amount as string) : undefined,
+      exchangeRate: row.exchange_rate ? parseFloat(row.exchange_rate as string) : undefined,
+      rateLockedUntil: row.rate_locked_until ? parseInt(row.rate_locked_until as string) : undefined,
+      dexPoolId: row.dex_pool_id as string,
+      dexProvider: row.dex_provider as string,
+      dexTxHash: row.dex_tx_hash as string,
+      tonTxHash: row.ton_tx_hash as string,
       status: row.status as ConversionStatus,
-      fees: typeof row.fees === 'string' ? JSON.parse(row.fees) : row.fees,
-      errorMessage: row.error_message,
-      createdAt: new Date(row.created_at),
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined
+      fees: typeof row.fees === 'string' ? JSON.parse(row.fees as string) : row.fees,
+      errorMessage: row.error_message as string,
+      createdAt: row.created_at ? new Date(row.created_at as string) : undefined,
+      completedAt: row.completed_at ? new Date(row.completed_at as string) : undefined
     };
   }
 }
