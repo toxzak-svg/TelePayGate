@@ -10,6 +10,7 @@ describe('Backup Codes Integration', () => {
       const { startPostgresFixture } = require('./fixtures/postgresFixture');
       const fixture = await startPostgresFixture();
       process.env.DATABASE_URL = fixture.databaseUrl;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global as any).__tc_fixture = fixture;
     }
 
@@ -25,6 +26,7 @@ describe('Backup Codes Integration', () => {
   });
 
   afterAll(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fixture = (global as any).__tc_fixture;
     if (fixture) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires

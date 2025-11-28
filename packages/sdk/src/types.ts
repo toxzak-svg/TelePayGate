@@ -119,6 +119,7 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawPayload?: any;
   createdAt: string;
   updatedAt: string;
@@ -155,5 +156,6 @@ export interface APIError {
   message: string;
   code: string;
   status: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }

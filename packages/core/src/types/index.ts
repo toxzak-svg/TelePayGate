@@ -22,7 +22,7 @@ export interface Payment {
   telegramPaymentId: string;
   starsAmount: number;
   status: 'pending' | 'received' | 'converting' | 'converted' | 'settled' | 'failed';
-  rawPayload?: Record<string, any>;
+  rawPayload?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }

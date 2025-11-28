@@ -1,4 +1,4 @@
-import { PostgreSqlContainer, StartedTestContainer } from 'testcontainers';
+import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
@@ -25,12 +25,14 @@ export async function startPostgresFixture(): Promise<Fixture> {
     // ignore and fall back to starting our own container
   }
 
-  const pg = new PostgreSqlContainer('postgres:16')
-    .withDatabase('tg_payment_tc')
-    .withUsername('tc_user')
-    .withPassword('tc_pass');
-
-  const container = await pg.start();
+  const container = await new GenericContainer('postgres:16')
+    .withEnvironment({
+      POSTGRES_DB: 'tg_payment_tc',
+      POSTGRES_USER: 'tc_user',
+      POSTGRES_PASSWORD: 'tc_pass',
+    })
+    .withExposedPorts(5432)
+    .start();
   const port = container.getMappedPort(5432);
   const host = container.getHost();
   const databaseUrl = `postgresql://tc_user:tc_pass@${host}:${port}/tg_payment_tc`;

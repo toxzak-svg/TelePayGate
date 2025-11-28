@@ -14,7 +14,7 @@ export class P2POrdersController {
       const db = getDatabase();
       const service = new StarsP2PService(db);
 
-      let result: any;
+      let result: Record<string, unknown>;
       if (type === 'sell') {
         if (!starsAmount) return res.status(400).json({ success: false, error: { code: 'MISSING_STARS', message: 'starsAmount is required for sell orders' } });
         result = await service.createSellOrder(userId, Number(starsAmount), String(rate));
@@ -39,7 +39,7 @@ export class P2POrdersController {
       const db = getDatabase();
       const model = new StarsOrderModel(db);
       const orders = await model.listOpenOrders(type, limit, offset);
-      const totalRow: any = await model.countOpenOrders(type);
+      const totalRow: { total: number } | null = await model.countOpenOrders(type);
       const total = totalRow?.total ?? 0;
 
       res.status(200).json({

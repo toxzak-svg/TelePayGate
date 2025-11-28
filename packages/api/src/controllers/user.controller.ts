@@ -53,7 +53,7 @@ export class UserController {
         requestId,
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ Registration error:', { requestId, error: error.message });
       return res.status(500).json({
         success: false,

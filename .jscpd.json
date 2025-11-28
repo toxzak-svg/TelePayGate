@@ -1,0 +1,11 @@
+{
+  "paths": ["packages", "src"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.min.js",
+    "docs/reports/**"
+  ],
+  "minLines": 5,
+  "reporters": ["json"]
+}
