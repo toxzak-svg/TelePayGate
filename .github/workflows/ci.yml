@@ -102,8 +102,78 @@ jobs:
 
       # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
-      - name: Run tests
-        run: npm run test --workspaces --if-present
+      - name: Skip heavy tests here (tests run in workspace matrix)
+        run: echo "Skipping monorepo tests in this job — tests run in parallel per-workspace"
+
+  workspace-tests:
+    name: Workspace tests (parallel)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - workspace: "@tg-payment/core"
+            package: core
+            needs_db: true
+          - workspace: "@tg-payment/api"
+            package: api
+            needs_db: true
+          - workspace: "@tg-payment/dashboard"
+            package: dashboard
+            needs_db: false
+          - workspace: "@tg-payment/sdk"
+            package: sdk
+            needs_db: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20 and cache npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies for workspace
+        run: npm ci --workspace="${{ matrix.workspace }}" --if-present
+
+      - name: Check whether workspace changed in this PR/push
+        id: changed-check
+        run: |
+          set -euo pipefail
+          echo "Determining changed files for workflow run..."
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF=${{ github.event.pull_request.base.ref }}
+            echo "Fetching base ref: $BASE_REF"
+            git fetch origin $BASE_REF --depth=1 || true
+            CHANGED=$(git diff --name-only origin/${BASE_REF}...HEAD || true)
+          else
+            # for push events, check commits in the push
+            CHANGED=$(git --no-pager diff --name-only HEAD~5..HEAD || true)
+          fi
+          echo "Changed files:\n$CHANGED"
+          echo "$CHANGED" | grep -E -q "^packages/${{ matrix.package }}/" && echo "workspace_changed=true" >> $GITHUB_ENV || echo "workspace_changed=false" >> $GITHUB_ENV
+
+      - name: Build package (if present)
+        run: npm run build --workspace="${{ matrix.workspace }}" --if-present
+
+      - name: Run package tests
+        run: |
+          # workspace_changed is set by the previous step via $GITHUB_ENV
+          if [ "${workspace_changed:-false}" != "true" ]; then
+            echo "No changes detected in workspace ${{ matrix.workspace }}, skipping tests to save CI time."
+            exit 0
+          fi
+          echo "Running tests for workspace ${{ matrix.workspace }}"
+          if [ "${{ matrix.needs_db }}" = "true" ]; then
+            echo "This workspace requires a DB — starting a local Postgres service in job"
+            docker run -d --name test-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 postgres:16 || true
+            # give postgres a moment to start
+            for i in {1..30}; do nc -z localhost 5432 && break || sleep 1; done
+            export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+          fi
+            npm run test --workspace="${{ matrix.workspace }}" --if-present
 
   e2e-fixture:
     # This job is intended to run on a self-hosted runner with Docker available.
@@ -135,3 +205,49 @@ jobs:
           npm run test --workspaces --if-present
         env:
           USE_TESTCONTAINERS: 'true'
+
+  docker-smoke:
+    name: Build Docker image + smoke test
+    runs-on: ubuntu-latest
+    needs: test
+    # This job intentionally avoids reading repository secrets so it works for forked PRs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: |
+          docker build -t tg-payment-gateway:ci .
+
+      - name: Start Postgres and Redis containers
+        run: |
+          docker run -d --name test-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5433:5432 postgres:16 || true
+          docker run -d --name test-redis -p 6380:6379 redis:7-alpine || true
+          # wait for services
+          for i in {1..60}; do
+            if docker exec test-pg pg_isready -h localhost -p 5432 -U postgres >/dev/null 2>&1; then echo "Postgres ready" && break; fi
+            echo "Waiting for Postgres... ($i/60)"; sleep 1
+          done
+          for i in {1..30}; do
+            if docker exec test-redis redis-cli ping >/dev/null 2>&1; then echo "Redis ready" && break; fi
+            echo "Waiting for Redis... ($i/30)"; sleep 1
+          done
+
+      - name: Run container for smoke testing
+        run: |
+          # run the built image and link to the test DB/Redis
+          docker run -d --name tg_payment_api_ci --link test-pg:db --link test-redis:redis -e DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres -e REDIS_URL=redis://redis:6379 -e PORT=3000 -p 3000:3000 tg-payment-gateway:ci || true
+          # wait for the /health endpoint
+          for i in {1..60}; do
+            if curl -f --max-time 2 http://localhost:3000/health >/dev/null 2>&1; then echo "Health OK" && exit 0; fi
+            echo "Waiting for /health... ($i/60)"; sleep 1
+          done
+          echo "::error::Health endpoint did not become ready" && exit 1
+
+      - name: Collect logs and teardown
+        if: always()
+        run: |
+          docker logs tg_payment_api_ci || true
+          docker rm -f tg_payment_api_ci || true
+          docker rm -f test-pg || true
+          docker rm -f test-redis || true

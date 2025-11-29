@@ -1,88 +1,61 @@
 # API Reference
-
-Complete reference for the Telegram Payment Gateway REST API.
-
-## Base URL
-
-Production: https://api.yourgateway.com/v1
-Development: http://localhost:3000/api/v1
-
-
-## Authentication
-
-All endpoints (except registration and webhooks) require authentication via API key.
-
-### Authentication Methods
-
-**Method 1: Header (Recommended)**
-X-API-Key: pk_your_api_key
-
-
-**Method 2: Bearer Token**
-Authorization: Bearer pk_your_api_key
-
-
-**Method 3: Query Parameter**
-GET /api/v1/payments?api_key=pk_your_api_key
-
-
----
-
-## User Endpoints
-
 ### Register New User
 
-Create a new user account and receive API credentials.
+Create a new user account and receive API credentials (API key + secret). Store secrets in a secure vault — the server will show the `apiSecret` only once.
 
 **Endpoint:** `POST /api/v1/users/register`  
-**Authentication:** None required
+**Authentication:** None
 
-**Request Body:**
+**Request Example:**
+```json
 {
-"appName": "My Telegram Bot",
-"description": "Bot description (optional)",
-"webhookUrl": "https://myapp.com/webhook"
+  "appName": "My Telegram Bot",
+  "description": "Bot description (optional)",
+  "webhookUrl": "https://myapp.com/webhook"
 }
+```
 
-
-**Response:** `201 Created`
+**Response Example (201 Created):**
+```json
 {
-"success": true,
-"user": {
-"id": "uuid-v4",
-"appName": "My Telegram Bot",
-"apiKey": "pk_abc123...",
-"apiSecret": "sk_xyz789...",
-"kycStatus": "pending",
-"createdAt": "2025-11-12T18:00:00Z"
+  "success": true,
+  "user": {
+    "id": "uuid-v4",
+    "appName": "My Telegram Bot",
+    "apiKey": "pk_abc123...",
+    "apiSecret": "sk_xyz789...",
+    "kycStatus": "pending",
+    "createdAt": "2025-11-12T18:00:00Z"
+  }
 }
-}
+```
 
+Notes:
+- The `apiSecret` is shown only once. Save it securely (vault or secure environment variable) and do not commit it into source control.
+- Make sure `webhookUrl` is reachable and uses HTTPS in production.
 
-**Rate Limit:** 10 requests/minute per IP
+### Get current user
 
----
-
-### Get User Profile
-
-Retrieve authenticated user's profile information.
+Return the current user's profile and settings. Authentication required via `X-API-Key` header or `Authorization: Bearer <token>`.
 
 **Endpoint:** `GET /api/v1/users/me`  
 **Authentication:** Required
 
-**Response:** `200 OK`
+**Response Example (200 OK):**
+```json
 {
-"success": true,
-"user": {
-"id": "uuid-v4",
-"appName": "My Telegram Bot",
-"apiKey": "pk_***",
-"webhookUrl": "https://myapp.com/webhook",
-"kycStatus": "pending",
-"createdAt": "2025-11-12T18:00:00Z",
-"updatedAt": "2025-11-12T18:30:00Z"
+  "success": true,
+  "user": {
+    "id": "uuid-v4",
+    "appName": "My Telegram Bot",
+    "apiKey": "pk_***",
+    "webhookUrl": "https://myapp.com/webhook",
+    "kycStatus": "pending",
+    "createdAt": "2025-11-12T18:00:00Z",
+    "updatedAt": "2025-11-12T18:30:00Z"
+  }
 }
-}
+```
 
 
 ---
@@ -94,13 +67,15 @@ Generate new API credentials. Old keys are immediately invalidated.
 **Endpoint:** `POST /api/v1/users/api-keys/regenerate`  
 **Authentication:** Required
 
-**Response:** `200 OK`
+**Response Example (200 OK):**
+```json
 {
-"success": true,
-"apiKey": "pk_new123...",
-"apiSecret": "sk_new789...",
-"message": "API keys regenerated successfully"
+  "success": true,
+  "apiKey": "pk_new123...",
+  "apiSecret": "sk_new789...",
+  "message": "API keys regenerated successfully"
 }
+```
 
 
 **⚠️ Warning:** Old keys stop working immediately.
@@ -108,6 +83,56 @@ Generate new API credentials. Old keys are immediately invalidated.
 ---
 
 ## Payment Endpoints
+ 
+## Authentication / Session Endpoints
+
+These endpoints implement the passwordless magic-link + optional TOTP flows used by the dashboard and SDK. If you are using API keys for machine-to-machine integrations, you do not need these endpoints.
+
+### Request Magic Link
+
+**Endpoint:** `POST /api/v1/auth/magic-link`  
+**Authentication:** None
+
+**Request Example (application/json):**
+```json
+{ "email": "dev@example.com" }
+```
+
+**Response (202 Accepted):**
+```json
+{ "success": true, "message": "Magic link requested" }
+```
+
+### Verify Magic Link / Create Session
+
+**Endpoint:** `POST /api/v1/auth/magic-link/verify`  
+**Authentication:** None
+
+**Request:**
+```json
+{ "token": "magic-token-from-email" }
+```
+
+**Response (200):** Sets secure session cookie and returns 200 with user details, or 206 if TOTP is required.
+
+### TOTP (Optional)
+
+`POST /api/v1/auth/totp/enable` — Begin TOTP provisioning (returns otpauth string + QR data).
+
+`POST /api/v1/auth/totp/confirm` — Confirm provisioning by validating a 6-digit code.
+
+`POST /api/v1/auth/totp/verify` — Verify code during login flow when TOTP is enabled.
+
+### Session Management
+
+`POST /api/v1/auth/logout` — Revoke session cookie (HTTP-only) and clear user session.
+
+`POST /api/v1/auth/session/refresh` — Refresh session (rotate cookie/refresh token), returns a new session cookie.
+
+### Backup / Recovery
+
+`POST /api/v1/auth/backup-codes/generate` — Generate one-time backup codes for account recovery.
+
 
 ### Telegram Webhook
 
@@ -233,6 +258,23 @@ GET /api/v1/payments?page=1&limit=20&status=received
 "total": 150,
 "pages": 8
 }
+
+## Fee collection & settlement
+
+Endpoints for fee collection, fee statistics and settlement triggers. Some endpoints are admin-only.
+
+`GET /api/v1/fees/stats` — Aggregated fee statistics (collected, pending, sweep history)
+
+`GET /api/v1/fees/history` — Paginated list of fee collection events
+
+`GET /api/v1/fees/uncollected` — List pending uncollected fees suitable for sweep planning
+
+`GET /api/v1/fees/collections` — List fee collection batches
+
+`POST /api/v1/fees/collect` — Trigger a manual fee collection / sweep (admin-only)
+
+`POST /api/v1/fees/collections/:id/complete` — Mark a collection batch as completed (admin-only)
+
 }
 
 
@@ -474,6 +516,48 @@ X-RateLimit-Reset: 1699565400
 
 
 ---
+
+## System & Admin endpoints
+
+### Health check
+
+Simple operational health check for the API (useful for load-balancers and uptime probes).
+
+**Endpoint:** `GET /api/v1/health`  
+**Authentication:** None (public)
+
+**Response (200 OK):**
+```json
+{
+  "status": "ok",
+  "database": "connected",
+  "cache": "connected",
+  "uptime": 12345
+}
+```
+
+### Admin / Dashboard endpoints (requires admin or dashboard role)
+
+These endpoints are used by the admin dashboard and require an API key with an admin role or a dashboard session with `admin` privileges.
+
+`GET /api/v1/admin/stats` — Returns high level KPIs (revenue, volumes, success rates)
+
+`GET /api/v1/admin/revenue` — Returns revenue series for the given timespan
+
+`GET /api/v1/admin/revenue/summary?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` — Summary statistics
+
+`GET /api/v1/admin/transactions/summary?startDate=...&endDate=...` — Transaction summaries
+
+`GET /api/v1/admin/users` — List dashboard users
+
+`GET /api/v1/admin/config` — Read runtime configuration (fee structure, thresholds)
+
+`PUT /api/v1/admin/config` — Update runtime configuration (admin only)
+
+`GET /api/v1/admin/payments` — Query payments across merchants (admin-only)
+
+`GET /api/v1/admin/conversions` — Query conversions across the system (admin-only)
+
 
 ## Error Responses
 
@@ -834,22 +918,28 @@ return res.status(401).json({ error: 'Invalid signature' });
 
 ## SDK Usage
 
-For TypeScript/JavaScript projects, use the official SDK:
+For TypeScript/JavaScript projects, use the official SDK.
 
+Install the client SDK and initialize it in your application:
+
+```bash
 npm install @tg-payment/sdk
+```
 
-undefined
+```js
 import TelegramPaymentGateway from '@tg-payment/sdk';
 
 const gateway = new TelegramPaymentGateway({
-apiKey: 'pk_your_key',
-apiSecret: 'sk_your_secret',
+  apiKey: process.env.TG_API_KEY,
+  apiSecret: process.env.TG_API_SECRET,
 });
 
+// Example: estimate a conversion
 const estimate = await gateway.estimateConversion({
-starsAmount: 5000,
-targetCurrency: 'TON',
+  starsAmount: 5000,
+  targetCurrency: 'TON',
 });
-
+console.log('Estimate:', estimate);
+```
 
 See [SDK Documentation](../packages/sdk/README.md) for complete reference.

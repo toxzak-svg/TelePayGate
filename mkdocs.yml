@@ -1,0 +1,16 @@
+site_name: TelePayGate Documentation
+site_description: Docs site for the Telegram Payment Gateway
+site_author: TelePayGate Team
+nav:
+  - Home: README.md
+  - API Reference: API.md
+  - Integration Guide: INTEGRATION_GUIDE.md
+  - Development: DEVELOPMENT.md
+  - Docker: DOCKER.md
+  - Architecture: ARCHITECTURE.md
+  - OpenAPI: openapi.yaml
+theme:
+  name: material
+plugins:
+  - search
+  - mkdocs-simple-hooks
