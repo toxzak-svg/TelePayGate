@@ -1,0 +1,8 @@
+{
+  "plugins": [
+    "preset-lint-recommended",
+    ["retext-spell", { "dictionary": "en_US" }],
+    ["remark-lint-heading-style", false],
+    ["remark-lint-list-item-indent", false]
+  ]
+}

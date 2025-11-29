@@ -29,6 +29,7 @@
     "db:setup": "npm run migrate",
     "docker:build": "docker build -t tg-payment-gateway .",
     "docker:up": "docker-compose up -d",
+    "dev:local": "DASHBOARD_LOCAL=true bash scripts/dev-up.sh",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "trigger:dev": "npx trigger.dev@latest dev",

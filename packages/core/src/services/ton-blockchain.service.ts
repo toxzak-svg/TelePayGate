@@ -25,6 +25,21 @@ export interface TransactionInfo {
   exitCode?: number;
 }
 
+export interface TransactionState {
+  status: 'pending' | 'confirmed' | 'failed';
+  confirmations: number;
+  success?: boolean;
+  exitCode?: number | null;
+  hash?: string | null;
+}
+
+export interface TransactionState {
+  status: 'confirmed' | 'pending' | 'failed';
+  confirmations: number;
+  hash?: string;
+  exitCode?: number;
+}
+
 /**
  * TonBlockchainService
  * Direct TON blockchain integration (no Fragment API)
@@ -355,6 +370,62 @@ export class TonBlockchainService {
       return null;
     } catch (error) {
       console.error("❌ Failed to get transaction:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Return a standardized transaction state object
+   */
+  async getTransactionState(txHash: string): Promise<TransactionState> {
+    // Try to fetch the transaction details first
+    const tx = await this.getTransaction(txHash);
+
+    if (!tx) {
+      // Unknown / pending
+      return { status: 'pending', confirmations: 0, success: undefined, exitCode: null, hash: null };
+    }
+
+    if (tx.confirmed) {
+      if (tx.success === false) {
+        return { status: 'failed', confirmations: tx.confirmations || 0, success: false, exitCode: tx.exitCode ?? null, hash: tx.hash };
+      }
+
+      return { status: 'confirmed', confirmations: tx.confirmations || 0, success: tx.success ?? true, exitCode: tx.exitCode ?? null, hash: tx.hash };
+    }
+
+    return { status: 'pending', confirmations: tx.confirmations || 0, success: tx.success ?? undefined, exitCode: tx.exitCode ?? null, hash: tx.hash };
+  }
+
+  
+
+  /**
+   * Return a simplified transaction state for polling logic
+   * status: 'pending' | 'confirmed' | 'failed'
+   */
+  async getTransactionState(txHash: string, minConfirmations: number = 1): Promise<{ status: 'pending' | 'confirmed' | 'failed'; confirmations: number; hash?: string; exitCode?: number } | null> {
+    if (!this.walletAddress) {
+      throw new Error('Wallet not initialized');
+    }
+
+    try {
+      const tx = await this.getTransaction(txHash);
+      if (!tx) return { status: 'pending', confirmations: 0 };
+
+      // Transaction explicitly failed on-chain
+      if (tx.confirmed && tx.success === false) {
+        return { status: 'failed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+      }
+
+      // Consider confirmed only when confirmations >= minConfirmations
+      if (tx.confirmed && (tx.confirmations || 0) >= minConfirmations && tx.success !== false) {
+        return { status: 'confirmed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+      }
+
+      // Otherwise still pending
+      return { status: 'pending', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+    } catch (error) {
+      console.error('❌ Failed to get transaction state:', error);
       return null;
     }
   }

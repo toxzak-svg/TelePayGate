@@ -8,6 +8,7 @@ jest.mock("../services/ton-blockchain.service", () => {
       return {
         initializeWallet: jest.fn(),
         getTransaction: jest.fn(),
+        getTransactionState: jest.fn(),
         getClient: jest.fn().mockReturnValue({}),
       };
     }),
@@ -33,10 +34,10 @@ describe("ConversionService", () => {
     it("should update status to completed when transaction is confirmed", async () => {
       jest.useFakeTimers();
       const tonService = (conversionService as any).tonService;
-      tonService.getTransaction.mockResolvedValue({
-        confirmed: true,
-        success: true,
-        transaction: { hash: "some-hash" },
+      tonService.getTransactionState.mockResolvedValue({
+        status: 'confirmed',
+        confirmations: 1,
+        hash: 'some-hash',
       });
       const dbNoneSpy = jest.spyOn(db, "none").mockResolvedValue(undefined);
       jest.spyOn(db, "oneOrNone").mockResolvedValue({ id: "fee-id" });
@@ -52,7 +53,7 @@ describe("ConversionService", () => {
       // Wait for the polling to complete
       await pollPromise;
 
-      expect(tonService.getTransaction).toHaveBeenCalledWith("tx-hash");
+      expect(tonService.getTransactionState).toHaveBeenCalledWith("tx-hash");
       expect(dbNoneSpy).toHaveBeenCalledWith(
         expect.stringContaining("UPDATE conversions"),
         ["completed", undefined, conversionId],
