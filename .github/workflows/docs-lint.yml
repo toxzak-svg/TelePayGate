@@ -1,0 +1,35 @@
+name: Docs — lint & spellcheck
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Markdown lint + spelling
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint (official action)
+        uses: ivov/markdownlint-action@v1
+        with:
+          # Run lint on the docs folder and README
+          args: "docs README.md"
+
+      - name: Run check-spelling (cspell)
+        uses: check-spelling/check-spelling@v0.0.90
+        with:
+          # basic English dictionary, checks the docs folder and README
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          config: |
+            # Allow repository name and common terms used across repo
+            language: en
+            word-lists:
+              - .github/WORDLIST.txt
+            include:
+              - docs/**
+              - README.md
