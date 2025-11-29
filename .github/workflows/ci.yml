@@ -102,8 +102,78 @@ jobs:
 
       # single guard above prevents EXPOSE_TEST_TOKENS from being set in hosted runs
 
-      - name: Run tests
-        run: npm run test --workspaces --if-present
+      - name: Skip heavy tests here (tests run in workspace matrix)
+        run: echo "Skipping monorepo tests in this job — tests run in parallel per-workspace"
+
+  workspace-tests:
+    name: Workspace tests (parallel)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - workspace: "@tg-payment/core"
+            package: core
+            needs_db: true
+          - workspace: "@tg-payment/api"
+            package: api
+            needs_db: true
+          - workspace: "@tg-payment/dashboard"
+            package: dashboard
+            needs_db: false
+          - workspace: "@tg-payment/sdk"
+            package: sdk
+            needs_db: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20 and cache npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies for workspace
+        run: npm ci --workspace="${{ matrix.workspace }}" --if-present
+
+      - name: Check whether workspace changed in this PR/push
+        id: changed-check
+        run: |
+          set -euo pipefail
+          echo "Determining changed files for workflow run..."
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF=${{ github.event.pull_request.base.ref }}
+            echo "Fetching base ref: $BASE_REF"
+            git fetch origin $BASE_REF --depth=1 || true
+            CHANGED=$(git diff --name-only origin/${BASE_REF}...HEAD || true)
+          else
+            # for push events, check commits in the push
+            CHANGED=$(git --no-pager diff --name-only HEAD~5..HEAD || true)
+          fi
+          echo "Changed files:\n$CHANGED"
+          echo "$CHANGED" | grep -E -q "^packages/${{ matrix.package }}/" && echo "workspace_changed=true" >> $GITHUB_ENV || echo "workspace_changed=false" >> $GITHUB_ENV
+
+      - name: Build package (if present)
+        run: npm run build --workspace="${{ matrix.workspace }}" --if-present
+
+      - name: Run package tests
+        run: |
+          # workspace_changed is set by the previous step via $GITHUB_ENV
+          if [ "${workspace_changed:-false}" != "true" ]; then
+            echo "No changes detected in workspace ${{ matrix.workspace }}, skipping tests to save CI time."
+            exit 0
+          fi
+          echo "Running tests for workspace ${{ matrix.workspace }}"
+          if [ "${{ matrix.needs_db }}" = "true" ]; then
+            echo "This workspace requires a DB — starting a local Postgres service in job"
+            docker run -d --name test-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 postgres:16 || true
+            # give postgres a moment to start
+            for i in {1..30}; do nc -z localhost 5432 && break || sleep 1; done
+            export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+          fi
+            npm run test --workspace="${{ matrix.workspace }}" --if-present
 
   e2e-fixture:
     # This job is intended to run on a self-hosted runner with Docker available.

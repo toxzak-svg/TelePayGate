@@ -47,12 +47,16 @@
     "@typescript-eslint/parser": "^6.14.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
+    "cspell": "^9.3.2",
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
     "eslint": "^8.57.1",
     "jest": "^30.2.0",
     "postcss": "^8.5.6",
     "prettier": "^3.0.3",
+    "remark-cli": "^12.0.1",
+    "remark-preset-lint-recommended": "^7.0.1",
+    "retext-spell": "^6.1.0",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
     "testcontainers": "^11.8.1",
@@ -69,10 +73,6 @@
     "pg-promise": "^12.2.0",
     "tonweb": "^0.0.66"
   },
-  "optionalDependencies": {
-    "@aws-sdk/client-kms": "^3.382.0"
-  }
-  ,
   "optionalDependencies": {
     "@aws-sdk/client-kms": "^3.382.0"
   }
