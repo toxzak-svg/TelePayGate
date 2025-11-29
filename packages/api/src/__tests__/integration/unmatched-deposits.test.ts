@@ -1,8 +1,8 @@
-import request from 'supertest';
-import { buildTestApp } from './app.test-setup';
-import { cleanDatabase, disconnectDatabase } from './db-test-utils';
+import request from "supertest";
+import { buildTestApp } from "./app.test-setup";
+import { cleanDatabase, disconnectDatabase } from "./db-test-utils";
 
-describe('Unmatched Deposits', () => {
+describe("Unmatched Deposits", () => {
   const app = buildTestApp();
 
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('Unmatched Deposits', () => {
     await disconnectDatabase();
   });
 
-  test('it should handle an unexpected deposit', async () => {
+  test("it should handle an unexpected deposit", async () => {
     // This test will simulate an incoming TON transaction that does not match any pending deposit.
     // The system should gracefully handle this and, ideally, notify the user.
 
@@ -24,18 +24,18 @@ describe('Unmatched Deposits', () => {
       // This payload will simulate a webhook from a TON scanner indicating a new transaction.
       // The format of this payload will depend on the TON scanner service we use.
       // For now, we'll use a simplified format.
-      tx_hash: 'unmatched_tx_hash',
-      sender: 'some_ton_address',
-      amount: '1000000000', // 1 TON in nanotons
-      destination: 'our_custodial_wallet_address'
+      tx_hash: "unmatched_tx_hash",
+      sender: "some_ton_address",
+      amount: "1000000000", // 1 TON in nanotons
+      destination: "our_custodial_wallet_address",
     };
 
     const res = await request(app)
-      .post('/api/v1/webhooks/ton-transaction')
+      .post("/api/v1/webhooks/ton-transaction")
       .send(payload);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.message).toBe('Webhook received');
+    expect(res.body.message).toBe("Webhook received");
   });
 });

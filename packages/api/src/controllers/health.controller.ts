@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 
 export class HealthController {
   /**
@@ -6,10 +6,10 @@ export class HealthController {
    */
   static async check(req: Request, res: Response) {
     res.status(200).json({
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || "development",
     });
   }
 }

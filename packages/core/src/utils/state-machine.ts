@@ -1,20 +1,20 @@
 export enum ConversionState {
-  PENDING = 'pending',
-  RATE_LOCKED = 'rate_locked',
-  PHASE1_PREPARED = 'phase1_prepared',
-  PHASE2_COMMITTED = 'phase2_committed',
-  PHASE3_CONFIRMED = 'phase3_confirmed',
-  IN_PROGRESS = 'in_progress',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
+  PENDING = "pending",
+  RATE_LOCKED = "rate_locked",
+  PHASE1_PREPARED = "phase1_prepared",
+  PHASE2_COMMITTED = "phase2_committed",
+  PHASE3_CONFIRMED = "phase3_confirmed",
+  IN_PROGRESS = "in_progress",
+  CONFIRMED = "confirmed",
+  COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 export interface StateTransition {
   from: ConversionState;
   to: ConversionState;
   timestamp: Date;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
 }
 
 export class ConversionStateMachine {
@@ -22,24 +22,50 @@ export class ConversionStateMachine {
   private history: StateTransition[] = [];
 
   // Define valid state transitions
-  private readonly validTransitions: Map<ConversionState, ConversionState[]> = new Map([
-    [ConversionState.PENDING, [ConversionState.RATE_LOCKED, ConversionState.PHASE1_PREPARED, ConversionState.FAILED]],
-    [ConversionState.RATE_LOCKED, [ConversionState.PHASE1_PREPARED, ConversionState.FAILED]],
-    [ConversionState.PHASE1_PREPARED, [ConversionState.PHASE2_COMMITTED, ConversionState.FAILED]],
-    [ConversionState.PHASE2_COMMITTED, [ConversionState.PHASE3_CONFIRMED, ConversionState.FAILED]],
-    [ConversionState.PHASE3_CONFIRMED, [ConversionState.IN_PROGRESS, ConversionState.FAILED]],
-    [ConversionState.IN_PROGRESS, [ConversionState.CONFIRMED, ConversionState.FAILED]],
-    [ConversionState.CONFIRMED, [ConversionState.COMPLETED, ConversionState.FAILED]],
-    [ConversionState.COMPLETED, []],
-    [ConversionState.FAILED, []]
-  ]);
+  private readonly validTransitions: Map<ConversionState, ConversionState[]> =
+    new Map([
+      [
+        ConversionState.PENDING,
+        [
+          ConversionState.RATE_LOCKED,
+          ConversionState.PHASE1_PREPARED,
+          ConversionState.FAILED,
+        ],
+      ],
+      [
+        ConversionState.RATE_LOCKED,
+        [ConversionState.PHASE1_PREPARED, ConversionState.FAILED],
+      ],
+      [
+        ConversionState.PHASE1_PREPARED,
+        [ConversionState.PHASE2_COMMITTED, ConversionState.FAILED],
+      ],
+      [
+        ConversionState.PHASE2_COMMITTED,
+        [ConversionState.PHASE3_CONFIRMED, ConversionState.FAILED],
+      ],
+      [
+        ConversionState.PHASE3_CONFIRMED,
+        [ConversionState.IN_PROGRESS, ConversionState.FAILED],
+      ],
+      [
+        ConversionState.IN_PROGRESS,
+        [ConversionState.CONFIRMED, ConversionState.FAILED],
+      ],
+      [
+        ConversionState.CONFIRMED,
+        [ConversionState.COMPLETED, ConversionState.FAILED],
+      ],
+      [ConversionState.COMPLETED, []],
+      [ConversionState.FAILED, []],
+    ]);
 
   constructor(initialState: ConversionState = ConversionState.PENDING) {
     this.currentState = initialState;
     this.history.push({
       from: initialState,
       to: initialState,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -53,10 +79,13 @@ export class ConversionStateMachine {
   /**
    * Attempt to transition to a new state
    */
-  transition(newState: ConversionState, metadata?: Record<string, unknown>): boolean {
+  transition(
+    newState: ConversionState,
+    metadata?: Record<string, any>,
+  ): boolean {
     if (!this.canTransition(newState)) {
       throw new Error(
-        `Invalid transition from ${this.currentState} to ${newState}`
+        `Invalid transition from ${this.currentState} to ${newState}`,
       );
     }
 
@@ -64,7 +93,7 @@ export class ConversionStateMachine {
       from: this.currentState,
       to: newState,
       timestamp: new Date(),
-      metadata
+      metadata,
     };
 
     this.history.push(transition);
@@ -92,15 +121,19 @@ export class ConversionStateMachine {
    * Get last transition
    */
   getLastTransition(): StateTransition | null {
-    return this.history.length > 0 ? this.history[this.history.length - 1] : null;
+    return this.history.length > 0
+      ? this.history[this.history.length - 1]
+      : null;
   }
 
   /**
    * Check if conversion is in a terminal state
    */
   isTerminal(): boolean {
-    return this.currentState === ConversionState.COMPLETED ||
-      this.currentState === ConversionState.FAILED;
+    return (
+      this.currentState === ConversionState.COMPLETED ||
+      this.currentState === ConversionState.FAILED
+    );
   }
 
   /**
@@ -129,7 +162,7 @@ export class ConversionStateMachine {
       ConversionState.PHASE3_CONFIRMED,
       ConversionState.IN_PROGRESS,
       ConversionState.CONFIRMED,
-      ConversionState.COMPLETED
+      ConversionState.COMPLETED,
     ];
 
     const currentIndex = stateOrder.indexOf(this.currentState);
@@ -143,18 +176,18 @@ export class ConversionStateMachine {
    */
   getPhaseName(): string {
     const phaseNames: Record<ConversionState, string> = {
-      [ConversionState.PENDING]: 'Initializing',
-      [ConversionState.RATE_LOCKED]: 'Rate Locked',
-      [ConversionState.PHASE1_PREPARED]: 'Phase 1: Preparing',
-      [ConversionState.PHASE2_COMMITTED]: 'Phase 2: Committing',
-      [ConversionState.PHASE3_CONFIRMED]: 'Phase 3: Confirming',
-      [ConversionState.IN_PROGRESS]: 'Processing',
-      [ConversionState.CONFIRMED]: 'Confirmed',
-      [ConversionState.COMPLETED]: 'Completed',
-      [ConversionState.FAILED]: 'Failed'
+      [ConversionState.PENDING]: "Initializing",
+      [ConversionState.RATE_LOCKED]: "Rate Locked",
+      [ConversionState.PHASE1_PREPARED]: "Phase 1: Preparing",
+      [ConversionState.PHASE2_COMMITTED]: "Phase 2: Committing",
+      [ConversionState.PHASE3_CONFIRMED]: "Phase 3: Confirming",
+      [ConversionState.IN_PROGRESS]: "Processing",
+      [ConversionState.CONFIRMED]: "Confirmed",
+      [ConversionState.COMPLETED]: "Completed",
+      [ConversionState.FAILED]: "Failed",
     };
 
-    return phaseNames[this.currentState] || 'Unknown';
+    return phaseNames[this.currentState] || "Unknown";
   }
 
   /**
@@ -175,7 +208,7 @@ export class ConversionStateMachine {
       [ConversionState.IN_PROGRESS]: 60,
       [ConversionState.CONFIRMED]: 30,
       [ConversionState.COMPLETED]: 0,
-      [ConversionState.FAILED]: 0
+      [ConversionState.FAILED]: 0,
     };
 
     let remainingTime = 0;
@@ -191,6 +224,6 @@ export class ConversionStateMachine {
       }
     }
 
-    return Date.now() + (remainingTime * 1000);
+    return Date.now() + remainingTime * 1000;
   }
 }

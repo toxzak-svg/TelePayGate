@@ -1,6 +1,10 @@
-import { Database } from '../db/connection';
-import { SettlementModel, SettlementStatus, FiatCurrency } from '../models/settlement.model';
-import { WebhookService } from './webhook.service';
+import { Database } from "../db/connection";
+import {
+  SettlementModel,
+  SettlementStatus,
+  FiatCurrency,
+} from "../models/settlement.model";
+import { WebhookService } from "./webhook.service";
 
 export interface SettlementServiceConfig {
   batchSize?: number;
@@ -37,12 +41,16 @@ export class SettlementService {
   constructor(
     private db: Database,
     private webhookService?: WebhookService,
-    config: SettlementServiceConfig = {}
+    config: SettlementServiceConfig = {},
   ) {
     this.settlementModel = new SettlementModel(db);
-    this.batchSize = config.batchSize ?? Number(process.env.SETTLEMENT_BATCH_SIZE || 25);
-    this.processingIntervalMs = config.processingIntervalMs ?? Number(process.env.SETTLEMENT_INTERVAL_MS || 60000);
-    this.tonUsdRate = config.tonUsdRate ?? Number(process.env.SETTLEMENT_TON_USD_RATE || 5.5);
+    this.batchSize =
+      config.batchSize ?? Number(process.env.SETTLEMENT_BATCH_SIZE || 25);
+    this.processingIntervalMs =
+      config.processingIntervalMs ??
+      Number(process.env.SETTLEMENT_INTERVAL_MS || 60000);
+    this.tonUsdRate =
+      config.tonUsdRate ?? Number(process.env.SETTLEMENT_TON_USD_RATE || 5.5);
   }
 
   async start(): Promise<void> {
@@ -52,10 +60,14 @@ export class SettlementService {
 
     await this.processCycle();
     this.timer = setInterval(() => {
-      this.processCycle().catch((err) => console.error('Settlement cycle failed:', err));
+      this.processCycle().catch((err) =>
+        console.error("Settlement cycle failed:", err),
+      );
     }, this.processingIntervalMs);
 
-    console.log(`🏦 Settlement processor running (interval=${this.processingIntervalMs}ms, batch=${this.batchSize})`);
+    console.log(
+      `🏦 Settlement processor running (interval=${this.processingIntervalMs}ms, batch=${this.batchSize})`,
+    );
   }
 
   async stop(): Promise<void> {
@@ -79,11 +91,14 @@ export class SettlementService {
           AND (c.settlement_status IS NULL OR c.settlement_status IN ('pending','ready'))
         ORDER BY c.completed_at NULLS LAST
         LIMIT $1`,
-      [this.batchSize]
+      [this.batchSize],
     );
 
     for (const conversion of conversions) {
-      const fiatAmount = this.calculateFiatAmount(conversion.target_amount, conversion.target_currency);
+      const fiatAmount = this.calculateFiatAmount(
+        conversion.target_amount,
+        conversion.target_currency,
+      );
       let settlementId = conversion.settlement_id;
 
       if (!settlementId) {
@@ -92,8 +107,8 @@ export class SettlementService {
           conversionId: conversion.id,
           fiatAmount,
           fiatCurrency: FiatCurrency.USD,
-          exchangePlatform: 'p2p-liquidity',
-          status: SettlementStatus.PENDING
+          exchangePlatform: "p2p-liquidity",
+          status: SettlementStatus.PENDING,
         });
         settlementId = settlement.id;
       }
@@ -104,7 +119,7 @@ export class SettlementService {
                 settlement_id = $2,
                 updated_at = NOW()
           WHERE id = $1`,
-        [conversion.id, settlementId]
+        [conversion.id, settlementId],
       );
     }
   }
@@ -118,7 +133,7 @@ export class SettlementService {
         WHERE s.status IN ('pending','processing')
         ORDER BY s.created_at ASC
         LIMIT $1`,
-      [this.batchSize]
+      [this.batchSize],
     );
 
     for (const settlement of settlements) {
@@ -126,15 +141,16 @@ export class SettlementService {
         ? settlement.payment_ids
         : [];
       const webhookUrl = settlement.webhook_url || undefined;
-      const fiatAmount = typeof settlement.fiat_amount === 'number'
-        ? settlement.fiat_amount
-        : parseFloat(settlement.fiat_amount as unknown as string);
+      const fiatAmount =
+        typeof settlement.fiat_amount === "number"
+          ? settlement.fiat_amount
+          : parseFloat(settlement.fiat_amount as unknown as string);
 
       const transactionId = await this.executeFiatPayout(
         settlement.settlement_id,
         fiatAmount,
-        'USD',
-        settlement.user_id
+        "USD",
+        settlement.user_id,
       );
 
       await this.db.none(
@@ -143,7 +159,7 @@ export class SettlementService {
                 completed_at = NOW(),
                 transaction_id = $2
           WHERE id = $1`,
-        [settlement.settlement_id, transactionId]
+        [settlement.settlement_id, transactionId],
       );
 
       await this.db.none(
@@ -151,7 +167,7 @@ export class SettlementService {
             SET settlement_status = 'settled',
                 updated_at = NOW()
           WHERE id = $1`,
-        [settlement.conversion_id]
+        [settlement.conversion_id],
       );
 
       if (paymentIds.length > 0) {
@@ -160,7 +176,7 @@ export class SettlementService {
               SET status = 'settled',
                   updated_at = NOW()
             WHERE id = ANY($1::uuid[])`,
-          [paymentIds]
+          [paymentIds],
         );
       }
 
@@ -168,17 +184,17 @@ export class SettlementService {
         await this.webhookService?.queueEvent(
           settlement.user_id,
           webhookUrl,
-          'settlement.completed',
+          "settlement.completed",
           {
             settlementId: settlement.settlement_id,
             conversionId: settlement.conversion_id,
             fiatAmount,
-            currency: 'USD'
-          }
+            currency: "USD",
+          },
         );
       }
 
-      console.log('✅ Settlement completed', {
+      console.log("✅ Settlement completed", {
         settlementId: settlement.settlement_id,
         conversionId: settlement.conversion_id,
       });
@@ -192,20 +208,25 @@ export class SettlementService {
     settlementId: string,
     amount: number,
     currency: string,
-    userId: string
+    userId: string,
   ): Promise<string> {
     // TODO: Integrate with real fiat gateway (Stripe, Wise, etc.)
     // For now, we simulate a successful payout
-    console.log(`💸 Executing fiat payout: ${amount} ${currency} to user ${userId}`);
-    
+    console.log(
+      `💸 Executing fiat payout: ${amount} ${currency} to user ${userId}`,
+    );
+
     // Simulate API latency
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     return `AUTO-SETTLED-${settlementId}-${Date.now()}`;
   }
 
-  private calculateFiatAmount(targetAmount: number, targetCurrency: string): number {
-    if (targetCurrency === 'TON' || targetCurrency === 'USDT') {
+  private calculateFiatAmount(
+    targetAmount: number,
+    targetCurrency: string,
+  ): number {
+    if (targetCurrency === "TON" || targetCurrency === "USDT") {
       return parseFloat((targetAmount * this.tonUsdRate).toFixed(2));
     }
     return parseFloat(targetAmount.toFixed(2));

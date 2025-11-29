@@ -1,8 +1,37 @@
 # Telegram Payment Gateway
 
-> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to
-TON cryptocurrency through P2P liquidity pools and DEX integration. No
-centralized exchanges, no KYC, truly permissionless.
+Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
+
+Quick links
+
+- Docs: `docs/`
+- Developer process: `docs/process/CONTRIBUTING.md`
+- Response helpers: `docs/process/response-helpers.md`
+
+Quick start (local dev)
+
+```bash
+npm install
+docker-compose up -d
+npm run migrate
+npm run dev
+```
+
+Testing
+
+```bash
+npm run test --workspace packages/api
+```
+
+Contributing
+
+- See `docs/process/CONTRIBUTING.md` for test and runner guidance.
+
+This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
+
+# Telegram Payment Gateway
+
+> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -14,10 +43,7 @@ centralized exchanges, no KYC, truly permissionless.
 
 ## 🌟 Overview
 
-A production-ready monorepo payment gateway enabling developers to accept
-Telegram Stars payments and convert them to TON cryptocurrency through
-**decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with
-TypeScript, Express.js, PostgreSQL, and the TON SDK for maximum reliability.
+A production-ready monorepo payment gateway enabling developers to accept Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with TypeScript, Express.js, PostgreSQL, and TON SDK for maximum reliability.
 
 **Latest Updates** (November 22, 2025):
 
@@ -39,6 +65,7 @@ TypeScript, Express.js, PostgreSQL, and the TON SDK for maximum reliability.
 ### Production Status
 
 **✅ Completed** (100%):
+
 - ✅ Core payment processing (Telegram Stars webhook integration)
 - ✅ TON blockchain integration (wallet management, deposit monitoring, polling)
 - ✅ DEX aggregation & P2P routing (DeDust, Ston.fi)
@@ -60,6 +87,10 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ### Prerequisites
 
+- Node.js 20+
+- Docker & Docker Compose
+- PostgreSQL 16+
+- TON wallet with mnemonic
 
 ### Installation
 
@@ -81,30 +112,22 @@ docker compose up -d
 
 We publish the repository documentation as a static site via GitHub Pages. Once built by CI the docs will be available on the project's GitHub Pages URL (or you can run MkDocs locally using `mkdocs serve`).
 
-
 # Run database migrations
 npm run migrate
 
 # Start development server
 npm run dev
 ```
- 
+
 ## 🧭 Developer Notes: Response Helpers
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 
 - Use `newRequestId()` to generate a UUID v4 request id for tracing and pass it to responses when possible.
--- Prefer `sendSuccess(res, { data }, status, requestId)` to return successful
-   JSON objects. The older `respondSuccess` alias is deprecated and will emit
-   a runtime warning; update controllers to use `sendSuccess`.
+- Use `sendSuccess(res, { data }, status, requestId)` or `respondSuccess(res, { data }, status, requestId)` to return successful JSON objects.
 - Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
 
-Migration tip: When refactoring existing controllers, preserve the previous
-response shape by placing your payload under a `data` key (e.g.
-`sendSuccess(res, { data: { user } }, 200, requestId)`) — many tests and
-consumers expect `res.body.data.*`. Replace any `respondSuccess`/
-`respondError` usages with `sendSuccess`/`sendError`.
-
+Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `respondSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`.
 
 API will be available at `http://localhost:3000`
 
@@ -118,11 +141,13 @@ API will be available at `http://localhost:3000`
 
    Replace the placeholder with your custodial TON address (must start with `EQ` or `UQ`).
 
+2. **Launch the automated fee collector** once you deploy or have test payments flowing:
+
    ```bash
    npm run worker:fees
    ```
 
-   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, and `TON_API_KEY`, plus a wallet mnemonic stored in your environment, to be present in `.env`.
+   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, `TON_API_KEY`, and `TON_WALLET_MNEMONIC` to be present in `.env`.
 
 3. **Monitor revenue** using the admin endpoints:
    - `GET /api/v1/admin/stats` – dashboard KPIs (revenue, merchants, success rate)
@@ -141,6 +166,7 @@ API will be available at `http://localhost:3000`
 6. [Development Guide](#development-guide)
 7. [Deployment](#deployment)
 8. [Contributing](#contributing)
+
 ---
 
 ## ✨ Key Features
@@ -252,26 +278,21 @@ USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests_
 ```
 
 - This requires Docker available on the machine running the tests.
-   - CI: an optional `e2e-fixture` job has been added to
-      `.github/workflows/ci.yml`. It is configured to run on `self-hosted`
-      runners and must be triggered manually via `workflow_dispatch` by a
-      maintainer. The self-hosted runner must have Docker available and be
-      labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
+- CI: an optional `e2e-fixture` job has been added to `.github/workflows/ci.yml`. It is configured to run on `self-hosted` runners and must be triggered manually via `workflow_dispatch` by a maintainer. The self-hosted runner must have Docker available and be labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
 
 Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
 
-
 ### Technology Stack
 
-| Layer              | Technology       | Purpose                          |
-|--------------------|------------------|----------------------------------|
-| **Language**       | TypeScript 5.2   | Type-safe development            |
-| **Runtime**        | Node.js 20+      | JavaScript execution             |
-| **API Framework**  | Express 4.x      | REST API server                  |
-| **Database**       | PostgreSQL 16    | Persistent data storage          |
-| **Blockchain**     | TonWeb, @ton/ton | TON blockchain interaction       |
-| **Containerization** | Docker Compose | Development & deployment env    |
-| **Package Manager**| npm workspaces   | Monorepo management              |
+| Layer                | Technology       | Purpose                      |
+| -------------------- | ---------------- | ---------------------------- |
+| **Language**         | TypeScript 5.2   | Type-safe development        |
+| **Runtime**          | Node.js 20+      | JavaScript execution         |
+| **API Framework**    | Express 4.x      | REST API server              |
+| **Database**         | PostgreSQL 16    | Persistent data storage      |
+| **Blockchain**       | TonWeb, @ton/ton | TON blockchain interaction   |
+| **Containerization** | Docker Compose   | Development & deployment env |
+| **Package Manager**  | npm workspaces   | Monorepo management          |
 
 ### Package Structure
 
@@ -326,14 +347,14 @@ telegram-payment-gateway/
 **Payment States:**
 
 ```text
-pending → received → awaiting_ton → ton_pending → 
+pending → received → awaiting_ton → ton_pending →
 ton_confirmed → converting → settled → completed
 ```
 
 **Conversion States:**
 
 ```text
-pending → rate_locked → awaiting_ton → ton_received → 
+pending → rate_locked → awaiting_ton → ton_received →
 converting_fiat → completed
 ```
 
@@ -514,7 +535,7 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
 
 # TON Blockchain (Direct Integration)
-<24-word mnemonic (do NOT store plaintext in this repository)>
+TON_WALLET_MNEMONIC=your 24 word mnemonic phrase
 TON_API_KEY=your_tonx_key
 TON_API_URL=https://toncenter.com/api/v2/jsonRPC
 TON_MAINNET=true
@@ -570,55 +591,6 @@ npm run format
 # Build for production
 npm run build
 ```
-
-### Dev container / Docker Compose (important)
-
-When running services with Docker Compose in development, the codebase uses
-npm workspaces. To make workspace packages (for example
-`@tg-payment/core`) available inside the containers we install at the
-repository root so packages are hoisted into `/app/node_modules`.
-
-Important notes:
-- The `docker-compose.override.yml` dev configuration runs `npm ci` at the
-   repository root inside the container before starting the workspace dev
-   command. This ensures `@tg-payment/core` and other workspace packages
-   resolve correctly.
-- Do not run `npm ci --prefix packages/api` inside the container if you
-   expect workspace dependencies to be hoisted.
-
-If you prefer to run the dev API inside Docker, use the helper script added
-in `scripts/dev-up.sh` which installs workspaces and brings up the stack in
-the correct order.
-
-### Dev helper scripts
-
-We provide two small helper scripts to make development Docker Compose startup easier:
-
-- `scripts/dev-up.sh` — installs workspace dependencies at the repo root,
-   builds images, starts infrastructure (db, redis, mailhog), runs
-   migrations, and brings up `api` and `dashboard` containers.
-- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API
-   `/health` endpoint to become available (useful after running the compose
-   stack).
-
-Usage:
-
-```bash
-# Make scripts executable first (one-time)
-chmod +x ./scripts/*.sh
-
-# Start the primary services, run migrations and bring up api/dashboard
-./scripts/dev-up.sh
-
-# or use docker compose directly then wait
-docker compose up -d
-./scripts/wait-for-services.sh
-```
-
-Notes:
-- If your host doesn't expose `pg_isready` or `nc`, the wait script falls back to basic TCP checks and curl. It is intended as a convenience for local dev environments.
-- Helper scripts are designed for dev only — production deployments should use your normal CI/CD pipelines and managed services.
-
 
 ### Testing
 
@@ -685,16 +657,16 @@ npm run migrate:status
 
 ```bash
 # Build images
-docker compose build
+docker-compose build
 
 # Start all services
-docker compose up -d
+docker-compose up -d
 
 # View logs
-docker compose logs -f api
+docker-compose logs -f api
 
 # Stop services
-docker compose down
+docker-compose down
 ```
 
 ### Production Environment
@@ -781,11 +753,11 @@ curl https://your-domain.com/api/v1/health
 Structured JSON logging with Winston:
 
 ```typescript
-logger.info('Payment processed', {
-  paymentId: 'uuid',
+logger.info("Payment processed", {
+  paymentId: "uuid",
   amount: 1000,
-  currency: 'STARS',
-  status: 'completed'
+  currency: "STARS",
+  status: "completed",
 });
 ```
 
@@ -795,8 +767,8 @@ Integrate Sentry for error monitoring:
 
 ```typescript
 Sentry.captureException(error, {
-  tags: { service: 'payment-processor' },
-  extra: { paymentId, userId }
+  tags: { service: "payment-processor" },
+  extra: { paymentId, userId },
 });
 ```
 

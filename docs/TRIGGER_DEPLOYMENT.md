@@ -59,6 +59,7 @@ API_HEALTH_CHECK_URL=https://telegram-payment-api.onrender.com/health
 Trigger a deployment manually from the Trigger.dev dashboard.
 
 **Usage:**
+
 ```typescript
 // Via dashboard: trigger with payload
 {
@@ -81,6 +82,7 @@ Trigger a deployment manually from the Trigger.dev dashboard.
 Complete deployment workflow with migrations and health checks.
 
 **Workflow:**
+
 1. Deploy API service
 2. Deploy worker services
 3. Run database migrations
@@ -88,6 +90,7 @@ Complete deployment workflow with migrations and health checks.
 5. Run health check
 
 **Usage:**
+
 ```typescript
 {
   "apiServiceId": "srv_xxxxx",
@@ -120,6 +123,7 @@ Automatically deploy when code is pushed to specific branches.
    ```
 
 **Behavior:**
+
 - Only deploys on specified branches
 - Skips deployment for other branches
 - Logs pusher info and commit count
@@ -133,15 +137,17 @@ Run deployments on a schedule (e.g., nightly builds).
 **Configure Schedule:**
 
 In Trigger.dev dashboard:
+
 1. Go to your task
 2. Set schedule (cron syntax)
 3. Example: `0 2 * * *` (every day at 2 AM UTC)
 
 **Or in code:**
+
 ```typescript
 export const scheduledDeployment = schedules.task({
   id: "scheduled-deployment",
-  cron: "0 2 * * *",  // Daily at 2 AM
+  cron: "0 2 * * *", // Daily at 2 AM
   run: async (payload) => {
     // ...
   },
@@ -155,6 +161,7 @@ export const scheduledDeployment = schedules.task({
 Low-level task for deploying individual services.
 
 **Usage:**
+
 ```typescript
 {
   "serviceId": "srv_xxxxx",
@@ -170,6 +177,7 @@ Low-level task for deploying individual services.
 Execute database migrations on Render.
 
 **Usage:**
+
 ```typescript
 {
   "serviceId": "srv_xxxxx"
@@ -183,6 +191,7 @@ Execute database migrations on Render.
 ### Render API Key
 
 Get your Render API key:
+
 1. Go to https://dashboard.render.com/account
 2. Scroll to "API Keys"
 3. Create new API key
@@ -191,6 +200,7 @@ Get your Render API key:
 ### Service IDs
 
 Find your Render service IDs:
+
 1. Go to https://dashboard.render.com
 2. Click on your service
 3. URL contains service ID: `dashboard.render.com/web/srv_xxxxx`
@@ -199,6 +209,7 @@ Find your Render service IDs:
 ### Trigger.dev Secret
 
 Get your Trigger secret:
+
 1. Go to https://trigger.dev
 2. Select your project
 3. Go to "API Keys"
@@ -245,6 +256,7 @@ git push origin main
 ### Scheduled Nightly Builds
 
 Set up in Trigger.dev dashboard:
+
 - Task: `scheduled-deployment`
 - Schedule: `0 2 * * *` (2 AM daily)
 - Automatically runs full pipeline
@@ -263,6 +275,7 @@ Set up in Trigger.dev dashboard:
 ### Logs
 
 All tasks include structured logging:
+
 ```typescript
 logger.log("🚀 Starting deployment");
 logger.warn("⚠️ Warning message");
@@ -270,6 +283,7 @@ logger.error("❌ Error occurred");
 ```
 
 View logs in:
+
 - Trigger.dev dashboard (real-time)
 - Render logs (deployment progress)
 
@@ -281,6 +295,7 @@ View logs in:
 
 **Solution:**
 Add `RENDER_API_KEY` to Trigger.dev environment variables:
+
 1. Trigger.dev dashboard → Project → Settings → Environment
 2. Add variable with your Render API key
 
@@ -288,6 +303,7 @@ Add `RENDER_API_KEY` to Trigger.dev environment variables:
 
 **Solution:**
 Commit all changes before deploying:
+
 ```bash
 git add .
 git commit -m "your message"
@@ -297,6 +313,7 @@ git push origin main
 ### "Health check failed"
 
 **Solution:**
+
 1. Verify `API_HEALTH_CHECK_URL` is correct
 2. Check if Render service is running
 3. Verify `/health` endpoint responds
@@ -304,6 +321,7 @@ git push origin main
 ### "Render API error: 401"
 
 **Solution:**
+
 - Invalid API key
 - Regenerate key in Render dashboard
 - Update in Trigger.dev environment
@@ -312,14 +330,14 @@ git push origin main
 
 ## 📝 Task Reference
 
-| Task ID | Purpose | Duration | Retries |
-|---------|---------|----------|---------|
-| `manual-deploy` | Quick manual deployment | 10 min | 2 |
-| `deploy-to-render` | Deploy single service | 10 min | 2 |
-| `run-migrations` | Execute DB migrations | 5 min | 3 |
-| `full-deployment-pipeline` | Complete deployment | 15 min | 3 |
-| `github-push-webhook` | Auto-deploy on push | 10 min | 2 |
-| `scheduled-deployment` | Scheduled deployments | - | 3 |
+| Task ID                    | Purpose                 | Duration | Retries |
+| -------------------------- | ----------------------- | -------- | ------- |
+| `manual-deploy`            | Quick manual deployment | 10 min   | 2       |
+| `deploy-to-render`         | Deploy single service   | 10 min   | 2       |
+| `run-migrations`           | Execute DB migrations   | 5 min    | 3       |
+| `full-deployment-pipeline` | Complete deployment     | 15 min   | 3       |
+| `github-push-webhook`      | Auto-deploy on push     | 10 min   | 2       |
+| `scheduled-deployment`     | Scheduled deployments   | -        | 3       |
 
 ---
 

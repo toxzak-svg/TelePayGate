@@ -1,9 +1,9 @@
-import api from '../../services/api';
-import { User } from '../../types';
+import api from "../../services/api";
+import { User } from "../../types";
 
 export const userService = {
   getProfile: async (): Promise<User> => {
-    const response = await api.get('/users/me');
+    const response = await api.get("/users/me");
     return response.data.user;
   },
 };

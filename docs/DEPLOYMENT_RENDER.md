@@ -31,13 +31,13 @@ This document captures everything required to deploy the Telegram Payment Gatewa
 
 ## Blueprint Overview
 
-| Component | Type | Notes |
-|-----------|------|-------|
-| `telegram-payment-api` | Web Service | Runs Express API on port `10000`, exposes `/health`, runs `npm run migrate` before each deploy. |
-| `worker-deposit-monitor` | Background worker | Executes `packages/core/dist/workers/deposit-settlement.worker.js` for deposit + settlement monitoring. |
-| `worker-fee-collection` | Background worker | Executes `packages/core/dist/workers/fee-collection.worker.js` to keep fee ledgers in sync. |
-| `tg-payment-redis` | Redis | Internal queue/cache for rate locking + background jobs. |
-| `tg-payment-db` | PostgreSQL | Stores all platform state. Connection string automatically injected into every service via `DATABASE_URL`. |
+| Component                | Type              | Notes                                                                                                      |
+| ------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| `telegram-payment-api`   | Web Service       | Runs Express API on port `10000`, exposes `/health`, runs `npm run migrate` before each deploy.            |
+| `worker-deposit-monitor` | Background worker | Executes `packages/core/dist/workers/deposit-settlement.worker.js` for deposit + settlement monitoring.    |
+| `worker-fee-collection`  | Background worker | Executes `packages/core/dist/workers/fee-collection.worker.js` to keep fee ledgers in sync.                |
+| `tg-payment-redis`       | Redis             | Internal queue/cache for rate locking + background jobs.                                                   |
+| `tg-payment-db`          | PostgreSQL        | Stores all platform state. Connection string automatically injected into every service via `DATABASE_URL`. |
 
 Services share two env-var groups defined near the top of `render.yaml`:
 
@@ -50,45 +50,45 @@ Render will prompt for every `sync: false` variable on first deploy. Keep copies
 
 ### shared-runtime (non-secret defaults)
 
-| Key | Purpose | Default |
-|-----|---------|---------|
-| `NODE_ENV` | Runtime mode | `production` |
-| `NODE_VERSION` | Node runtime | `20.11.0` |
-| `TON_API_URL` | TON RPC endpoint | `https://toncenter.com/api/v2/jsonRPC` |
-| `TON_MAINNET` | `true` for mainnet | `"true"` |
-| `TON_WORKCHAIN` | Workchain id | `"0"` |
-| `DEDUST_API_URL` | DeDust API base | `https://api.dedust.io` |
-| `STONFI_API_URL` | Ston.fi API base | `https://api.ston.fi` |
-| `DEX_SLIPPAGE_TOLERANCE` | Swap slippage pct | `0.5` |
-| `MIN_CONVERSION_STARS` | Minimum Stars allowed | `100` |
-| `RATE_LOCK_DURATION_SECONDS` | Rate lock TTL | `300` |
-| `MAX_PENDING_CONVERSIONS` | Back-pressure guard | `10` |
-| `P2P_POOL_REFRESH_INTERVAL` | DEX refresh cadence | `30` |
-| `PLATFORM_TON_WALLET` | Target custodial wallet | _set in dashboard_ |
+| Key                          | Purpose                 | Default                                |
+| ---------------------------- | ----------------------- | -------------------------------------- |
+| `NODE_ENV`                   | Runtime mode            | `production`                           |
+| `NODE_VERSION`               | Node runtime            | `20.11.0`                              |
+| `TON_API_URL`                | TON RPC endpoint        | `https://toncenter.com/api/v2/jsonRPC` |
+| `TON_MAINNET`                | `true` for mainnet      | `"true"`                               |
+| `TON_WORKCHAIN`              | Workchain id            | `"0"`                                  |
+| `DEDUST_API_URL`             | DeDust API base         | `https://api.dedust.io`                |
+| `STONFI_API_URL`             | Ston.fi API base        | `https://api.ston.fi`                  |
+| `DEX_SLIPPAGE_TOLERANCE`     | Swap slippage pct       | `0.5`                                  |
+| `MIN_CONVERSION_STARS`       | Minimum Stars allowed   | `100`                                  |
+| `RATE_LOCK_DURATION_SECONDS` | Rate lock TTL           | `300`                                  |
+| `MAX_PENDING_CONVERSIONS`    | Back-pressure guard     | `10`                                   |
+| `P2P_POOL_REFRESH_INTERVAL`  | DEX refresh cadence     | `30`                                   |
+| `PLATFORM_TON_WALLET`        | Target custodial wallet | _set in dashboard_                     |
 
 ### shared-secrets (must be supplied manually)
 
-| Key | Description |
-|-----|-------------|
-| `TON_WALLET_MNEMONIC` | 24-word production mnemonic with enough TON for fees. |
-| `TON_API_KEY` | TON RPC API token. |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token handling Stars webhooks. |
-| `TELEGRAM_WEBHOOK_SECRET` | Signature expected on Telegram webhook payloads. |
-| `API_SECRET_KEY` | Internal signing key for webhook + SDK auth. |
-| `JWT_SECRET` | JWT signing key for any session tokens. |
-| `WALLET_ENCRYPTION_KEY` | 32-byte hex string for encrypting custody wallets. |
-| `COINGECKO_API_KEY` (_optional_) | Needed only if CoinGecko is enabled. |
-| `COINMARKETCAP_API_KEY` (_optional_) | Needed only if CoinMarketCap fallback is enabled. |
-| `KRAKEN_API_KEY` / `KRAKEN_API_SECRET` (_optional_) | Required if Kraken off-ramps are enabled. |
-| `COINLIST_API_KEY` / `COINLIST_API_SECRET` (_optional_) | Required for CoinList settlements. |
+| Key                                                     | Description                                           |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| `TON_WALLET_MNEMONIC`                                   | 24-word production mnemonic with enough TON for fees. |
+| `TON_API_KEY`                                           | TON RPC API token.                                    |
+| `TELEGRAM_BOT_TOKEN`                                    | Telegram bot token handling Stars webhooks.           |
+| `TELEGRAM_WEBHOOK_SECRET`                               | Signature expected on Telegram webhook payloads.      |
+| `API_SECRET_KEY`                                        | Internal signing key for webhook + SDK auth.          |
+| `JWT_SECRET`                                            | JWT signing key for any session tokens.               |
+| `WALLET_ENCRYPTION_KEY`                                 | 32-byte hex string for encrypting custody wallets.    |
+| `COINGECKO_API_KEY` (_optional_)                        | Needed only if CoinGecko is enabled.                  |
+| `COINMARKETCAP_API_KEY` (_optional_)                    | Needed only if CoinMarketCap fallback is enabled.     |
+| `KRAKEN_API_KEY` / `KRAKEN_API_SECRET` (_optional_)     | Required if Kraken off-ramps are enabled.             |
+| `COINLIST_API_KEY` / `COINLIST_API_SECRET` (_optional_) | Required for CoinList settlements.                    |
 
 ### Service-specific variables
 
-| Service | Key | Source |
-|---------|-----|--------|
-| All | `DATABASE_URL` | Auto-injected from `tg-payment-db`. |
-| All | `REDIS_URL` | Auto-injected from `tg-payment-redis`. |
-| API | `PORT` | Hard-coded to `10000` (Render automatically routes HTTP traffic here). |
+| Service | Key            | Source                                                                 |
+| ------- | -------------- | ---------------------------------------------------------------------- |
+| All     | `DATABASE_URL` | Auto-injected from `tg-payment-db`.                                    |
+| All     | `REDIS_URL`    | Auto-injected from `tg-payment-redis`.                                 |
+| API     | `PORT`         | Hard-coded to `10000` (Render automatically routes HTTP traffic here). |
 
 No additional manual wiring is necessary—workers inherit the shared env groups and DB credentials automatically.
 
@@ -108,6 +108,7 @@ No additional manual wiring is necessary—workers inherit the shared env groups
    # or
    render blueprint launch --file render.yaml --name telegram-payment-gateway
    ```
+
    - Use `--dry-run` if you just want to verify what Render would change.
    - You can add `--from-branch main` to pin the branch Render should build.
 4. **Populate secrets**: the deploy command pauses if any `sync: false` env vars are missing. Supply them inline or via `--env` files per Render's CLI docs.

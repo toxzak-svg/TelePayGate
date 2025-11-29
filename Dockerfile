@@ -18,11 +18,7 @@ COPY packages/sdk/package*.json ./packages/sdk/
 
 # Install dependencies (with cache mount for faster builds)
 RUN --mount=type=cache,target=/root/.npm \
-    # Install full workspace deps (including devDependencies) so build tools
-    # (TypeScript, ts-node, ts-jest, etc.) and workspace lifecycle scripts run
-    # correctly during the build stage. We will prune dev deps later in the
-    # multi-stage build to keep the runtime image small.
-    npm ci --no-audit --prefer-offline --progress=false
+    npm ci --only=production=false --ignore-scripts
 
 # Copy source code and database migrations
 COPY packages ./packages
@@ -53,10 +49,6 @@ COPY --from=builder /app/packages/api/package.json ./packages/api/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/database ./database
 
-# Copy container helper scripts and make them executable
-COPY scripts ./scripts
-RUN chmod +x ./scripts/*.sh || true
-
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
@@ -66,7 +58,7 @@ USER nodejs
 
 EXPOSE 3000
 
-# Use tini for proper signal handling and run entrypoint that waits for dependent services
-ENTRYPOINT ["/sbin/tini", "--", "/app/scripts/docker-entrypoint.sh"]
+# Use tini for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
 
 CMD ["node", "packages/api/dist/index.js"]

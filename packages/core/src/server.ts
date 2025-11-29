@@ -3,22 +3,24 @@ export class ServerBase {
   protected port: number;
   protected environment: string;
 
-  constructor(port: number = 3000, environment: string = 'development') {
+  constructor(port: number = 3000, environment: string = "development") {
     this.port = port;
     this.environment = environment;
   }
 
   protected validateEnvironment(): void {
     const requiredEnvVars = [
-      'DATABASE_URL',
-      'TELEGRAM_BOT_TOKEN',
-      'API_SECRET_KEY'
+      "DATABASE_URL",
+      "TELEGRAM_BOT_TOKEN",
+      "API_SECRET_KEY",
     ];
 
-    const missing = requiredEnvVars.filter(varName => !process.env[varName]);
-    
+    const missing = requiredEnvVars.filter((varName) => !process.env[varName]);
+
     if (missing.length > 0) {
-      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+      throw new Error(
+        `Missing required environment variables: ${missing.join(", ")}`,
+      );
     }
   }
 
@@ -35,8 +37,8 @@ export class ServerBase {
       process.exit(0);
     };
 
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   }
 }
 

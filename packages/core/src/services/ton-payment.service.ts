@@ -1,5 +1,11 @@
-import { Address, TonClient, WalletContractV4, internal, fromNano } from '@ton/ton';
-import { mnemonicToPrivateKey } from '@ton/crypto';
+import {
+  Address,
+  TonClient,
+  WalletContractV4,
+  internal,
+  fromNano,
+} from "@ton/ton";
+import { mnemonicToPrivateKey } from "@ton/crypto";
 
 export interface TonPaymentConfig {
   endpoint: string;
@@ -24,8 +30,8 @@ export class TonPaymentService {
    * Initialize wallet from mnemonic
    */
   async initializeWallet(): Promise<void> {
-    const keyPair = await mnemonicToPrivateKey(this.config.mnemonic.split(' '));
-    
+    const keyPair = await mnemonicToPrivateKey(this.config.mnemonic.split(" "));
+
     const workchain = this.config.workchain ?? 0;
     this.wallet = WalletContractV4.create({
       workchain,
@@ -33,7 +39,7 @@ export class TonPaymentService {
     });
 
     this.walletAddress = this.wallet.address;
-    console.log('✅ TON wallet initialized:', this.walletAddress.toString());
+    console.log("✅ TON wallet initialized:", this.walletAddress.toString());
   }
 
   /**
@@ -41,7 +47,7 @@ export class TonPaymentService {
    */
   async getBalance(): Promise<number> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     const balance = await this.client.getBalance(this.walletAddress);
@@ -53,23 +59,30 @@ export class TonPaymentService {
    */
   async checkIncomingPayments(expectedAmount: number): Promise<boolean> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     try {
-      const transactions = await this.client.getTransactions(this.walletAddress, {
-        limit: 10,
-      });
+      const transactions = await this.client.getTransactions(
+        this.walletAddress,
+        {
+          limit: 10,
+        },
+      );
 
       for (const tx of transactions) {
         // FIXED: Proper type checking for transaction messages
-        if (tx.inMessage && 'info' in tx.inMessage && 'value' in tx.inMessage.info) {
+        if (
+          tx.inMessage &&
+          "info" in tx.inMessage &&
+          "value" in tx.inMessage.info
+        ) {
           const info = tx.inMessage.info as any; // Type assertion for value access
-          if (info.value && 'coins' in info.value) {
+          if (info.value && "coins" in info.value) {
             const received = Number(info.value.coins) / 1e9;
-            
+
             if (Math.abs(received - expectedAmount) < 0.0001) {
-              console.log('✅ Payment received:', received, 'TON');
+              console.log("✅ Payment received:", received, "TON");
               return true;
             }
           }
@@ -78,7 +91,7 @@ export class TonPaymentService {
 
       return false;
     } catch (error) {
-      console.error('❌ Error checking payments:', error);
+      console.error("❌ Error checking payments:", error);
       return false;
     }
   }
@@ -89,14 +102,14 @@ export class TonPaymentService {
   async sendTon(
     destinationAddress: string,
     amount: number,
-    comment?: string
+    comment?: string,
   ): Promise<string> {
     if (!this.wallet) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
-    const keyPair = await mnemonicToPrivateKey(this.config.mnemonic.split(' '));
-    
+    const keyPair = await mnemonicToPrivateKey(this.config.mnemonic.split(" "));
+
     // FIXED: Get contract provider from client
     const contract = this.client.open(this.wallet);
     const seqno = await contract.getSeqno();
@@ -109,12 +122,12 @@ export class TonPaymentService {
         internal({
           to: destinationAddress,
           value: (amount * 1e9).toString(),
-          body: comment || '',
+          body: comment || "",
         }),
       ],
     });
 
-    console.log('💸 TON transfer initiated:', {
+    console.log("💸 TON transfer initiated:", {
       to: destinationAddress,
       amount,
       seqno,
@@ -128,7 +141,7 @@ export class TonPaymentService {
    */
   getWalletAddress(): string {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
     return this.walletAddress.toString();
   }
@@ -155,7 +168,7 @@ export class TonPaymentService {
       // This is a simplified version — caller may extend as needed
       return true;
     } catch (error) {
-      console.error('❌ Error verifying transaction:', error);
+      console.error("❌ Error verifying transaction:", error);
       return false;
     }
   }

@@ -12,14 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Common additions
-coverage/
-.nyc_output/
-.cache/
-tmp/
-temp/
-
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

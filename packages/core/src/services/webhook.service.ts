@@ -1,6 +1,6 @@
-import axios from 'axios';
-import crypto from 'crypto';
-import { Pool } from 'pg';
+import axios from "axios";
+import crypto from "crypto";
+import { Pool } from "pg";
 
 export interface WebhookEvent {
   id: string;
@@ -9,7 +9,7 @@ export interface WebhookEvent {
   event: string;
   payload: any;
   signature: string;
-  status: 'pending' | 'delivered' | 'failed';
+  status: "pending" | "delivered" | "failed";
   attempts: number;
   maxAttempts: number;
   lastAttemptAt?: Date;
@@ -25,7 +25,7 @@ export class WebhookService {
 
   constructor(
     private pool: Pool,
-    private webhookSecret: string
+    private webhookSecret: string,
   ) {}
 
   /**
@@ -35,7 +35,7 @@ export class WebhookService {
     userId: string,
     webhookUrl: string,
     event: string,
-    payload: any
+    payload: any,
   ): Promise<WebhookEvent> {
     const signature = this.generateSignature(payload);
 
@@ -52,8 +52,8 @@ export class WebhookService {
         event,
         JSON.stringify(payload),
         signature,
-        this.MAX_ATTEMPTS
-      ]
+        this.MAX_ATTEMPTS,
+      ],
     );
 
     const webhookEvent = this.mapToWebhookEvent(result.rows[0]);
@@ -70,19 +70,19 @@ export class WebhookService {
   async deliverEvent(eventId: string): Promise<boolean> {
     // Get event from database
     const result = await this.pool.query(
-      'SELECT * FROM webhook_events WHERE id = $1',
-      [eventId]
+      "SELECT * FROM webhook_events WHERE id = $1",
+      [eventId],
     );
 
     if (result.rows.length === 0) {
-      throw new Error('Webhook event not found');
+      throw new Error("Webhook event not found");
     }
 
     const event = this.mapToWebhookEvent(result.rows[0]);
 
     // Check if max attempts reached
     if (event.attempts >= event.maxAttempts) {
-      await this.markAsFailed(eventId, 'Max delivery attempts reached');
+      await this.markAsFailed(eventId, "Max delivery attempts reached");
       return false;
     }
 
@@ -93,17 +93,17 @@ export class WebhookService {
         {
           event: event.event,
           timestamp: Date.now(),
-          data: event.payload
+          data: event.payload,
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-            'X-Webhook-Signature': event.signature,
-            'X-Event-Id': event.id,
-            'User-Agent': 'TelegramPaymentGateway/1.0'
+            "Content-Type": "application/json",
+            "X-Webhook-Signature": event.signature,
+            "X-Event-Id": event.id,
+            "User-Agent": "TelegramPaymentGateway/1.0",
           },
-          timeout: 10000 // 10 second timeout
-        }
+          timeout: 10000, // 10 second timeout
+        },
       );
 
       // Check if response is successful (2xx)
@@ -116,25 +116,30 @@ export class WebhookService {
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
-      
+
       // Increment attempts
       const newAttempts = event.attempts + 1;
-      const nextRetryDelay = this.RETRY_DELAYS[newAttempts - 1] || this.RETRY_DELAYS[this.RETRY_DELAYS.length - 1];
-      const nextRetryAt = new Date(Date.now() + (nextRetryDelay * 1000));
+      const nextRetryDelay =
+        this.RETRY_DELAYS[newAttempts - 1] ||
+        this.RETRY_DELAYS[this.RETRY_DELAYS.length - 1];
+      const nextRetryAt = new Date(Date.now() + nextRetryDelay * 1000);
 
       await this.pool.query(
         `UPDATE webhook_events
          SET attempts = $1, last_attempt_at = NOW(), next_retry_at = $2, error_message = $3
          WHERE id = $4`,
-        [newAttempts, nextRetryAt, errorMessage, eventId]
+        [newAttempts, nextRetryAt, errorMessage, eventId],
       );
 
-      console.error(`❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`, {
-        eventId,
-        url: event.webhookUrl,
-        error: errorMessage,
-        nextRetry: nextRetryAt
-      });
+      console.error(
+        `❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`,
+        {
+          eventId,
+          url: event.webhookUrl,
+          error: errorMessage,
+          nextRetry: nextRetryAt,
+        },
+      );
 
       // Check if we've reached max attempts
       if (newAttempts >= this.MAX_ATTEMPTS) {
@@ -155,7 +160,7 @@ export class WebhookService {
        WHERE status = 'pending'
        AND attempts < max_attempts
        AND (next_retry_at IS NULL OR next_retry_at <= NOW())
-       LIMIT 100`
+       LIMIT 100`,
     );
 
     let retried = 0;
@@ -177,18 +182,18 @@ export class WebhookService {
   async getEventsByUser(
     userId: string,
     options: {
-      status?: 'pending' | 'delivered' | 'failed';
+      status?: "pending" | "delivered" | "failed";
       limit?: number;
       offset?: number;
-    } = {}
+    } = {},
   ): Promise<{ events: WebhookEvent[]; total: number }> {
     const { status, limit = 20, offset = 0 } = options;
 
-    let whereClause = 'WHERE user_id = $1';
+    let whereClause = "WHERE user_id = $1";
     const params: any[] = [userId];
 
     if (status) {
-      whereClause += ' AND status = $2';
+      whereClause += " AND status = $2";
       params.push(status);
     }
 
@@ -197,17 +202,17 @@ export class WebhookService {
         `SELECT * FROM webhook_events ${whereClause}
          ORDER BY created_at DESC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, limit, offset]
+        [...params, limit, offset],
       ),
       this.pool.query(
         `SELECT COUNT(*) as count FROM webhook_events ${whereClause}`,
-        params
-      )
+        params,
+      ),
     ]);
 
     return {
-      events: eventsResult.rows.map(r => this.mapToWebhookEvent(r)),
-      total: parseInt(countResult.rows[0].count)
+      events: eventsResult.rows.map((r) => this.mapToWebhookEvent(r)),
+      total: parseInt(countResult.rows[0].count),
     };
   }
 
@@ -219,19 +224,22 @@ export class WebhookService {
       `UPDATE webhook_events
        SET status = 'delivered', delivered_at = NOW()
        WHERE id = $1`,
-      [eventId]
+      [eventId],
     );
   }
 
   /**
    * Mark event as failed
    */
-  private async markAsFailed(eventId: string, errorMessage: string): Promise<void> {
+  private async markAsFailed(
+    eventId: string,
+    errorMessage: string,
+  ): Promise<void> {
     await this.pool.query(
       `UPDATE webhook_events
        SET status = 'failed', error_message = $1
        WHERE id = $2`,
-      [errorMessage, eventId]
+      [errorMessage, eventId],
     );
   }
 
@@ -239,9 +247,10 @@ export class WebhookService {
    * Generate HMAC signature for webhook payload
    */
   private generateSignature(payload: any): string {
-    const hmac = crypto.createHmac('sha256', this.webhookSecret);
-    const data = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    return hmac.update(data).digest('hex');
+    const hmac = crypto.createHmac("sha256", this.webhookSecret);
+    const data =
+      typeof payload === "string" ? payload : JSON.stringify(payload);
+    return hmac.update(data).digest("hex");
   }
 
   /**
@@ -251,7 +260,7 @@ export class WebhookService {
     const expectedSignature = this.generateSignature(payload);
     return crypto.timingSafeEqual(
       Buffer.from(signature),
-      Buffer.from(expectedSignature)
+      Buffer.from(expectedSignature),
     );
   }
 
@@ -265,7 +274,7 @@ export class WebhookService {
     failed: number;
     successRate: number;
   }> {
-    const whereClause = userId ? 'WHERE user_id = $1' : '';
+    const whereClause = userId ? "WHERE user_id = $1" : "";
     const params = userId ? [userId] : [];
 
     const result = await this.pool.query(
@@ -275,7 +284,7 @@ export class WebhookService {
          SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
          SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
        FROM webhook_events ${whereClause}`,
-      params
+      params,
     );
 
     const row = result.rows[0];
@@ -287,7 +296,7 @@ export class WebhookService {
       delivered,
       pending: parseInt(row.pending),
       failed: parseInt(row.failed),
-      successRate: total > 0 ? (delivered / total) * 100 : 0
+      successRate: total > 0 ? (delivered / total) * 100 : 0,
     };
   }
 
@@ -300,16 +309,19 @@ export class WebhookService {
       userId: row.user_id,
       webhookUrl: row.webhook_url,
       event: row.event,
-      payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload,
+      payload:
+        typeof row.payload === "string" ? JSON.parse(row.payload) : row.payload,
       signature: row.signature,
       status: row.status,
       attempts: row.attempts,
       maxAttempts: row.max_attempts,
-      lastAttemptAt: row.last_attempt_at ? new Date(row.last_attempt_at) : undefined,
+      lastAttemptAt: row.last_attempt_at
+        ? new Date(row.last_attempt_at)
+        : undefined,
       nextRetryAt: row.next_retry_at ? new Date(row.next_retry_at) : undefined,
       deliveredAt: row.delivered_at ? new Date(row.delivered_at) : undefined,
       errorMessage: row.error_message,
-      createdAt: new Date(row.created_at)
+      createdAt: new Date(row.created_at),
     };
   }
 }

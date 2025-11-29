@@ -1,5 +1,12 @@
-import { TonClient, WalletContractV4, internal, fromNano, toNano, Address } from '@ton/ton';
-import { mnemonicToPrivateKey } from '@ton/crypto';
+import {
+  TonClient,
+  WalletContractV4,
+  internal,
+  fromNano,
+  toNano,
+  Address,
+} from "@ton/ton";
+import { mnemonicToPrivateKey } from "@ton/crypto";
 
 export interface WalletInfo {
   address: string;
@@ -18,6 +25,21 @@ export interface TransactionInfo {
   exitCode?: number;
 }
 
+export interface TransactionState {
+  status: 'pending' | 'confirmed' | 'failed';
+  confirmations: number;
+  success?: boolean;
+  exitCode?: number | null;
+  hash?: string | null;
+}
+
+export interface TransactionState {
+  status: 'confirmed' | 'pending' | 'failed';
+  confirmations: number;
+  hash?: string;
+  exitCode?: number;
+}
+
 /**
  * TonBlockchainService
  * Direct TON blockchain integration (no Fragment API)
@@ -32,7 +54,7 @@ export class TonBlockchainService {
   constructor(
     private endpoint: string,
     private apiKey?: string,
-    private mnemonic?: string
+    private mnemonic?: string,
   ) {
     this.client = new TonClient({
       endpoint,
@@ -45,11 +67,11 @@ export class TonBlockchainService {
    */
   async initializeWallet(): Promise<WalletInfo> {
     if (!this.mnemonic) {
-      throw new Error('Mnemonic not provided');
+      throw new Error("Mnemonic not provided");
     }
 
     try {
-      this.keyPair = await mnemonicToPrivateKey(this.mnemonic.split(' '));
+      this.keyPair = await mnemonicToPrivateKey(this.mnemonic.split(" "));
 
       const workchain = 0;
       this.wallet = WalletContractV4.create({
@@ -59,14 +81,14 @@ export class TonBlockchainService {
 
       this.walletAddress = this.wallet.address;
 
-      console.log('✅ TON wallet initialized:', this.walletAddress.toString());
+      console.log("✅ TON wallet initialized:", this.walletAddress.toString());
 
       return {
         address: this.walletAddress.toString(),
-        publicKey: this.keyPair.publicKey.toString('hex'),
+        publicKey: this.keyPair.publicKey.toString("hex"),
       };
     } catch (error) {
-      console.error('❌ Failed to initialize wallet:', error);
+      console.error("❌ Failed to initialize wallet:", error);
       throw error;
     }
   }
@@ -83,7 +105,7 @@ export class TonBlockchainService {
    */
   getWallet(): { wallet: WalletContractV4; keyPair: any } {
     if (!this.wallet || !this.keyPair) {
-      throw new Error('Wallet not initialized. Call initializeWallet() first.');
+      throw new Error("Wallet not initialized. Call initializeWallet() first.");
     }
     return { wallet: this.wallet, keyPair: this.keyPair };
   }
@@ -93,7 +115,7 @@ export class TonBlockchainService {
    */
   getSender() {
     if (!this.wallet || !this.keyPair) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
     const walletContract = this.client.open(this.wallet);
     return walletContract.sender(this.keyPair.secretKey);
@@ -104,7 +126,7 @@ export class TonBlockchainService {
    */
   getWalletAddress(): string {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
     return this.walletAddress.toString();
   }
@@ -114,14 +136,14 @@ export class TonBlockchainService {
    */
   async getBalance(): Promise<number> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     try {
       const balance = await this.client.getBalance(this.walletAddress);
       return parseFloat(fromNano(balance));
     } catch (error) {
-      console.error('❌ Failed to get balance:', error);
+      console.error("❌ Failed to get balance:", error);
       throw error;
     }
   }
@@ -131,10 +153,10 @@ export class TonBlockchainService {
    */
   async monitorDeposits(
     callback: (tx: TransactionInfo) => Promise<void>,
-    intervalMs: number = 30000
+    intervalMs: number = 30000,
   ): Promise<() => void> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     let lastHash: string | null = null;
@@ -143,26 +165,31 @@ export class TonBlockchainService {
       try {
         const transactions = await this.client.getTransactions(
           this.walletAddress!,
-          { limit: 10 }
+          { limit: 10 },
         );
 
         for (const tx of transactions) {
-          const hash = tx.hash().toString('hex');
-          
+          const hash = tx.hash().toString("hex");
+
           // Skip if already processed
           if (lastHash && hash === lastHash) {
             continue;
           }
 
           // Check for incoming message
-          if (tx.inMessage && 'info' in tx.inMessage && 'value' in (tx.inMessage.info as any)) {
-            const info = (tx.inMessage.info as any);
-            if (info.value && 'coins' in info.value) {
+          if (
+            tx.inMessage &&
+            "info" in tx.inMessage &&
+            "value" in (tx.inMessage.info as any)
+          ) {
+            const info = tx.inMessage.info as any;
+            if (info.value && "coins" in info.value) {
               const amount = parseFloat(fromNano(info.value.coins));
-              const fromAddr = 'source' in (tx.inMessage as any) 
-                ? (tx.inMessage as any).source?.toString() 
-                : 'unknown';
-              
+              const fromAddr =
+                "source" in (tx.inMessage as any)
+                  ? (tx.inMessage as any).source?.toString()
+                  : "unknown";
+
               const txInfo: TransactionInfo = {
                 hash,
                 from: fromAddr,
@@ -180,7 +207,7 @@ export class TonBlockchainService {
           lastHash = hash;
         }
       } catch (error) {
-        console.error('❌ Error monitoring deposits:', error);
+        console.error("❌ Error monitoring deposits:", error);
       }
     };
 
@@ -200,10 +227,10 @@ export class TonBlockchainService {
   async sendTON(
     destinationAddress: string,
     amountTon: number,
-    memo?: string
+    memo?: string,
   ): Promise<string> {
     if (!this.wallet || !this.keyPair) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     try {
@@ -217,13 +244,13 @@ export class TonBlockchainService {
           internal({
             to: destinationAddress,
             value: toNano(amountTon.toString()),
-            body: memo || '',
+            body: memo || "",
             init: null,
           }),
         ],
       });
 
-      console.log('💸 TON transfer sent:', {
+      console.log("💸 TON transfer sent:", {
         to: destinationAddress,
         amount: amountTon,
         seqno,
@@ -231,7 +258,7 @@ export class TonBlockchainService {
 
       return `seqno-${seqno}`;
     } catch (error) {
-      console.error('❌ Failed to send TON:', error);
+      console.error("❌ Failed to send TON:", error);
       throw error;
     }
   }
@@ -241,38 +268,38 @@ export class TonBlockchainService {
    */
   async verifyTransaction(
     txHash: string,
-    _minConfirmations: number = 10
+    _minConfirmations: number = 10,
   ): Promise<boolean> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     try {
       const transactions = await this.client.getTransactions(
         this.walletAddress,
-        { limit: 50 }
+        { limit: 50 },
       );
 
       // Search for transaction in list
       for (const tx of transactions) {
-        if (tx.hash().toString('hex') === txHash) {
+        if (tx.hash().toString("hex") === txHash) {
           // Check transaction description for exit code
           const { description } = tx;
-          
 
           // Verify transaction was successful
           // Only exitCode === 0 indicates success
-          if (description && 'type' in description) {
+          if (description && "type" in description) {
             const desc = description as any;
-            if (desc.type === 'generic') {
+            if (desc.type === "generic") {
               const exitCode = desc.computePhase?.exitCode;
               if (exitCode !== undefined && exitCode !== 0) {
-                console.warn(`❌ Transaction ${txHash} failed with exit code ${exitCode}`);
+                console.warn(
+                  `❌ Transaction ${txHash} failed with exit code ${exitCode}`,
+                );
                 return false;
               }
             }
           }
-          
 
           // Simplified: verify based on inclusion in transaction list
           // In production, check block height and confirmations
@@ -282,7 +309,7 @@ export class TonBlockchainService {
 
       return false;
     } catch (error) {
-      console.error('❌ Failed to verify transaction:', error);
+      console.error("❌ Failed to verify transaction:", error);
       return false;
     }
   }
@@ -292,35 +319,38 @@ export class TonBlockchainService {
    */
   async getTransaction(txHash: string): Promise<TransactionInfo | null> {
     if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
+      throw new Error("Wallet not initialized");
     }
 
     try {
       // Fetch recent transactions for the wallet
-      const transactions = await this.client.getTransactions(this.walletAddress, {
-        limit: 50,
-      });
+      const transactions = await this.client.getTransactions(
+        this.walletAddress,
+        {
+          limit: 50,
+        },
+      );
 
       for (const tx of transactions) {
-        if (tx.hash().toString('hex') === txHash) {
+        if (tx.hash().toString("hex") === txHash) {
           let amount = 0;
-          let from = '';
-          let to = '';
+          let from = "";
+          let to = "";
 
-          if (tx.inMessage && tx.inMessage.info.type === 'internal') {
-             amount = parseFloat(fromNano(tx.inMessage.info.value.coins));
-             from = tx.inMessage.info.src.toString();
-             to = tx.inMessage.info.dest.toString();
+          if (tx.inMessage && tx.inMessage.info.type === "internal") {
+            amount = parseFloat(fromNano(tx.inMessage.info.value.coins));
+            from = tx.inMessage.info.src.toString();
+            to = tx.inMessage.info.dest.toString();
           }
-          
+
           // Check success status (compute phase exit code)
           let success = true;
           let exitCode = 0;
-          
-          if (tx.description.type === 'generic') {
-             const { computePhase } = tx.description;
-             exitCode = computePhase.type === 'vm' ? computePhase.exitCode : 0;
-             success = exitCode === 0;
+
+          if (tx.description.type === "generic") {
+            const { computePhase } = tx.description;
+            exitCode = computePhase.type === "vm" ? computePhase.exitCode : 0;
+            success = exitCode === 0;
           }
 
           return {
@@ -332,14 +362,70 @@ export class TonBlockchainService {
             confirmed: true,
             confirmations: 1,
             success,
-            exitCode
+            exitCode,
           };
         }
       }
 
       return null;
     } catch (error) {
-      console.error('❌ Failed to get transaction:', error);
+      console.error("❌ Failed to get transaction:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Return a standardized transaction state object
+   */
+  async getTransactionState(txHash: string): Promise<TransactionState> {
+    // Try to fetch the transaction details first
+    const tx = await this.getTransaction(txHash);
+
+    if (!tx) {
+      // Unknown / pending
+      return { status: 'pending', confirmations: 0, success: undefined, exitCode: null, hash: null };
+    }
+
+    if (tx.confirmed) {
+      if (tx.success === false) {
+        return { status: 'failed', confirmations: tx.confirmations || 0, success: false, exitCode: tx.exitCode ?? null, hash: tx.hash };
+      }
+
+      return { status: 'confirmed', confirmations: tx.confirmations || 0, success: tx.success ?? true, exitCode: tx.exitCode ?? null, hash: tx.hash };
+    }
+
+    return { status: 'pending', confirmations: tx.confirmations || 0, success: tx.success ?? undefined, exitCode: tx.exitCode ?? null, hash: tx.hash };
+  }
+
+  
+
+  /**
+   * Return a simplified transaction state for polling logic
+   * status: 'pending' | 'confirmed' | 'failed'
+   */
+  async getTransactionState(txHash: string, minConfirmations: number = 1): Promise<{ status: 'pending' | 'confirmed' | 'failed'; confirmations: number; hash?: string; exitCode?: number } | null> {
+    if (!this.walletAddress) {
+      throw new Error('Wallet not initialized');
+    }
+
+    try {
+      const tx = await this.getTransaction(txHash);
+      if (!tx) return { status: 'pending', confirmations: 0 };
+
+      // Transaction explicitly failed on-chain
+      if (tx.confirmed && tx.success === false) {
+        return { status: 'failed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+      }
+
+      // Consider confirmed only when confirmations >= minConfirmations
+      if (tx.confirmed && (tx.confirmations || 0) >= minConfirmations && tx.success !== false) {
+        return { status: 'confirmed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+      }
+
+      // Otherwise still pending
+      return { status: 'pending', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
+    } catch (error) {
+      console.error('❌ Failed to get transaction state:', error);
       return null;
     }
   }
@@ -359,7 +445,11 @@ export class TonBlockchainService {
   /**
    * Generate payment link for mobile wallets
    */
-  generatePaymentLink(address: string, amountTon: number, memo?: string): string {
+  generatePaymentLink(
+    address: string,
+    amountTon: number,
+    memo?: string,
+  ): string {
     const amountNano = Math.floor(amountTon * 1e9);
     let link = `ton://transfer/${address}?amount=${amountNano}`;
     if (memo) {

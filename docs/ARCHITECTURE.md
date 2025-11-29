@@ -19,13 +19,13 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 
 ### Technology Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Language** | TypeScript 5.x | Type-safe development |
-| **API Framework** | Express.js | REST API server |
-| **Database** | PostgreSQL 16 | Persistent data storage |
-| **Containerization** | Docker + compose | Development & deployment |
-| **Package Manager** | npm workspaces | Monorepo management |
+| Layer                | Technology       | Purpose                  |
+| -------------------- | ---------------- | ------------------------ |
+| **Language**         | TypeScript 5.x   | Type-safe development    |
+| **API Framework**    | Express.js       | REST API server          |
+| **Database**         | PostgreSQL 15    | Persistent data storage  |
+| **Containerization** | Docker + Compose | Development & deployment |
+| **Package Manager**  | npm workspaces   | Monorepo management      |
 
 ---
 
@@ -67,6 +67,7 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 │ Database │
 └─────────────────┘
 
+text
 
 ### Package Structure
 
@@ -93,6 +94,7 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 │
 └── docker-compose.yml # Infrastructure
 
+text
 
 ---
 
@@ -115,6 +117,7 @@ PaymentService.processSuccessfulPayment()
 ├─> Store in database
 └─> Return confirmation
 
+text
 
 ### Conversion Flow
 
@@ -145,6 +148,7 @@ ConversionService.createConversion()
 ├─> Query DEX pools for best rate
 └─> Update conversion status
 
+text
 
 ### Authentication Flow
 
@@ -166,6 +170,7 @@ authenticateApiKey middleware
 
 Continue to route handler
 
+text
 
 ---
 
@@ -192,6 +197,7 @@ is_active
 
 created_at, updated_at
 
+text
 
 **payments** - Telegram payment records
 id (uuid, PK)
@@ -208,6 +214,7 @@ raw_payload (jsonb)
 
 created_at, confirmed_at
 
+text
 
 **conversions** - Stars → TON conversions
 id (uuid, PK)
@@ -228,6 +235,7 @@ status
 
 created_at, completed_at
 
+text
 
 **settlements** - Fiat settlements
 id (uuid, PK)
@@ -242,6 +250,7 @@ bank_account_id
 
 status
 
+text
 
 #### Supporting Tables
 
@@ -268,6 +277,7 @@ idx_conversions_user_id ON conversions(user_id, created_at DESC)
 idx_conversions_status ON conversions(status)
 idx_conversions_payment_ids ON conversions USING gin(payment_ids)
 
+text
 
 ### Relationships
 
@@ -276,6 +286,7 @@ users (1) ──< (N) conversions
 conversions (1) ──< (N) settlements
 conversions (N) ──> (N) payments (via payment_ids array)
 
+text
 
 ---
 
@@ -303,6 +314,7 @@ Verify user is active
 
 Attach user to request context
 
+text
 
 ### Rate Limiting
 
@@ -337,6 +349,7 @@ origin: process.env.ALLOWED_ORIGINS?.split(','),
 credentials: true
 }));
 
+text
 
 ---
 
@@ -378,12 +391,12 @@ credentials: true
 
 ### Bottlenecks & Solutions
 
-| Component | Current Limit | Solution |
-|-----------|--------------|----------|
-| API instances | 1 | Load balancer + multiple instances |
-| Database connections | 20 | Increase pool size, add replicas |
-| Rate limiting | In-memory | Migrate to Redis |
-| DEX APIs | Rate limiting | Implement caching & fallback pools |
+| Component            | Current Limit | Solution                           |
+| -------------------- | ------------- | ---------------------------------- |
+| API instances        | 1             | Load balancer + multiple instances |
+| Database connections | 20            | Increase pool size, add replicas   |
+| Rate limiting        | In-memory     | Migrate to Redis                   |
+| DEX APIs             | Rate limiting | Implement caching & fallback pools |
 
 ---
 
@@ -394,6 +407,7 @@ credentials: true
 **Current Implementation:**
 console.log() with structured data
 
+text
 
 **Production Recommendations:**
 
@@ -430,6 +444,7 @@ console.log() with structured data
 GET /health
 GET /api/v1/health (planned)
 
+text
 
 **Production:**
 
@@ -451,6 +466,7 @@ Local Machine
 └── Node.js (host machine)
 └── API (ts-node-dev)
 
+text
 
 ### Production (Recommended)
 
@@ -461,6 +477,7 @@ Cloud Platform (Railway/Render/AWS)
 ├── PostgreSQL (managed)
 └── Redis (managed)
 
+text
 
 ### CI/CD Pipeline
 
@@ -483,6 +500,7 @@ Run integration tests
 
 Deploy to production
 
+text
 
 ---
 

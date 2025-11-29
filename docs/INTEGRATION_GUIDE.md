@@ -22,6 +22,7 @@ Step-by-step guide to integrating Telegram Payment Gateway into your application
 **Option 1: Using SDK (Recommended)**
 npm install @tg-payment/sdk
 
+text
 
 **Option 2: Direct API**
 Use any HTTP client (axios, fetch, etc.)
@@ -42,6 +43,7 @@ curl -X POST https://api.yourgateway.com/v1/users/register
 "webhookUrl": "https://myapp.com/webhook"
 }'
 
+text
 
 **Response:**
 {
@@ -53,6 +55,7 @@ curl -X POST https://api.yourgateway.com/v1/users/register
 }
 }
 
+text
 
 **⚠️ Important:** Store these credentials securely. You'll need them for all API calls.
 
@@ -70,6 +73,7 @@ TG_PAYMENT_API_URL=https://api.yourgateway.com/v1
 Telegram Bot
 TELEGRAM_BOT_TOKEN=your_bot_token
 
+text
 
 ---
 
@@ -127,6 +131,7 @@ await ctx.reply('✅ Payment received! Processing...');
 
 bot.launch();
 
+text
 
 ---
 
@@ -156,6 +161,7 @@ console.log('Payments:', payments);
 const payment = await gateway.getPayment('payment-uuid');
 console.log('Stars received:', payment.starsAmount);
 
+text
 
 **Using Direct API:**
 
@@ -175,6 +181,7 @@ params: { page: 1, limit: 10, status: 'received' }
 
 console.log('Payments:', response.data.payments);
 
+text
 
 ---
 
@@ -195,6 +202,7 @@ console.log('Estimated TON:', estimate.tonEquivalent);
 console.log('Fees:', estimate.fees.total);
 console.log('Net amount:', estimate.netAmount);
 
+text
 
 #### 6.2: Lock Rate (Optional)
 
@@ -209,6 +217,7 @@ durationSeconds: 300, // 5 minutes
 console.log('Rate locked:', rateLock.exchangeRate);
 console.log('Valid until:', new Date(rateLock.lockedUntil));
 
+text
 
 #### 6.3: Create Conversion
 
@@ -230,6 +239,7 @@ rateLockId: rateLock.id, // optional
 console.log('Conversion created:', conversion.id);
 console.log('Status:', conversion.status);
 
+text
 
 #### 6.4: Monitor Conversion Status
 
@@ -238,19 +248,20 @@ async function waitForConversion(conversionId: string) {
 while (true) {
 const status = await gateway.getConversionStatus(conversionId);
 
+text
 console.log('Phase:', status.progress?.phase);
 console.log('Progress:', status.progress?.percentage + '%');
 
 if (status.status === 'completed') {
-  console.log('✅ Conversion complete!');
-  console.log('TON received:', status.conversion.targetAmount);
-  console.log('TX Hash:', status.conversion.tonTxHash);
-  break;
+console.log('✅ Conversion complete!');
+console.log('TON received:', status.conversion.targetAmount);
+console.log('TX Hash:', status.conversion.tonTxHash);
+break;
 }
 
 if (status.status === 'failed') {
-  console.error('❌ Conversion failed:', status.conversion.errorMessage);
-  break;
+console.error('❌ Conversion failed:', status.conversion.errorMessage);
+break;
 }
 
 // Wait 10 seconds before next check
@@ -260,6 +271,7 @@ await new Promise(resolve => setTimeout(resolve, 10000));
 
 await waitForConversion(conversion.id);
 
+text
 
 ---
 
@@ -274,13 +286,13 @@ Create a buy or sell order at a specific rate:
 ```javascript
 // Create a buy order: 5 TON for 1000 Stars (Rate: 0.005)
 const order = await gateway.createP2POrder({
-  type: 'buy',
+  type: "buy",
   starsAmount: 1000,
   tonAmount: 5.0,
-  rate: 0.005
+  rate: 0.005,
 });
 
-console.log('Order created:', order.orderId);
+console.log("Order created:", order.orderId);
 ```
 
 #### 7.2: List Open Orders
@@ -289,11 +301,11 @@ View your active orders:
 
 ```javascript
 const { orders } = await gateway.listP2POrders({
-  status: 'pending',
-  type: 'buy'
+  status: "pending",
+  type: "buy",
 });
 
-console.log('Active orders:', orders.length);
+console.log("Active orders:", orders.length);
 ```
 
 #### 7.3: Cancel Order
@@ -301,8 +313,8 @@ console.log('Active orders:', orders.length);
 Cancel an order if it hasn't been matched:
 
 ```javascript
-await gateway.cancelP2POrder('order-uuid');
-console.log('Order cancelled');
+await gateway.cancelP2POrder("order-uuid");
+console.log("Order cancelled");
 ```
 
 ---
@@ -345,18 +357,19 @@ console.log('Stars:', data.starsAmount);
 // Update your database
 break;
 
+text
 case 'conversion.completed':
-  console.log('Conversion completed:', data.conversionId);
-  console.log('TON amount:', data.tonAmount);
-  console.log('TX Hash:', data.txHash);
-  // Notify user, update balance, etc.
-  break;
-  
+console.log('Conversion completed:', data.conversionId);
+console.log('TON amount:', data.tonAmount);
+console.log('TX Hash:', data.txHash);
+// Notify user, update balance, etc.
+break;
+
 case 'conversion.failed':
-  console.log('Conversion failed:', data.conversionId);
-  console.log('Reason:', data.errorMessage);
-  // Handle failure
-  break;
+console.log('Conversion failed:', data.conversionId);
+console.log('Reason:', data.errorMessage);
+// Handle failure
+break;
 }
 
 res.json({ success: true });
@@ -366,6 +379,7 @@ app.listen(3000, () => {
 console.log('Webhook server running on port 3000');
 });
 
+text
 
 ---
 
@@ -424,24 +438,25 @@ status: 'received',
 limit: 1
 });
 
+text
 const conversion = await gateway.createConversion({
-  paymentIds: [payments.id],
-  targetCurrency: 'TON'
+paymentIds: [payments.id],
+targetCurrency: 'TON'
 });
 
 // Wait for conversion
 const status = await waitForConversion(conversion.id);
 
 if (status.status === 'completed') {
-  const userId = ctx.from!.id;
-  const currentBalance = userBalances.get(userId) || 0;
-  userBalances.set(userId, currentBalance + status.conversion.targetAmount!);
-  
-  await ctx.reply(
-    `✅ Conversion complete!\n` +
-    `Received: ${status.conversion.targetAmount} TON\n` +
-    `Your balance: ${userBalances.get(userId)} TON`
-  );
+const userId = ctx.from!.id;
+const currentBalance = userBalances.get(userId) || 0;
+userBalances.set(userId, currentBalance + status.conversion.targetAmount!);
+
+await ctx.reply(
+`✅ Conversion complete!\n` +
+`Received: ${status.conversion.targetAmount} TON\n` +
+`Your balance: ${userBalances.get(userId)} TON`
+);
 }
 } catch (error) {
 await ctx.reply('❌ Conversion failed. Please contact support.');
@@ -471,6 +486,7 @@ app.listen(3000);
 
 console.log('✅ Bot and webhook server running');
 
+text
 
 ---
 
@@ -534,6 +550,7 @@ targetCurrency: 'TON'
 });
 }
 
+text
 
 ### Issue: "Rate lock expired"
 
@@ -552,10 +569,12 @@ targetCurrency: 'TON',
 rateLockId: rateLock.id
 });
 
+text
 
 ### Issue: "Webhook not receiving events"
 
 **Solutions:**
+
 1. Verify webhook URL is publicly accessible
 2. Check webhook signature verification
 3. Ensure HTTPS is enabled

@@ -14,9 +14,9 @@ import TelegramPaymentGateway from '@tg-payment/sdk';
 
 // Initialize client
 const gateway = new TelegramPaymentGateway({
-  apiKey: 'pk_your_api_key',
-  apiSecret: 'sk_your_api_secret',
-  apiUrl: '<https://api.yourgateway.com/v1>', // optional
+apiKey: 'pk_your_api_key',
+apiSecret: 'sk_your_api_secret',
+apiUrl: '<https://api.yourgateway.com/v1>', // optional
 });// Estimate conversion
 const estimate = await gateway.estimateConversion({
 starsAmount: 5000,
@@ -34,7 +34,7 @@ text
 ✅ **Rate locking** - Lock exchange rates for time-sensitive conversions  
 ✅ **Payment tracking** - Monitor payment status in real-time  
 ✅ **Conversion management** - Create and track Stars → TON conversions  
-✅ **Error handling** - Comprehensive error types and messages  
+✅ **Error handling** - Comprehensive error types and messages
 
 ## API Reference
 
@@ -126,7 +126,7 @@ text
 **Response:**
 {
 status: 'completed',
-  conversion: { /* conversion object */ },
+conversion: { /_ conversion object _/ },
 progress: {
 phase: 'phase3_confirmed',
 percentage: 100,

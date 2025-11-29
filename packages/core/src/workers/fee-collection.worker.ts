@@ -1,8 +1,11 @@
-import 'dotenv/config';
-import { getDatabase, Database } from '../db/connection';
-import { FeeService } from '../services/fee.service';
-import TonBlockchainService from '../services/ton-blockchain.service';
-import { createPeriodicRunner, installGracefulShutdown } from '../lib/worker-utils';
+import "dotenv/config";
+import { getDatabase, Database } from "../db/connection";
+import { FeeService } from "../services/fee.service";
+import TonBlockchainService from "../services/ton-blockchain.service";
+import {
+  createPeriodicRunner,
+  installGracefulShutdown,
+} from "../lib/worker-utils";
 
 /**
  * Fee Collection Worker
@@ -14,7 +17,7 @@ class FeeCollectionWorker {
   private feeService: FeeService;
   private tonService: TonBlockchainService;
   private runner = createPeriodicRunner(() => Promise.resolve(), 0);
-  
+
   // Configuration
   private readonly CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
   private readonly MIN_COLLECTION_AMOUNT_TON = 1.0; // Minimum 1 TON before collection
@@ -23,7 +26,7 @@ class FeeCollectionWorker {
   constructor(
     db: Database,
     feeService: FeeService,
-    tonService: TonBlockchainService
+    tonService: TonBlockchainService,
   ) {
     this.db = db;
     this.feeService = feeService;
@@ -35,16 +38,21 @@ class FeeCollectionWorker {
    */
   async start(): Promise<void> {
     if (this.runner.isRunning()) {
-      console.warn('⚠️ Fee collection worker already running');
+      console.warn("⚠️ Fee collection worker already running");
       return;
     }
 
-    console.log('🚀 Fee collection worker started');
+    console.log("🚀 Fee collection worker started");
     console.log(`⏰ Check interval: ${this.CHECK_INTERVAL_MS / 1000}s`);
-    console.log(`💰 Min collection amount: ${this.MIN_COLLECTION_AMOUNT_TON} TON`);
+    console.log(
+      `💰 Min collection amount: ${this.MIN_COLLECTION_AMOUNT_TON} TON`,
+    );
 
     // create runner bound to this.collectFeesIfNeeded
-    this.runner = createPeriodicRunner(() => this.collectFeesIfNeeded(), this.CHECK_INTERVAL_MS);
+    this.runner = createPeriodicRunner(
+      () => this.collectFeesIfNeeded(),
+      this.CHECK_INTERVAL_MS,
+    );
     await this.runner.start();
   }
 
@@ -53,7 +61,7 @@ class FeeCollectionWorker {
    */
   async stop(): Promise<void> {
     await this.runner.stop();
-    console.log('🛑 Fee collection worker stopped');
+    console.log("🛑 Fee collection worker stopped");
   }
 
   /**
@@ -61,7 +69,7 @@ class FeeCollectionWorker {
    */
   private async collectFeesIfNeeded(): Promise<void> {
     try {
-      console.log('\n🔍 Checking pending fees...');
+      console.log("\n🔍 Checking pending fees...");
 
       // Get pending fees
       const result = await this.db.oneOrNone(`
@@ -78,33 +86,40 @@ class FeeCollectionWorker {
 
       const pendingData = result;
       if (!pendingData || !pendingData.fee_ids) {
-        console.log('No pending fees to collect.');
+        console.log("No pending fees to collect.");
         return;
       }
       const totalTon = parseFloat(pendingData.total_ton);
       const feeCount = parseInt(pendingData.fee_count);
       const feeIds = pendingData.fee_ids;
 
-      console.log(`📊 Pending fees: ${feeCount} fees, ${totalTon.toFixed(4)} TON`);
+      console.log(
+        `📊 Pending fees: ${feeCount} fees, ${totalTon.toFixed(4)} TON`,
+      );
 
       // Check if we should collect
       if (totalTon < this.MIN_COLLECTION_AMOUNT_TON) {
-        console.log(`⏸️ Below threshold (${this.MIN_COLLECTION_AMOUNT_TON} TON), skipping collection`);
+        console.log(
+          `⏸️ Below threshold (${this.MIN_COLLECTION_AMOUNT_TON} TON), skipping collection`,
+        );
         return;
       }
 
       // Get platform wallet address
       const platformWallet = await this.feeService.getPlatformWallet();
-      
+
       if (!platformWallet) {
-        console.error('❌ Platform wallet not configured');
+        console.error("❌ Platform wallet not configured");
         return;
       }
 
-      console.log(`💸 Collecting ${totalTon.toFixed(4)} TON to ${platformWallet}`);
+      console.log(
+        `💸 Collecting ${totalTon.toFixed(4)} TON to ${platformWallet}`,
+      );
 
       // Create collection record
-      const collectionResult = await this.db.one(`
+      const collectionResult = await this.db.one(
+        `
         INSERT INTO fee_collections (
           user_id, 
           fee_ids, 
@@ -129,25 +144,33 @@ class FeeCollectionWorker {
         FROM platform_fees
         WHERE id = ANY($1)
         RETURNING id, total_fees_ton
-      `, [feeIds, platformWallet]);
+      `,
+        [feeIds, platformWallet],
+      );
 
       const collectionId = collectionResult.id;
-      const amountToSend = parseFloat(collectionResult.total_fees_ton) - this.GAS_RESERVE_TON;
+      const amountToSend =
+        parseFloat(collectionResult.total_fees_ton) - this.GAS_RESERVE_TON;
 
       if (amountToSend <= 0) {
-        console.error('❌ Amount too small after gas reserve');
-        await this.markCollectionFailed(collectionId, 'Amount too small after gas reserve');
+        console.error("❌ Amount too small after gas reserve");
+        await this.markCollectionFailed(
+          collectionId,
+          "Amount too small after gas reserve",
+        );
         return;
       }
 
-      console.log(`🔐 Sending ${amountToSend.toFixed(4)} TON (${this.GAS_RESERVE_TON} TON reserved for gas)`);
+      console.log(
+        `🔐 Sending ${amountToSend.toFixed(4)} TON (${this.GAS_RESERVE_TON} TON reserved for gas)`,
+      );
 
       // Send TON to platform wallet
       try {
         const txHash = await this.tonService.sendTON(
           platformWallet,
           amountToSend,
-          'Platform fee collection'
+          "Platform fee collection",
         );
 
         console.log(`✅ Transaction sent: ${txHash}`);
@@ -155,14 +178,15 @@ class FeeCollectionWorker {
         // Mark as collected
         await this.markCollectionCompleted(collectionId, txHash, feeIds);
 
-        console.log(`🎉 Successfully collected ${amountToSend.toFixed(4)} TON from ${feeCount} fees`);
+        console.log(
+          `🎉 Successfully collected ${amountToSend.toFixed(4)} TON from ${feeCount} fees`,
+        );
       } catch (txError: any) {
-        console.error('❌ Transaction failed:', txError.message);
+        console.error("❌ Transaction failed:", txError.message);
         await this.markCollectionFailed(collectionId, txError.message);
       }
-
     } catch (error: any) {
-      console.error('❌ Fee collection error:', error);
+      console.error("❌ Fee collection error:", error);
     }
   }
 
@@ -172,25 +196,31 @@ class FeeCollectionWorker {
   private async markCollectionCompleted(
     collectionId: string,
     txHash: string,
-    feeIds: string[]
+    feeIds: string[],
   ): Promise<void> {
-    await this.db.tx(async t => {
-      await t.none(`
+    await this.db.tx(async (t) => {
+      await t.none(
+        `
         UPDATE fee_collections 
         SET status = 'completed', 
             tx_hash = $1, 
             collected_at = NOW()
         WHERE id = $2
-      `, [txHash, collectionId]);
+      `,
+        [txHash, collectionId],
+      );
 
-      await t.none(`
+      await t.none(
+        `
         UPDATE platform_fees 
         SET status = 'collected', 
             collection_tx_hash = $1, 
             collected_at = NOW(),
             updated_at = NOW()
         WHERE id = ANY($2)
-      `, [txHash, feeIds]);
+      `,
+        [txHash, feeIds],
+      );
     });
   }
 
@@ -199,14 +229,17 @@ class FeeCollectionWorker {
    */
   private async markCollectionFailed(
     collectionId: string,
-    errorMessage: string
+    errorMessage: string,
   ): Promise<void> {
-    await this.db.none(`
+    await this.db.none(
+      `
       UPDATE fee_collections 
       SET status = 'failed', 
           error_message = $1
       WHERE id = $2
-    `, [errorMessage, collectionId]);
+    `,
+      [errorMessage, collectionId],
+    );
   }
 }
 
@@ -215,21 +248,21 @@ class FeeCollectionWorker {
  */
 async function bootstrap() {
   if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
+    throw new Error("DATABASE_URL is required");
   }
 
   if (!process.env.TON_WALLET_MNEMONIC) {
-    throw new Error('TON_WALLET_MNEMONIC is required for fee collection');
+    throw new Error("TON_WALLET_MNEMONIC is required for fee collection");
   }
 
   const db = getDatabase();
 
   const feeService = new FeeService(db);
-  
+
   const tonService = new TonBlockchainService(
-    process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
+    process.env.TON_API_URL || "https://toncenter.com/api/v2/jsonRPC",
     process.env.TON_API_KEY,
-    process.env.TON_WALLET_MNEMONIC
+    process.env.TON_WALLET_MNEMONIC,
   );
 
   const worker = new FeeCollectionWorker(db, feeService, tonService);
@@ -237,7 +270,7 @@ async function bootstrap() {
   await worker.start();
 
   installGracefulShutdown(async () => {
-    console.log('\n🛑 Shutting down fee collection worker...');
+    console.log("\n🛑 Shutting down fee collection worker...");
     await worker.stop();
   });
 }
@@ -245,7 +278,7 @@ async function bootstrap() {
 // Only run if executed directly
 if (require.main === module) {
   bootstrap().catch((err) => {
-    console.error('Failed to start fee collection worker:', err);
+    console.error("Failed to start fee collection worker:", err);
     process.exit(1);
   });
 }

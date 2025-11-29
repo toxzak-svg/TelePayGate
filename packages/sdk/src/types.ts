@@ -9,26 +9,26 @@ export interface PaymentGatewayConfig {
 
 // ==================== CURRENCIES ====================
 
-export type Currency = 'STARS' | 'TON' | 'USD' | 'EUR' | 'GBP';
+export type Currency = "STARS" | "TON" | "USD" | "EUR" | "GBP";
 
-export type PaymentStatus = 
-  | 'pending' 
-  | 'received' 
-  | 'converting' 
-  | 'converted' 
-  | 'settled' 
-  | 'failed';
+export type PaymentStatus =
+  | "pending"
+  | "received"
+  | "converting"
+  | "converted"
+  | "settled"
+  | "failed";
 
-export type ConversionStatusType = 
-  | 'pending' 
-  | 'rate_locked' 
-  | 'phase1_prepared' 
-  | 'phase2_committed' 
-  | 'phase3_confirmed'
-  | 'in_progress' 
-  | 'confirmed' 
-  | 'completed' 
-  | 'failed';
+export type ConversionStatusType =
+  | "pending"
+  | "rate_locked"
+  | "phase1_prepared"
+  | "phase2_committed"
+  | "phase3_confirmed"
+  | "in_progress"
+  | "confirmed"
+  | "completed"
+  | "failed";
 
 // ==================== CONVERSION ====================
 
@@ -119,7 +119,6 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawPayload?: any;
   createdAt: string;
   updatedAt: string;
@@ -138,7 +137,7 @@ export interface UserProfile {
   appName: string;
   apiKey: string;
   webhookUrl?: string;
-  kycStatus: 'pending' | 'verified' | 'rejected';
+  kycStatus: "pending" | "verified" | "rejected";
   createdAt: string;
 }
 
@@ -156,6 +155,5 @@ export interface APIError {
   message: string;
   code: string;
   status: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: any;
 }

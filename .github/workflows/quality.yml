@@ -12,21 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node and cache npm
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
-
-      - name: Clean npm cache
-        run: npm cache clean --force
 
       - name: Install dependencies
-        run: npm ci --workspaces --ignore-scripts
-
-      - name: Ensure reports directory exists
-        run: mkdir -p docs/reports
+        run: npm ci
 
       - name: Run jscpd
         run: |
@@ -34,7 +26,7 @@ jobs:
 
       - name: Fail on duplication threshold
         run: |
-          node -e "const fs=require('fs'); const p='docs/reports/jscpd-latest.json'; if(!fs.existsSync(p)){console.warn('jscpd output missing; skipping duplication threshold check'); process.exit(0);} const r=JSON.parse(fs.readFileSync(p)); const dup=(r.statistics && r.statistics.duplicates) || 0; console.log('jscpd duplicates:',dup); if(dup>50){console.error('Duplication threshold exceeded (>50 duplicates)'); process.exit(1);}"
+          node -e "const fs=require('fs'); const p='docs/reports/jscpd-latest.json'; if(!fs.existsSync(p)){console.error('jscpd output missing'); process.exit(1);} const r=JSON.parse(fs.readFileSync(p)); const dup=(r.statistics && r.statistics.duplicates) || 0; console.log('jscpd duplicates:',dup); if(dup>50){console.error('Duplication threshold exceeded (>50 duplicates)'); process.exit(1);}"
 
       - name: Run ESLint
         run: npm run lint -- --max-warnings=0

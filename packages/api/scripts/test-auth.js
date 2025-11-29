@@ -22,21 +22,15 @@ async function testAuthFlow() {
       }
     }
 
-    // 2. Register new user (no auth required). If a TEST_API_KEY is set
-    //    in the environment we use that instead of creating a new user.
+    // 2. Register new user (no auth required)
     console.log('\n2️⃣  Registering new user...');
-    if (process.env.TEST_API_KEY && process.env.TEST_API_KEY.length > 8) {
-      apiKey = process.env.TEST_API_KEY;
-      console.log('ℹ️  Using TEST_API_KEY from environment for flow');
-    } else {
-      const registerResponse = await axios.post(`${API_URL}/users/register`, {
-        appName: 'Auth Test App',
-        description: 'Testing authentication',
-      });
-      apiKey = registerResponse.data.user.apiKey;
-      console.log('✅ User registered (API key generated)');
-      console.log('   API Key: [REDACTED]');
-    }
+    const registerResponse = await axios.post(`${API_URL}/users/register`, {
+      appName: 'Auth Test App',
+      description: 'Testing authentication',
+    });
+    apiKey = registerResponse.data.user.apiKey;
+    console.log('✅ User registered');
+    console.log('   API Key:', apiKey);
 
     // 3. Test authenticated request
     console.log('\n3️⃣  Testing authenticated request...');
@@ -76,30 +70,33 @@ async function testAuthFlow() {
       }
     }
 
-    // 6. Test rate limiting - perform a burst of simple GET requests using
-    //    the active apiKey (either generated above or supplied by TEST_API_KEY)
-    console.log('\n6️⃣  Testing rate limiting (making 12 requests; limit may apply)...');
+    // 6. Test rate limiting
+    console.log('\n6️⃣  Testing rate limiting (making 12 requests, limit is 10/min)...');
     let rateLimitHit = false;
     for (let i = 1; i <= 12; i++) {
       try {
-        const resp = await axios.get(`${API_URL}/users/me`, {
-          headers: { 'X-API-Key': apiKey },
-        });
-        // If responses remain 200 the service may not enforce a strict rate limit
+        const response = await axios.post(
+          `${API_URL}/users/register`,
+          {
+            appName: `Rate Test ${i}`,
+          }
+        );
+        console.log(`   Request ${i}: Success`);
       } catch (error) {
-        if (error.response && (error.response.status === 429 || error.response.status === 401)) {
+        if (error.response?.status === 429) {
+          console.log(`   Request ${i}: ✅ Rate limited!`);
+          console.log('   Error:', error.response.data.error.code);
+          console.log('   Retry after:', error.response.data.error.retryAfter, 'seconds');
           rateLimitHit = true;
-          console.log('\u2705 Rate-limit or auth rejection observed (status)', error.response.status);
           break;
         } else {
-          // Unexpected error — rethrow so the test script fails visibly
           throw error;
         }
       }
     }
 
     if (!rateLimitHit) {
-      console.log('⚠️  Rate limit not observed (this may be OK in local dev or test environments)');
+      console.log('⚠️  Rate limit not hit (may need to adjust limits)');
     }
 
     // 7. Test Authorization header format
