@@ -853,22 +853,28 @@ return res.status(401).json({ error: 'Invalid signature' });
 
 ## SDK Usage
 
-For TypeScript/JavaScript projects, use the official SDK:
+For TypeScript/JavaScript projects, use the official SDK.
 
+Install the client SDK and initialize it in your application:
+
+```bash
 npm install @tg-payment/sdk
+```
 
-undefined
+```js
 import TelegramPaymentGateway from '@tg-payment/sdk';
 
 const gateway = new TelegramPaymentGateway({
-apiKey: 'pk_your_key',
-apiSecret: 'sk_your_secret',
+  apiKey: process.env.TG_API_KEY,
+  apiSecret: process.env.TG_API_SECRET,
 });
 
+// Example: estimate a conversion
 const estimate = await gateway.estimateConversion({
-starsAmount: 5000,
-targetCurrency: 'TON',
+  starsAmount: 5000,
+  targetCurrency: 'TON',
 });
-
+console.log('Estimate:', estimate);
+```
 
 See [SDK Documentation](../packages/sdk/README.md) for complete reference.
