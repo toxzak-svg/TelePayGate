@@ -11,8 +11,12 @@ set -euo pipefail
 BASEDIR=$(dirname "$0")/..
 cd "$BASEDIR"
 
-echo "Installing npm dependencies (hoisted workspaces)..."
-npm ci --no-audit --no-fund
+echo "Installing npm dependencies (hoisted workspaces) if needed..."
+if [ -d node_modules ]; then
+  echo "node_modules already present — skipping npm ci"
+else
+  npm ci --no-audit --no-fund
+fi
 
 echo "Building compose images (if necessary)..."
 docker compose build --pull --parallel
