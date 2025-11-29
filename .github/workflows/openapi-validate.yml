@@ -1,0 +1,49 @@
+name: OpenAPI Validate
+
+on:
+  push:
+    paths:
+      - 'docs/openapi.yaml'
+  pull_request:
+    paths:
+      - 'docs/openapi.yaml'
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+    name: Validate OpenAPI spec
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate OpenAPI (swagger-cli)
+        # Runs swagger-cli in a container so no install needed on runner
+        run: |
+          echo "Validating docs/openapi.yaml"
+          docker run --rm -v "${{ github.workspace }}":/local -w /local swaggerapi/swagger-cli validate docs/openapi.yaml
+name: OpenAPI — validate
+
+on:
+  push:
+    paths:
+      - 'docs/openapi.yaml'
+  pull_request:
+    paths:
+      - 'docs/openapi.yaml'
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Redocly OpenAPI CLI (lint)
+        run: |
+          # Use npx to run the OpenAPI validator without adding a permanent dependency
+          npx --yes @redocly/openapi-cli lint docs/openapi.yaml
