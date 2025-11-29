@@ -19,6 +19,7 @@
     "dev": "npm run dev --workspaces --if-present",
     "test:detect": "dotenv -e .env.test -- jest --detectOpenHandles --runInBand --forceExit",
     "dev:all": "npm run docker:up && cd packages/dashboard && npm run dev",
+    "dev:local": "DASHBOARD_LOCAL=true bash scripts/dev-up.sh",
     "clean": "bash ./scripts/clean.sh",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
