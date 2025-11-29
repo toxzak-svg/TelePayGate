@@ -7,6 +7,8 @@ Complete reference for the Telegram Payment Gateway REST API.
 Production: https://api.yourgateway.com/v1
 Development: http://localhost:3000/api/v1
 
+Use the Base URL above when calling API endpoints. The `/api/v1` prefix is the canonical versioned namespace for this project.
+
 
 ## Authentication
 
@@ -17,6 +19,12 @@ All endpoints (except registration and webhooks) require authentication via API 
 **Method 1: Header (Recommended)**
 X-API-Key: pk_your_api_key
 
+Example (curl):
+
+```bash
+curl -H "X-API-Key: pk_your_api_key" "http://localhost:3000/api/v1/users/me"
+```
+
 
 **Method 2: Bearer Token**
 Authorization: Bearer pk_your_api_key
@@ -24,6 +32,8 @@ Authorization: Bearer pk_your_api_key
 
 **Method 3: Query Parameter**
 GET /api/v1/payments?api_key=pk_your_api_key
+
+Query param auth is supported for convenience but is discouraged for production traffic since URLs may be logged and expose sensitive keys.
 
 
 ---
@@ -58,20 +68,29 @@ Create a new user account and receive API credentials.
 }
 }
 
+Notes:
+- The registered `apiSecret` is sensitive — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
+Install the client SDK and initialize it in your application:
 
-**Rate Limit:** 10 requests/minute per IP
+```bash
+npm install @tg-payment/sdk
+```
 
----
+```js
+import TelegramPaymentGateway from '@tg-payment/sdk';
 
-### Get User Profile
-
-Retrieve authenticated user's profile information.
-
+const gateway = new TelegramPaymentGateway({
+  apiKey: process.env.TG_API_KEY,
+  apiSecret: process.env.TG_API_SECRET,
+});
 **Endpoint:** `GET /api/v1/users/me`  
-**Authentication:** Required
-
-**Response:** `200 OK`
-{
+// Example: estimate a conversion
+const estimate = await gateway.estimateConversion({
+  starsAmount: 5000,
+  targetCurrency: 'TON',
+});
+console.log('Estimate:', estimate);
 "success": true,
 "user": {
 "id": "uuid-v4",
