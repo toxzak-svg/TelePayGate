@@ -1,6 +1,7 @@
 openapi: 3.0.3
 info:
   title: Telegram Payment Gateway API
+<<<<<<< HEAD
   version: "2.2.0"
   description: |
     OpenAPI description for the Telegram Payment Gateway. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
@@ -512,98 +513,3 @@ paths:
       responses:
         '200':
           description: Order cancelled
-openapi: 3.0.3
-info:
-  title: Telegram Payment Gateway API
-  version: "1.0.0"
-  description: API for accepting Telegram Stars payments and converting to TON.
-servers:
-  - url: https://api.yourgateway.com/v1
-  - url: http://localhost:3000/api/v1
-paths:
-  /users/register:
-    post:
-      summary: Register a new developer application
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                appName:
-                  type: string
-                description:
-                  type: string
-                webhookUrl:
-                  type: string
-      responses:
-        '201':
-          description: Created - returns apiKey and apiSecret
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      apiKey:
-                        type: string
-                      apiSecret:
-                        type: string
-
-  /users/me:
-    get:
-      summary: Get profile for authenticated user
-      security:
-        - ApiKeyAuth: []
-      responses:
-        '200':
-          description: Profile object
-
-  /payments/webhook:
-    post:
-      summary: Telegram payment webhook (public)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Acknowledged
-
-  /payments:
-    get:
-      summary: List payments
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-        - in: query
-          name: limit
-          schema:
-            type: integer
-        - in: query
-          name: status
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Array of payments
-
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
