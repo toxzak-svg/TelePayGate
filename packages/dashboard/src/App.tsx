@@ -9,6 +9,7 @@ import Layout from './components/layout/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Onboarding from './pages/Onboarding';
 import Passwordless from './pages/auth/Passwordless';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
@@ -38,6 +39,7 @@ function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="onboarding" element={<Onboarding />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="p2p-orders" element={<P2POrders />} />
               <Route path="dex-analytics" element={<DexAnalytics />} />

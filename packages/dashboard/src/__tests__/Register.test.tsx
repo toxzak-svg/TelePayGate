@@ -6,10 +6,18 @@ import { BrowserRouter } from 'react-router-dom';
 import Register from '../pages/Register';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+const registerMock = vi.fn().mockResolvedValue({ apiKey: 'pk_test_123', apiSecret: 'sk_test_abc' });
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    register: vi.fn().mockResolvedValue({ apiKey: 'pk_test_123', apiSecret: 'sk_test_abc' }),
+    register: registerMock,
   }),
+}));
+
+vi.mock('../api/services', () => ({
+  userService: {
+    getFeatures: vi.fn().mockResolvedValue({ success: true, features: { captchaEnabled: false } }),
+    verifyCaptcha: vi.fn().mockResolvedValue({ success: true, verified: true }),
+  }
 }));
 
 describe('Register page', () => {
@@ -33,6 +41,8 @@ describe('Register page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /create app & api key/i }));
 
+    // ensure register was called, then assert on UI
+    await waitFor(() => expect(registerMock).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText(/App created successfully/i)).toBeInTheDocument());
     // credentials displayed
     expect(screen.getByText(/pk_test_123/i)).toBeInTheDocument();
