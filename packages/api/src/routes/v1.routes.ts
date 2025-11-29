@@ -2,6 +2,8 @@ import { Router } from 'express';
 import PaymentController from '../controllers/payment.controller';
 import { ConversionController } from '../controllers/conversion.controller';
 import UserController from '../controllers/user.controller';
+import config from '../config';
+import { createRateLimiter } from '../middleware/ratelimit.middleware';
 import AdminController from '../controllers/admin.controller';
 import { requireDashboardRole } from '../middleware/role.middleware';
 import FeeCollectionController from '../controllers/fee-collection.controller';
@@ -9,6 +11,7 @@ import { authenticate } from '../middleware/auth.middleware';
 // import P2POrdersController from '../controllers/p2p-orders.controller';
 import webhookRoutes from './webhooks.routes';
 import AuthController from '../controllers/auth.controller';
+import CaptchaController from '../controllers/captcha.controller';
 import csrfProtect from '../middleware/csrf.middleware';
 
 const router = Router();
@@ -31,6 +34,12 @@ router.post('/auth/totp/confirm', AuthController.totpConfirm);
 router.post('/auth/logout', AuthController.logout);
 router.get('/auth/me', AuthController.me);
 
+// Features endpoint (discovery)
+router.get('/features', CaptchaController.getFeatures);
+
+// Captcha verification used by public forms (register)
+router.post('/captcha/verify', CaptchaController.verify);
+
 // Payment routes
 router.post('/payments/webhook', PaymentController.handleTelegramWebhook);
 // After webhook, enable CSRF protection for state-changing endpoints
@@ -46,7 +55,12 @@ router.get('/conversions/:id', authenticate, conversionController.getConversion.
 router.get('/conversions', authenticate, conversionController.getConversionHistory.bind(conversionController));
 
 // User routes
-router.post('/users/register', UserController.register);
+// Public registration: apply a stricter rate limiter to avoid abuse
+router.post(
+  '/users/register',
+  createRateLimiter({ windowMs: config.rateLimit.registerWindowMs, maxRequests: config.rateLimit.registerMaxRequests }),
+  UserController.register
+);
 router.get('/users/me', authenticate, UserController.getMe);
 router.post('/users/api-keys/regenerate', authenticate, UserController.regenerateApiKey);
 router.get('/users/stats', authenticate, UserController.getStats);

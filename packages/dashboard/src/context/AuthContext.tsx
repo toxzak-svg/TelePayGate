@@ -6,6 +6,12 @@ interface AuthContextType {
   user: User | null;
   apiKey: string | null;
   login: (apiKey: string) => Promise<void>;
+  register: (
+    appName: string,
+    description?: string | null,
+    webhookUrl?: string | null,
+    captchaToken?: string | null
+  ) => Promise<{ apiKey: string; apiSecret?: string }>; 
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -52,6 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const register = async (
+    appName: string,
+    description?: string | null,
+    webhookUrl?: string | null,
+    captchaToken?: string | null
+  ) => {
+    // call backend register endpoint, auto-login with returned apiKey
+    const res = await userService.register(appName, description, webhookUrl, captchaToken);
+    // expected shape: { success: true, user: { apiKey, apiSecret, ... } }
+    const created = res.user;
+    if (!created || !created.apiKey) {
+      throw new Error('Registration failed: no apiKey returned');
+    }
+
+    // do not persist the apiSecret — only show it once
+    await login(created.apiKey);
+
+    return { apiKey: created.apiKey, apiSecret: created.apiSecret };
+  };
+
   const logout = () => {
     localStorage.removeItem('apiKey');
     setApiKey(null);
@@ -64,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         apiKey,
         login,
+        register,
         logout,
         isLoading,
         isAuthenticated: !!apiKey && !!user,

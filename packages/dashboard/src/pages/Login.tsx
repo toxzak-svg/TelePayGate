@@ -104,12 +104,10 @@ export default function Login() {
             <p className="text-sm text-gray-600 text-center">
               Don't have an API key?{' '}
               <a
-                href="https://docs.example.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/register"
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                View Documentation
+                Create one now
               </a>
             </p>
           </div>

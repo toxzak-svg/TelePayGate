@@ -74,6 +74,23 @@ export const userService = {
     return data.user;
   },
 
+  async register(appName: string, description?: string | null, webhookUrl?: string | null, captchaToken?: string | null): Promise<any> {
+    const body: any = { appName, description, webhookUrl };
+    if (captchaToken) body.captchaToken = captchaToken;
+    const { data } = await apiClient.post('/users/register', body);
+    return data;
+  },
+
+  async getFeatures(): Promise<any> {
+    const { data } = await apiClient.get('/features');
+    return data;
+  },
+
+  async verifyCaptcha(token?: string): Promise<any> {
+    const { data } = await apiClient.post('/captcha/verify', { token });
+    return data;
+  },
+
   async updateWebhookUrl(webhookUrl: string): Promise<User> {
     const { data } = await apiClient.patch<ApiResponse<User>>(
       '/user/webhook',

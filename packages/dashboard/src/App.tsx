@@ -7,6 +7,7 @@ import { queryClient } from './api/queryClient';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Passwordless from './pages/auth/Passwordless';
 import Transactions from './pages/Transactions';
@@ -25,6 +26,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/auth/passwordless" element={<Passwordless />} />
             <Route
               path="/"
