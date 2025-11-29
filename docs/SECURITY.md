@@ -16,7 +16,10 @@
 
 ## Secrets & safe storage
 
-Do not commit `.env` or any secret material to source control. Use a secret manager for production deployments (HashiCorp Vault, AWS Secrets Manager, Azure KeyVault, Google Secret Manager or Render/Railway secret management).
+Do not commit `.env` or any secret material to source control. Use a secret
+manager for production deployments — for example: HashiCorp Vault, AWS
+Secrets Manager, Azure KeyVault, Google Secret Manager, or Render/Railway
+secret management.
 
 Example local `.env` snippet (do not commit):
 ```env

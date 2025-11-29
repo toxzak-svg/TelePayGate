@@ -123,7 +123,7 @@ API will be available at `http://localhost:3000`
    npm run worker:fees
    ```
 
-   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, `TON_API_KEY`, and `TON_WALLET_MNEMONIC` to be present in `.env`.
+   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, and `TON_API_KEY`, plus a wallet mnemonic stored in your environment, to be present in `.env`.
 
 3. **Monitor revenue** using the admin endpoints:
    - `GET /api/v1/admin/stats` – dashboard KPIs (revenue, merchants, success rate)
@@ -253,7 +253,11 @@ USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests_
 ```
 
 - This requires Docker available on the machine running the tests.
-- CI: an optional `e2e-fixture` job has been added to `.github/workflows/ci.yml`. It is configured to run on `self-hosted` runners and must be triggered manually via `workflow_dispatch` by a maintainer. The self-hosted runner must have Docker available and be labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
+   - CI: an optional `e2e-fixture` job has been added to
+      `.github/workflows/ci.yml`. It is configured to run on `self-hosted`
+      runners and must be triggered manually via `workflow_dispatch` by a
+      maintainer. The self-hosted runner must have Docker available and be
+      labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
 
 Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
 
@@ -511,7 +515,7 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
 
 # TON Blockchain (Direct Integration)
-TON_WALLET_MNEMONIC=your 24 word mnemonic phrase
+<24-word mnemonic (do NOT store plaintext in this repository)>
 TON_API_KEY=your_tonx_key
 TON_API_URL=https://toncenter.com/api/v2/jsonRPC
 TON_MAINNET=true
@@ -570,20 +574,33 @@ npm run build
 
 ### Dev container / Docker Compose (important)
 
-When running services with Docker Compose in development, the codebase uses npm workspaces. To make workspace packages (for example `@tg-payment/core`) available inside the containers we install at the repository root so packages are hoisted into `/app/node_modules`.
+When running services with Docker Compose in development, the codebase uses
+npm workspaces. To make workspace packages (for example
+`@tg-payment/core`) available inside the containers we install at the
+repository root so packages are hoisted into `/app/node_modules`.
 
 Important notes:
-- The `docker-compose.override.yml` dev configuration runs `npm ci` at the repository root inside the container before starting the workspace dev command. This ensures `@tg-payment/core` and other workspace packages resolve correctly.
-- Do not run `npm ci --prefix packages/api` inside the container if you expect workspace dependencies to be hoisted
+- The `docker-compose.override.yml` dev configuration runs `npm ci` at the
+   repository root inside the container before starting the workspace dev
+   command. This ensures `@tg-payment/core` and other workspace packages
+   resolve correctly.
+- Do not run `npm ci --prefix packages/api` inside the container if you
+   expect workspace dependencies to be hoisted.
 
-If you prefer to run the dev API inside Docker, use the helper script added in `scripts/dev-up.sh` which installs workspaces and brings up the stack in the correct order.
+If you prefer to run the dev API inside Docker, use the helper script added
+in `scripts/dev-up.sh` which installs workspaces and brings up the stack in
+the correct order.
 
 ### Dev helper scripts
 
 We provide two small helper scripts to make development Docker Compose startup easier:
 
-- `scripts/dev-up.sh` — installs workspace dependencies at the repo root, builds images, starts infrastructure (db, redis, mailhog), runs migrations, and brings up `api` and `dashboard` containers.
-- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API /health endpoint to become available (useful after running the compose stack).
+- `scripts/dev-up.sh` — installs workspace dependencies at the repo root,
+   builds images, starts infrastructure (db, redis, mailhog), runs
+   migrations, and brings up `api` and `dashboard` containers.
+- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API
+   `/health` endpoint to become available (useful after running the compose
+   stack).
 
 Usage:
 
