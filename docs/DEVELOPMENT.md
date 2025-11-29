@@ -21,12 +21,10 @@ Complete guide for developers working on the Telegram Payment Gateway.
 Make sure you have these installed:
 
 Check versions
-node --version # Should be 18+
+node --version # Should be 20+
 npm --version # Should be 9+
 docker --version
-docker-compose --version
-
-text
+docker compose version
 
 ### Initial Setup
 
@@ -42,7 +40,7 @@ cp .env.example .env
 
 Edit .env with your credentials
 4. Start database
-docker-compose up -d postgres
+docker compose up -d postgres
 
 5. Verify database is ready
 docker logs tg_payment_postgres
@@ -50,7 +48,6 @@ docker logs tg_payment_postgres
 6. Start development server
 npm run dev --workspace=@tg-payment/api
 
-text
 
 ### Environment Setup
 
@@ -77,25 +74,24 @@ STONFI_API_URL=https://api.ston.fi
 Security
 WEBHOOK_SECRET=dev_secret_change_in_production
 
-text
 
 ---
 
 ## Development Workflow
 
+
 ### Starting Development
 
 Terminal 1: Start database
-docker-compose up postgres
+docker compose up -d postgres
 
-Terminal 2: Start API with hot reload
+Terminal 2: Start API with hot reload (local dev - hot reload)
 npm run dev --workspace=@tg-payment/api
 
 Terminal 3: Run tests (optional)
 npm test
 
 Access API at http://localhost:3000
-text
 
 ### Making Changes
 
@@ -115,7 +111,6 @@ git commit -m "feat: description of changes"
 5. Push
 git push origin feature/your-feature-name
 
-text
 
 ### NPM Scripts
 
@@ -138,11 +133,9 @@ npm run lint # Lint all packages
 npm run lint:fix # Auto-fix linting issues
 
 Database
-npm run db:migrate # Run migrations
-npm run db:seed # Seed database
-npm run db:reset # Reset database
+npm run migrate # Run migrations (repository-level command)
+npm run migrate:status # Check migration status
 
-text
 
 ---
 
@@ -187,7 +180,6 @@ packages/
 └── src/
 └── types/ # TypeScript types
 
-text
 
 ### Adding a New Endpoint
 
@@ -201,7 +193,6 @@ standardLimit,
 MyController.myMethod
 );
 
-text
 
 **2. Create controller in `controllers/my.controller.ts`:**
 
@@ -213,7 +204,6 @@ static async myMethod(req: Request, res: Response) {
 const requestId = uuid();
 const userId = (req as any).user?.id;
 
-text
 try {
   // Your logic here
   
@@ -233,7 +223,6 @@ try {
 }
 }
 
-text
 
 **3. Add service logic in `core/services/`:**
 
@@ -250,7 +239,6 @@ return result.rows;
 }
 }
 
-text
 
 **4. Write tests:**
 
@@ -267,7 +255,6 @@ console.log('✅ Test passed:', response.data);
 
 testMyFeature();
 
-text
 
 ### Database Queries
 
@@ -284,7 +271,6 @@ const result = await pool.query(
 SELECT * FROM users WHERE id = '${userId}'
 );
 
-text
 
 **Transactions:**
 
@@ -304,7 +290,6 @@ throw error;
 client.release();
 }
 
-text
 
 ---
 
@@ -323,7 +308,6 @@ node packages/api/scripts/test-auth.js
 With debugging
 NODE_ENV=test DEBUG=* npm test
 
-text
 
 ### Writing Integration Tests
 
@@ -337,7 +321,6 @@ try {
 // 1. Setup
 const user = await createTestUser();
 
-text
 // 2. Execute
 const response = await axios.post(`${API_URL}/endpoint`, {
   data: 'test'
@@ -352,7 +335,6 @@ console.error('❌ Test failed:', error.response?.data);
 }
 }
 
-text
 
 ### Test Data
 
@@ -364,7 +346,6 @@ curl -X POST http://localhost:3000/api/v1/users/register
 Use returned API key for subsequent tests
 export TEST_API_KEY="pk_xxx"
 
-text
 
 ---
 
@@ -389,7 +370,6 @@ Create `.vscode/launch.json`:
 ]
 }
 
-text
 
 ### Logging
 
@@ -397,7 +377,6 @@ text
 console.log('✅ Success:', data);
 console.error('❌ Error:', error);
 
-text
 
 **Add contextual logging:**
 console.log('[PaymentService] Processing payment', {
@@ -407,7 +386,6 @@ amount,
 timestamp: new Date().toISOString()
 });
 
-text
 
 ### Database Debugging
 
@@ -428,7 +406,6 @@ FROM pg_stat_statements
 ORDER BY total_time DESC
 LIMIT 10;
 
-text
 
 ### Network Debugging
 
@@ -446,7 +423,6 @@ for i in {1..15}; do
 curl -H "X-API-Key: pk_xxx" http://localhost:3000/api/v1/users/me
 done
 
-text
 
 ---
 
@@ -476,7 +452,6 @@ if (typeof amount === 'number' && amount > 0) {
 // safe to use amount
 }
 
-text
 
 ### Error Handling
 
@@ -507,7 +482,6 @@ await doSomething();
 // Silent failure
 }
 
-text
 
 ### Database Queries
 
@@ -527,7 +501,6 @@ const { Client } = require('pg');
 const client = new Client({ ... });
 await client.connect(); // Don't do this repeatedly
 
-text
 
 ### API Responses
 
@@ -546,7 +519,6 @@ console.log('Processing request', { requestId });
 return res.json({ result }); // Missing success flag
 return res.send('OK'); // Not JSON
 
-text
 
 ---
 
@@ -568,7 +540,6 @@ docker logs tg_payment_postgres
 Verify connection
 docker exec -it tg_payment_postgres psql -U tg_user -d tg_payment_dev
 
-text
 
 **2. Port already in use**
 
@@ -583,7 +554,6 @@ taskkill /PID <PID> /F # Windows
 Or change port in .env
 PORT=3001
 
-text
 
 **3. API not reloading**
 
@@ -592,7 +562,6 @@ npm run dev --workspace=@tg-payment/api -- --no-cache
 
 Or restart manually
 Ctrl+C then restart
-text
 
 **4. TypeScript errors**
 
@@ -603,7 +572,6 @@ Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
 npm install
 
-text
 
 **5. Database migration errors**
 
@@ -618,7 +586,6 @@ Wait for init, then check logs
 sleep 10
 docker logs tg_payment_postgres
 
-text
 
 ### Getting Help
 
@@ -648,7 +615,6 @@ for (const user of users) {
 await pool.query('SELECT * FROM payments WHERE user_id = $1', [user.id]);
 }
 
-text
 
 ### API
 
@@ -662,7 +628,6 @@ app.use(compression());
 const cached = cache.get(key);
 if (cached) return cached;
 
-text
 
 ---
 

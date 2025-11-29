@@ -67,7 +67,6 @@ The Telegram Payment Gateway is a monorepo-based microservices architecture buil
 │ Database │
 └─────────────────┘
 
-text
 
 ### Package Structure
 
@@ -94,7 +93,6 @@ text
 │
 └── docker-compose.yml # Infrastructure
 
-text
 
 ---
 
@@ -117,7 +115,6 @@ PaymentService.processSuccessfulPayment()
 ├─> Store in database
 └─> Return confirmation
 
-text
 
 ### Conversion Flow
 
@@ -148,7 +145,6 @@ ConversionService.createConversion()
 ├─> Query DEX pools for best rate
 └─> Update conversion status
 
-text
 
 ### Authentication Flow
 
@@ -170,7 +166,6 @@ authenticateApiKey middleware
 
 Continue to route handler
 
-text
 
 ---
 
@@ -197,7 +192,6 @@ is_active
 
 created_at, updated_at
 
-text
 
 **payments** - Telegram payment records
 id (uuid, PK)
@@ -214,7 +208,6 @@ raw_payload (jsonb)
 
 created_at, confirmed_at
 
-text
 
 **conversions** - Stars → TON conversions
 id (uuid, PK)
@@ -235,7 +228,6 @@ status
 
 created_at, completed_at
 
-text
 
 **settlements** - Fiat settlements
 id (uuid, PK)
@@ -250,7 +242,6 @@ bank_account_id
 
 status
 
-text
 
 #### Supporting Tables
 
@@ -277,7 +268,6 @@ idx_conversions_user_id ON conversions(user_id, created_at DESC)
 idx_conversions_status ON conversions(status)
 idx_conversions_payment_ids ON conversions USING gin(payment_ids)
 
-text
 
 ### Relationships
 
@@ -286,7 +276,6 @@ users (1) ──< (N) conversions
 conversions (1) ──< (N) settlements
 conversions (N) ──> (N) payments (via payment_ids array)
 
-text
 
 ---
 
@@ -314,7 +303,6 @@ Verify user is active
 
 Attach user to request context
 
-text
 
 ### Rate Limiting
 
@@ -349,7 +337,6 @@ origin: process.env.ALLOWED_ORIGINS?.split(','),
 credentials: true
 }));
 
-text
 
 ---
 
@@ -407,7 +394,6 @@ text
 **Current Implementation:**
 console.log() with structured data
 
-text
 
 **Production Recommendations:**
 
@@ -444,7 +430,6 @@ text
 GET /health
 GET /api/v1/health (planned)
 
-text
 
 **Production:**
 
@@ -466,7 +451,6 @@ Local Machine
 └── Node.js (host machine)
 └── API (ts-node-dev)
 
-text
 
 ### Production (Recommended)
 
@@ -477,7 +461,6 @@ Cloud Platform (Railway/Render/AWS)
 ├── PostgreSQL (managed)
 └── Redis (managed)
 
-text
 
 ### CI/CD Pipeline
 
@@ -500,7 +483,6 @@ Run integration tests
 
 Deploy to production
 
-text
 
 ---
 

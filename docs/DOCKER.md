@@ -1,4 +1,4 @@
-# Docker & docker-compose — Development and local testing
+# Docker & docker compose — Development and local testing
 
 This project includes a multi-stage `Dockerfile` for building a production image and an opinionated `docker-compose.yml` for local development and testing.
 
@@ -18,19 +18,20 @@ cp .env.example .env
 2. Start the stack (background):
 
 ```bash
-docker-compose up -d
+# use the modern `docker compose` CLI (recommended)
+docker compose up -d
 ```
 
 3. Run database migrations once the database is healthy:
 
 ```bash
-docker-compose run --rm migrations
+docker compose run --rm migrations
 ```
 
 4. Check logs and verify services:
 
 ```bash
-docker-compose logs -f api
+docker compose logs -f api
 ```
 
 Dev workflow (live reload and code mounts)
@@ -38,7 +39,7 @@ Dev workflow (live reload and code mounts)
 Use the override file to mount your working copy into the containers and run dev servers:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build
+docker compose -f docker-compose.yml -f docker-compose.override.yml up --build
 ```
 
 This runs the `api` service in development mode (ts-node-dev) and the `dashboard` vite dev server. Code changes in your workspace will be reflected immediately inside the containers.
@@ -46,10 +47,17 @@ This runs the `api` service in development mode (ts-node-dev) and the `dashboard
 Common commands
 
 - Build a production image: `docker build -t tg-payment-gateway .`
-- Start the default compose stack: `docker-compose up -d`
-- Stop the stack: `docker-compose down`
-- Run migrations: `docker-compose run --rm migrations`
-- Tail logs: `docker-compose logs -f`
+- Start the default compose stack: `docker compose up -d`
+- Stop the stack: `docker compose down`
+- Run migrations: `docker compose run --rm migrations`
+- Tail logs: `docker compose logs -f`
+
+### Quick dev helpers
+
+For local development we provide two helper scripts to make it easier to get a working dev environment:
+
+- `./scripts/dev-up.sh` — installs workspaces at the repo root, builds images, starts core infra (db, redis, mailhog), runs migrations and brings up the `api` and `dashboard` services.
+- `./scripts/wait-for-services.sh` — waits for Postgres, Redis and the API `/health` endpoint to become available.
 
 Notes
 

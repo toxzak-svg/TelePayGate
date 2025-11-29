@@ -10,7 +10,12 @@ jobs:
   builder-stage:
     name: Build Dockerfile builder stage
     runs-on: ubuntu-latest
-    permissions: write-all
+    # Use minimal permissions required for the job — build doesn't need broad write tokens
+    permissions:
+      contents: read
+    concurrency:
+      group: build/builder-stage
+      cancel-in-progress: true
     strategy:
       matrix:
         platform: [ 'linux/amd64', 'linux/arm64' ]

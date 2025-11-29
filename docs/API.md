@@ -7,7 +7,6 @@ Complete reference for the Telegram Payment Gateway REST API.
 Production: https://api.yourgateway.com/v1
 Development: http://localhost:3000/api/v1
 
-text
 
 ## Authentication
 
@@ -18,17 +17,14 @@ All endpoints (except registration and webhooks) require authentication via API 
 **Method 1: Header (Recommended)**
 X-API-Key: pk_your_api_key
 
-text
 
 **Method 2: Bearer Token**
 Authorization: Bearer pk_your_api_key
 
-text
 
 **Method 3: Query Parameter**
 GET /api/v1/payments?api_key=pk_your_api_key
 
-text
 
 ---
 
@@ -48,7 +44,6 @@ Create a new user account and receive API credentials.
 "webhookUrl": "https://myapp.com/webhook"
 }
 
-text
 
 **Response:** `201 Created`
 {
@@ -63,7 +58,6 @@ text
 }
 }
 
-text
 
 **Rate Limit:** 10 requests/minute per IP
 
@@ -90,7 +84,6 @@ Retrieve authenticated user's profile information.
 }
 }
 
-text
 
 ---
 
@@ -109,7 +102,6 @@ Generate new API credentials. Old keys are immediately invalidated.
 "message": "API keys regenerated successfully"
 }
 
-text
 
 **⚠️ Warning:** Old keys stop working immediately.
 
@@ -138,7 +130,6 @@ Receive payment notifications from Telegram Bot API.
 }
 }
 
-text
 
 **Response:** `200 OK`
 {
@@ -152,7 +143,6 @@ text
 }
 }
 
-text
 
 **Rate Limit:** 100 requests/minute
 
@@ -207,7 +197,6 @@ Retrieve details for a specific payment.
 }
 }
 
-text
 
 ---
 
@@ -226,7 +215,6 @@ List all payments with pagination and filtering.
 **Example:**
 GET /api/v1/payments?page=1&limit=20&status=received
 
-text
 
 **Response:** `200 OK`
 {
@@ -247,7 +235,6 @@ text
 }
 }
 
-text
 
 ---
 
@@ -275,7 +262,6 @@ Get aggregated statistics for user's payments.
 }
 }
 
-text
 
 ---
 
@@ -295,7 +281,6 @@ Get an estimated conversion rate without locking.
 "targetCurrency": "TON"
 }
 
-text
 
 **Response:** `200 OK`
 {
@@ -317,7 +302,6 @@ text
 }
 }
 
-text
 
 ---
 
@@ -336,7 +320,6 @@ Lock an exchange rate for a specified duration.
 "durationSeconds": 300
 }
 
-text
 
 **Response:** `200 OK`
 {
@@ -350,7 +333,6 @@ text
 }
 }
 
-text
 
 **Notes:**
 - Minimum lock duration: 60 seconds
@@ -373,7 +355,6 @@ Create a new conversion from Stars to target currency.
 "rateLockId": "lock-uuid"
 }
 
-text
 
 **Response:** `201 Created`
 {
@@ -396,7 +377,6 @@ text
 }
 }
 
-text
 
 **Requirements:**
 - Minimum 1000 Stars per conversion
@@ -432,7 +412,6 @@ Check the status of an ongoing conversion.
 }
 }
 
-text
 
 **Status Values:**
 - `pending` - Conversion created
@@ -477,7 +456,6 @@ List all conversions with pagination and filtering.
 }
 }
 
-text
 
 ---
 
@@ -494,7 +472,6 @@ X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
 X-RateLimit-Reset: 1699565400
 
-text
 
 ---
 
@@ -511,7 +488,6 @@ All errors follow this format:
 }
 }
 
-text
 
 ### Common Error Codes
 
@@ -818,7 +794,6 @@ Configure webhook URL in your user profile to receive real-time events.
 }
 }
 
-text
 
 **Conversion Completed:**
 {
@@ -831,7 +806,6 @@ text
 }
 }
 
-text
 
 ### Webhook Signature Verification
 
@@ -855,7 +829,6 @@ return res.status(401).json({ error: 'Invalid signature' });
 // Process webhook...
 });
 
-text
 
 ---
 
@@ -865,7 +838,6 @@ For TypeScript/JavaScript projects, use the official SDK:
 
 npm install @tg-payment/sdk
 
-text
 undefined
 import TelegramPaymentGateway from '@tg-payment/sdk';
 
@@ -879,6 +851,5 @@ starsAmount: 5000,
 targetCurrency: 'TON',
 });
 
-text
 
 See [SDK Documentation](../packages/sdk/README.md) for complete reference.

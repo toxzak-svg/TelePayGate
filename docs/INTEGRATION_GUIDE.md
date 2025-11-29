@@ -22,7 +22,6 @@ Step-by-step guide to integrating Telegram Payment Gateway into your application
 **Option 1: Using SDK (Recommended)**
 npm install @tg-payment/sdk
 
-text
 
 **Option 2: Direct API**
 Use any HTTP client (axios, fetch, etc.)
@@ -43,7 +42,6 @@ curl -X POST https://api.yourgateway.com/v1/users/register
 "webhookUrl": "https://myapp.com/webhook"
 }'
 
-text
 
 **Response:**
 {
@@ -55,7 +53,6 @@ text
 }
 }
 
-text
 
 **⚠️ Important:** Store these credentials securely. You'll need them for all API calls.
 
@@ -73,7 +70,6 @@ TG_PAYMENT_API_URL=https://api.yourgateway.com/v1
 Telegram Bot
 TELEGRAM_BOT_TOKEN=your_bot_token
 
-text
 
 ---
 
@@ -131,7 +127,6 @@ await ctx.reply('✅ Payment received! Processing...');
 
 bot.launch();
 
-text
 
 ---
 
@@ -161,7 +156,6 @@ console.log('Payments:', payments);
 const payment = await gateway.getPayment('payment-uuid');
 console.log('Stars received:', payment.starsAmount);
 
-text
 
 **Using Direct API:**
 
@@ -181,7 +175,6 @@ params: { page: 1, limit: 10, status: 'received' }
 
 console.log('Payments:', response.data.payments);
 
-text
 
 ---
 
@@ -202,7 +195,6 @@ console.log('Estimated TON:', estimate.tonEquivalent);
 console.log('Fees:', estimate.fees.total);
 console.log('Net amount:', estimate.netAmount);
 
-text
 
 #### 6.2: Lock Rate (Optional)
 
@@ -217,7 +209,6 @@ durationSeconds: 300, // 5 minutes
 console.log('Rate locked:', rateLock.exchangeRate);
 console.log('Valid until:', new Date(rateLock.lockedUntil));
 
-text
 
 #### 6.3: Create Conversion
 
@@ -239,7 +230,6 @@ rateLockId: rateLock.id, // optional
 console.log('Conversion created:', conversion.id);
 console.log('Status:', conversion.status);
 
-text
 
 #### 6.4: Monitor Conversion Status
 
@@ -248,7 +238,6 @@ async function waitForConversion(conversionId: string) {
 while (true) {
 const status = await gateway.getConversionStatus(conversionId);
 
-text
 console.log('Phase:', status.progress?.phase);
 console.log('Progress:', status.progress?.percentage + '%');
 
@@ -271,7 +260,6 @@ await new Promise(resolve => setTimeout(resolve, 10000));
 
 await waitForConversion(conversion.id);
 
-text
 
 ---
 
@@ -357,7 +345,6 @@ console.log('Stars:', data.starsAmount);
 // Update your database
 break;
 
-text
 case 'conversion.completed':
   console.log('Conversion completed:', data.conversionId);
   console.log('TON amount:', data.tonAmount);
@@ -379,7 +366,6 @@ app.listen(3000, () => {
 console.log('Webhook server running on port 3000');
 });
 
-text
 
 ---
 
@@ -438,7 +424,6 @@ status: 'received',
 limit: 1
 });
 
-text
 const conversion = await gateway.createConversion({
   paymentIds: [payments.id],
   targetCurrency: 'TON'
@@ -486,7 +471,6 @@ app.listen(3000);
 
 console.log('✅ Bot and webhook server running');
 
-text
 
 ---
 
@@ -550,7 +534,6 @@ targetCurrency: 'TON'
 });
 }
 
-text
 
 ### Issue: "Rate lock expired"
 
@@ -569,7 +552,6 @@ targetCurrency: 'TON',
 rateLockId: rateLock.id
 });
 
-text
 
 ### Issue: "Webhook not receiving events"
 
