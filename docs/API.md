@@ -1,4 +1,46 @@
 # API Reference
+
+Complete reference for the Telegram Payment Gateway REST API.
+
+## Base URL
+
+Production: https://api.yourgateway.com/v1
+Development: http://localhost:3000/api/v1
+
+Use the Base URL above when calling API endpoints. The `/api/v1` prefix is the canonical versioned namespace for this project.
+
+
+## Authentication
+
+All endpoints (except registration and webhooks) require authentication via API key.
+
+### Authentication Methods
+
+**Method 1: Header (Recommended)**
+X-API-Key: pk_your_api_key
+
+Example (curl):
+
+```bash
+curl -H "X-API-Key: pk_your_api_key" "http://localhost:3000/api/v1/users/me"
+```
+
+
+**Method 2: Bearer Token**
+Authorization: Bearer pk_your_api_key
+
+
+**Method 3: Query Parameter**
+GET /api/v1/payments?api_key=pk_your_api_key
+
+Query param auth is supported for convenience but is discouraged for production traffic since URLs may be logged and expose sensitive keys.
+
+
+---
+
+## User Endpoints
+
+>>>>>>> 88af574 (docs: add docs linter + spellcheck workflow and populate core docs (API, integration, architecture))
 ### Register New User
 
 Create a new user account and receive API credentials (API key + secret). Store secrets in a secure vault — the server will show the `apiSecret` only once.
@@ -31,13 +73,8 @@ Create a new user account and receive API credentials (API key + secret). Store 
 ```
 
 Notes:
-- The `apiSecret` is shown only once. Save it securely (vault or secure environment variable) and do not commit it into source control.
-- Make sure `webhookUrl` is reachable and uses HTTPS in production.
-
-### Get current user
-
-Return the current user's profile and settings. Authentication required via `X-API-Key` header or `Authorization: Bearer <token>`.
-
+- The registered `apiSecret` is shown only once — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
 **Endpoint:** `GET /api/v1/users/me`  
 **Authentication:** Required
 
@@ -55,6 +92,7 @@ Return the current user's profile and settings. Authentication required via `X-A
     "updatedAt": "2025-11-12T18:30:00Z"
   }
 }
+```
 ```
 
 
