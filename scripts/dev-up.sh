@@ -46,7 +46,7 @@ echo "Done. Use 'docker compose logs -f api' to tail API logs or 'docker compose
 if [ "${DASHBOARD_LOCAL:-}" = "true" ]; then
   echo "DASHBOARD_LOCAL=true; starting dashboard dev server locally"
   # install and start dashboard dev server in background
-  (cd packages/dashboard && npm ci --no-audit --no-fund && nohup npm run dev > /tmp/dashboard-dev.log 2>&1 &)
+  (cd packages/dashboard && nohup npm run dev > /tmp/dashboard-dev.log 2>&1 &)
 
   # run a lightweight API smoke test to ensure API is reachable
   if [ -x "$BASEDIR/scripts/dashboard-smoke.sh" ]; then
