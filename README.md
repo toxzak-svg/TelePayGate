@@ -76,9 +76,8 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start infrastructure
-docker-compose up -d
-
-Documentation site
+docker compose up -d
+# Documentation site
 
 We publish the repository documentation as a static site via GitHub Pages. Once built by CI the docs will be available on the project's GitHub Pages URL (or you can run MkDocs locally using `mkdocs serve`).
 
