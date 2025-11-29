@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tg_user} -d ${POSTGRES_DB:-tg_payment_dev}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -51,6 +51,13 @@ services:
       EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-mailhog}
       EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-1025}
       EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE:-false}
+      # entrypoint helpers: wait for DB/Redis before starting
+      WAIT_FOR_DB: 'true'
+      WAIT_FOR_DB_HOST: ${WAIT_FOR_DB_HOST:-db}
+      WAIT_FOR_DB_PORT: ${WAIT_FOR_DB_PORT:-5432}
+      WAIT_FOR_REDIS: 'true'
+      WAIT_FOR_REDIS_HOST: ${WAIT_FOR_REDIS_HOST:-redis}
+      WAIT_FOR_REDIS_PORT: ${WAIT_FOR_REDIS_PORT:-6379}
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -95,6 +102,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tg_pass}
       POSTGRES_DB: ${POSTGRES_DB:-tg_payment_dev}
       DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-tg_payment_dev}
+      WAIT_FOR_DB: 'true'
+      WAIT_FOR_DB_HOST: ${WAIT_FOR_DB_HOST:-db}
+      WAIT_FOR_DB_PORT: ${WAIT_FOR_DB_PORT:-5432}
     depends_on:
       db:
         condition: service_healthy

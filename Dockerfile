@@ -53,6 +53,10 @@ COPY --from=builder /app/packages/api/package.json ./packages/api/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/database ./database
 
+# Copy container helper scripts and make them executable
+COPY scripts ./scripts
+RUN chmod +x ./scripts/*.sh || true
+
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
@@ -62,7 +66,7 @@ USER nodejs
 
 EXPOSE 3000
 
-# Use tini for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
+# Use tini for proper signal handling and run entrypoint that waits for dependent services
+ENTRYPOINT ["/sbin/tini", "--", "/app/scripts/docker-entrypoint.sh"]
 
 CMD ["node", "packages/api/dist/index.js"]

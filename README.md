@@ -71,7 +71,7 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start infrastructure
-docker-compose up -d
+docker compose up -d
 
 # Run database migrations
 npm run migrate
@@ -653,16 +653,16 @@ npm run migrate:status
 
 ```bash
 # Build images
-docker-compose build
+docker compose build
 
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f api
+docker compose logs -f api
 
 # Stop services
-docker-compose down
+docker compose down
 ```
 
 ### Production Environment
