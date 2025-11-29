@@ -205,3 +205,49 @@ jobs:
           npm run test --workspaces --if-present
         env:
           USE_TESTCONTAINERS: 'true'
+
+  docker-smoke:
+    name: Build Docker image + smoke test
+    runs-on: ubuntu-latest
+    needs: test
+    # This job intentionally avoids reading repository secrets so it works for forked PRs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: |
+          docker build -t tg-payment-gateway:ci .
+
+      - name: Start Postgres and Redis containers
+        run: |
+          docker run -d --name test-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5433:5432 postgres:16 || true
+          docker run -d --name test-redis -p 6380:6379 redis:7-alpine || true
+          # wait for services
+          for i in {1..60}; do
+            if docker exec test-pg pg_isready -h localhost -p 5432 -U postgres >/dev/null 2>&1; then echo "Postgres ready" && break; fi
+            echo "Waiting for Postgres... ($i/60)"; sleep 1
+          done
+          for i in {1..30}; do
+            if docker exec test-redis redis-cli ping >/dev/null 2>&1; then echo "Redis ready" && break; fi
+            echo "Waiting for Redis... ($i/30)"; sleep 1
+          done
+
+      - name: Run container for smoke testing
+        run: |
+          # run the built image and link to the test DB/Redis
+          docker run -d --name tg_payment_api_ci --link test-pg:db --link test-redis:redis -e DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres -e REDIS_URL=redis://redis:6379 -e PORT=3000 -p 3000:3000 tg-payment-gateway:ci || true
+          # wait for the /health endpoint
+          for i in {1..60}; do
+            if curl -f --max-time 2 http://localhost:3000/health >/dev/null 2>&1; then echo "Health OK" && exit 0; fi
+            echo "Waiting for /health... ($i/60)"; sleep 1
+          done
+          echo "::error::Health endpoint did not become ready" && exit 1
+
+      - name: Collect logs and teardown
+        if: always()
+        run: |
+          docker logs tg_payment_api_ci || true
+          docker rm -f tg_payment_api_ci || true
+          docker rm -f test-pg || true
+          docker rm -f test-redis || true

@@ -1,6 +1,520 @@
 openapi: 3.0.3
 info:
   title: Telegram Payment Gateway API
+  version: "2.2.0"
+  description: |
+    OpenAPI description for the Telegram Payment Gateway. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
+servers:
+  - url: https://api.yourgateway.com/v1
+    description: Production
+  - url: http://localhost:3000/api/v1
+    description: Development / Local
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        appName:
+          type: string
+        apiKey:
+          type: string
+        webhookUrl:
+          type: string
+        kycStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        starsAmount:
+          type: integer
+        status:
+          type: string
+        telegramPaymentId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Conversion:
+      type: object
+      properties:
+        id:
+          type: string
+        paymentIds:
+          type: array
+          items:
+            type: string
+        sourceCurrency:
+          type: string
+        targetCurrency:
+          type: string
+        sourceAmount:
+          type: number
+        targetAmount:
+          type: number
+        exchangeRate:
+          type: number
+        status:
+          type: string
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      summary: API health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  database:
+                    type: string
+
+  /users/register:
+    post:
+      summary: Register an API user and return credentials
+      description: Create a user record and return API credentials (apiKey, apiSecret). The apiSecret is shown once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appName]
+              properties:
+                appName:
+                  type: string
+                description:
+                  type: string
+                webhookUrl:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /users/me:
+    get:
+      summary: Get current user profile
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /users/api-keys/regenerate:
+    post:
+      summary: Regenerate API keys for the current user
+      description: Regenerates apiKey and apiSecret. Old keys are invalidated immediately.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Keys regenerated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  apiKey:
+                    type: string
+                  apiSecret:
+                    type: string
+
+  /payments/webhook:
+    post:
+      summary: Telegram payment webhook (successful_payment)
+      description: Receives webhook notifications from Telegram (successful_payment). Authenticate with `X-User-Id` header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: webhook accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /payments:
+    get:
+      summary: List payments (paginated)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+
+  /payments/{id}:
+    get:
+      summary: Get payment details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /conversions/estimate:
+    post:
+      summary: Estimate a conversion (no lock)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+      responses:
+        '200':
+          description: Estimate response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estimate:
+                    $ref: '#/components/schemas/Conversion'
+
+  /conversions/lock-rate:
+    post:
+      summary: Lock an exchange rate for conversion
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+                durationSeconds:
+                  type: integer
+      responses:
+        '200':
+          description: Rate locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rateLock:
+                    type: object
+
+  /conversions:
+    post:
+      summary: Create a conversion using received payments
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentIds:
+                  type: array
+                  items:
+                    type: string
+                targetCurrency:
+                  type: string
+                rateLockId:
+                  type: string
+      responses:
+        '201':
+          description: Conversion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  conversion:
+                    $ref: '#/components/schemas/Conversion'
+
+  /conversions/{id}/status:
+    get:
+      summary: Retrieve conversion status/progress
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversion status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: object
+
+  /dex/rates:
+    get:
+      summary: Query aggregated DEX rates
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: fromToken
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: toToken
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: amount
+          schema:
+            type: number
+      responses:
+        '200':
+          description: DEX rates
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /dex/route:
+    post:
+      summary: Find best swap route for token pair
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                maxHops:
+                  type: integer
+      responses:
+        '200':
+          description: Route found
+
+  /dex/swap:
+    post:
+      summary: Execute swap (admin)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                poolId:
+                  type: string
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                minReceive:
+                  type: number
+                slippage:
+                  type: number
+      responses:
+        '200':
+          description: Swap executed
+
+  /p2p/orders:
+    post:
+      summary: Create P2P order (buy/sell)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                starsAmount:
+                  type: number
+                tonAmount:
+                  type: number
+                rate:
+                  type: number
+      responses:
+        '201':
+          description: Order created
+
+    get:
+      summary: List P2P orders
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Orders list
+
+  /p2p/orders/{orderId}:
+    delete:
+      summary: Cancel a P2P order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order cancelled
+openapi: 3.0.3
+info:
+  title: Telegram Payment Gateway API
   version: "1.0.0"
   description: API for accepting Telegram Stars payments and converting to TON.
 servers:

@@ -1,6 +1,8 @@
 # Telegram Payment Gateway
 
-> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
+> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to
+TON cryptocurrency through P2P liquidity pools and DEX integration. No
+centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -12,7 +14,10 @@
 
 ## 🌟 Overview
 
-A production-ready monorepo payment gateway enabling developers to accept Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with TypeScript, Express.js, PostgreSQL, and TON SDK for maximum reliability.
+A production-ready monorepo payment gateway enabling developers to accept
+Telegram Stars payments and convert them to TON cryptocurrency through
+**decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with
+TypeScript, Express.js, PostgreSQL, and the TON SDK for maximum reliability.
 
 **Latest Updates** (November 22, 2025):
 
@@ -71,8 +76,9 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start infrastructure
-docker compose up -d
-# Documentation site
+docker-compose up -d
+
+Documentation site
 
 We publish the repository documentation as a static site via GitHub Pages. Once built by CI the docs will be available on the project's GitHub Pages URL (or you can run MkDocs locally using `mkdocs serve`).
 
@@ -89,10 +95,16 @@ npm run dev
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 
 - Use `newRequestId()` to generate a UUID v4 request id for tracing and pass it to responses when possible.
-- Prefer `sendSuccess(res, { data }, status, requestId)` to return successful JSON objects. The older `respondSuccess` alias is deprecated and will emit a runtime warning; update controllers to use `sendSuccess`.
+-- Prefer `sendSuccess(res, { data }, status, requestId)` to return successful
+   JSON objects. The older `respondSuccess` alias is deprecated and will emit
+   a runtime warning; update controllers to use `sendSuccess`.
 - Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
 
-Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `sendSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`. Replace any `respondSuccess`/`respondError` usages with `sendSuccess`/`sendError`.
+Migration tip: When refactoring existing controllers, preserve the previous
+response shape by placing your payload under a `data` key (e.g.
+`sendSuccess(res, { data: { user } }, 200, requestId)`) — many tests and
+consumers expect `res.body.data.*`. Replace any `respondSuccess`/
+`respondError` usages with `sendSuccess`/`sendError`.
 
 
 API will be available at `http://localhost:3000`
