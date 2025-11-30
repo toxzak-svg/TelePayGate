@@ -66,20 +66,21 @@ export class TransactionMonitorService {
     if (!txHash) return;
 
     try {
-      const tx = await this.tonService.getTransaction(txHash);
+      const state = await this.tonService.getTransactionState(txHash as any);
+      const requiredConfirmations = parseInt(process.env.TON_MIN_CONFIRMATIONS || '1', 10);
 
-      if (tx && tx.confirmed && tx.success) {
+      if (state && state.status === 'confirmed' && (state.confirmations || 0) >= requiredConfirmations && state.success) {
         console.log(
           `✅ Transaction confirmed: ${txHash} for conversion ${conversion.id}`,
         );
 
         await this.db.tx(async (t) => {
-          await t.none(
+            await t.none(
             `UPDATE conversions 
                  SET status = 'completed', ton_tx_hash = $1, 
                      completed_at = NOW(), updated_at = NOW()
                  WHERE id = $2`,
-            [tx.hash, conversion.id],
+            [state.hash || txHash, conversion.id],
           );
 
           // Mark fee as collected if exists
@@ -87,16 +88,16 @@ export class TransactionMonitorService {
             "SELECT id FROM platform_fees WHERE conversion_id = $1",
             [conversion.id],
           );
-          if (fee) {
-            await t.none(
-              `UPDATE platform_fees 
+            if (fee) {
+              await t.none(
+                `UPDATE platform_fees 
                      SET status = 'collected', collection_tx_hash = $1, collected_at = NOW(), updated_at = NOW() 
                      WHERE id = $2`,
-              [tx.hash, fee.id],
-            );
-          }
+                [state.hash || txHash, fee.id],
+              );
+            }
         });
-      } else if (tx && tx.confirmed && !tx.success) {
+      } else if (state && state.status === 'failed') {
         console.error(
           `❌ Transaction failed: ${txHash} for conversion ${conversion.id}`,
         );
@@ -105,7 +106,7 @@ export class TransactionMonitorService {
            SET status = 'failed', error_message = $1, updated_at = NOW()
            WHERE id = $2`,
           [
-            `Transaction failed on-chain (exit code: ${tx.exitCode})`,
+            `Transaction failed on-chain (exit code: ${state.exitCode})`,
             conversion.id,
           ],
         );
