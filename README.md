@@ -147,6 +147,22 @@ To speed up local and CI installs and builds we added a few safe, non-breaking i
 
 These edits are safe and optional — they do not change runtime behaviour, only speed up developer/CI workflows.
 
+### Troubleshooting: Permission errors during install
+
+If `npm ci` fails with EACCES / permission denied errors (e.g. renaming files inside `node_modules`), this usually means some previously-installed files are owned by root. Run the helper script to diagnose and repair ownership:
+
+```bash
+# show if any files are mis-owned and print the chown command to run
+bash scripts/fix-permissions.sh
+
+# when prompted by the previous script, run one of these (requires sudo):
+sudo chown -R $(id -u):$(id -g) $PWD
+# or to only fix node_modules dirs (faster):
+sudo find $PWD -name node_modules -type d -prune -exec chown -R $(id -u):$(id -g) {} +
+```
+
+Avoid running package managers with `sudo` in this repository in the future — it often leaves root-owned files which block later installs.
+
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 
