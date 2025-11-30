@@ -3,9 +3,10 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": [],
+    // enable jest + node types for tests run by ts-jest
+    "types": ["node", "jest"],
     "composite": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/__tests__/**/*"]
+  "exclude": []
 }

@@ -36,8 +36,8 @@ This document captures everything required to deploy the Telegram Payment Gatewa
 | `telegram-payment-api`   | Web Service       | Runs Express API on port `10000`, exposes `/health`, runs `npm run migrate` before each deploy.            |
 | `worker-deposit-monitor` | Background worker | Executes `packages/core/dist/workers/deposit-settlement.worker.js` for deposit + settlement monitoring.    |
 | `worker-fee-collection`  | Background worker | Executes `packages/core/dist/workers/fee-collection.worker.js` to keep fee ledgers in sync.                |
-| `tg-payment-redis`       | Redis             | Internal queue/cache for rate locking + background jobs.                                                   |
-| `tg-payment-db`          | PostgreSQL        | Stores all platform state. Connection string automatically injected into every service via `DATABASE_URL`. |
+| `telepaygate-redis`       | Redis             | Internal queue/cache for rate locking + background jobs.                                                   |
+| `telepaygate-db`          | PostgreSQL        | Stores all platform state. Connection string automatically injected into every service via `DATABASE_URL`. |
 
 Services share two env-var groups defined near the top of `render.yaml`:
 
@@ -86,8 +86,8 @@ Render will prompt for every `sync: false` variable on first deploy. Keep copies
 
 | Service | Key            | Source                                                                 |
 | ------- | -------------- | ---------------------------------------------------------------------- |
-| All     | `DATABASE_URL` | Auto-injected from `tg-payment-db`.                                    |
-| All     | `REDIS_URL`    | Auto-injected from `tg-payment-redis`.                                 |
+| All     | `DATABASE_URL` | Auto-injected from `telepaygate-db`.                                    |
+| All     | `REDIS_URL`    | Auto-injected from `telepaygate-redis`.                                 |
 | API     | `PORT`         | Hard-coded to `10000` (Render automatically routes HTTP traffic here). |
 
 No additional manual wiring is necessary—workers inherit the shared env groups and DB credentials automatically.

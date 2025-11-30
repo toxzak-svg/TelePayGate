@@ -1,7 +1,7 @@
 const pgp = require('pg-promise')();
 const crypto = require('crypto');
 
-const DB_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev';
+const DB_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev';
 const db = pgp(DB_URL);
 
 function generateApiKey() {

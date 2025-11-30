@@ -14,7 +14,7 @@ function generateApiKey() {
 }
 
 async function createApiKey() {
-  const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev';
+  const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev';
   
   const pgp = pgPromise();
   const db = pgp(DATABASE_URL);

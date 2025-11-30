@@ -18,7 +18,7 @@ describe("TransactionMonitorService", () => {
     };
 
     mockTonService = {
-      getTransaction: jest.fn(),
+      getTransactionState: jest.fn(),
     };
 
     monitor = new TransactionMonitorService(mockDb, mockTonService);
@@ -32,10 +32,11 @@ describe("TransactionMonitorService", () => {
     };
 
     mockDb.any.mockResolvedValue([conversion]);
-    mockTonService.getTransaction.mockResolvedValue({
-      hash: "hash-123",
-      confirmed: true,
+    mockTonService.getTransactionState.mockResolvedValue({
+      status: 'confirmed',
+      confirmations: 1,
       success: true,
+      hash: 'hash-123',
     });
 
     await (monitor as any).checkPendingTransactions();
@@ -52,15 +53,17 @@ describe("TransactionMonitorService", () => {
     };
 
     mockDb.any.mockResolvedValue([conversion]);
-    mockTonService.getTransaction.mockResolvedValue({
-      hash: "hash-456",
-      confirmed: true,
+    mockTonService.getTransactionState.mockResolvedValue({
+      status: 'failed',
+      confirmations: 1,
       success: false,
       exitCode: 123,
+      hash: 'hash-456',
     });
 
     await (monitor as any).checkPendingTransactions();
-
+      // TransactionMonitor calls getTransactionState internally
+      expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-123");
     expect(mockDb.none).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE conversions"),
       expect.arrayContaining([
@@ -68,5 +71,32 @@ describe("TransactionMonitorService", () => {
         "conv-456",
       ]),
     );
+  });
+
+  test('should respect confirmations threshold before marking completed', async () => {
+    process.env.TON_MIN_CONFIRMATIONS = '2';
+
+    const conversion = {
+      id: 'conv-789',
+      dex_tx_hash: 'hash-789',
+      status: 'phase2_committed',
+    };
+
+    mockDb.any.mockResolvedValue([conversion]);
+
+      expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-456");
+    mockTonService.getTransactionState
+      .mockResolvedValueOnce({ status: 'confirmed', confirmations: 1, success: true, hash: 'hash-789' })
+      .mockResolvedValueOnce({ status: 'confirmed', confirmations: 2, success: true, hash: 'hash-789' });
+
+    // First run should not commit since confirmations < 2
+    await (monitor as any).checkPendingTransactions();
+    expect(mockDb.tx).not.toHaveBeenCalled();
+
+    // Second run should now commit
+    await (monitor as any).checkPendingTransactions();
+    expect(mockDb.tx).toHaveBeenCalled();
+
+    delete process.env.TON_MIN_CONFIRMATIONS;
   });
 });

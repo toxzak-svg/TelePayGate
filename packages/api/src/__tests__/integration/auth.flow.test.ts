@@ -44,7 +44,7 @@ beforeAll(async () => {
 
   const DATABASE_URL =
     process.env.DATABASE_URL ||
-    "postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test";
+    "postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test";
   await initDatabase(DATABASE_URL as string);
 });
 

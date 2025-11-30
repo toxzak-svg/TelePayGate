@@ -522,7 +522,7 @@ Create `.env` file:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://user:pass@localhost:5432/telepaygate_dev
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 
