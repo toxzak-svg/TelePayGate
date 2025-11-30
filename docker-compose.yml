@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16
-    container_name: tg_payment_postgres
+    container_name: telepaygate_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tg_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tg_pass}
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: tg_payment_redis
+    container_name: telepaygate_redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -29,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tg_payment_api
+    container_name: telepaygate_api
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-tg_payment_dev}
@@ -57,7 +57,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: tg_payment_mailhog
+    container_name: telepaygate_mailhog
     ports:
       - "1025:1025" # SMTP
       - "8025:8025" # HTTP
@@ -74,5 +74,5 @@ volumes:
     driver: local
 
 networks:
-  tg_payment_network:
+  telepaygate_network:
     driver: bridge

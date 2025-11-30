@@ -17,14 +17,14 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: tg_payment_ci
+          POSTGRES_DB: telepaygate_ci
         options: >-
           --health-cmd="pg_isready -U postgres -d tg_payment_ci"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tg_payment_ci
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/telepaygate_ci
 
     steps:
       - name: Checkout code

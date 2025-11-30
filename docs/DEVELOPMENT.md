@@ -44,7 +44,7 @@ Edit .env with your credentials 4. Start database
 docker-compose up -d postgres
 
 5. Verify database is ready
-   docker logs tg_payment_postgres
+   docker logs telepaygate_postgres
 
 6. Start development server
    npm run dev --workspace=@tg-payment/api
@@ -413,7 +413,7 @@ text
 ### Database Debugging
 
 Connect to database
-docker exec -it tg_payment_postgres psql -U tg_user -d tg_payment_dev
+   docker exec -it telepaygate_postgres psql -U tg_user -d telepaygate_dev
 
 Useful queries
 SELECT _ FROM users LIMIT 5;
@@ -564,10 +564,10 @@ If not, start it
 docker-compose up -d postgres
 
 Check logs
-docker logs tg_payment_postgres
+docker logs telepaygate_postgres
 
 Verify connection
-docker exec -it tg_payment_postgres psql -U tg_user -d tg_payment_dev
+docker exec -it telepaygate_postgres psql -U tg_user -d telepaygate_dev
 
 text
 
@@ -609,7 +609,7 @@ text
 **5. Database migration errors**
 
 Check current schema
-docker exec -it tg_payment_postgres psql -U tg_user -d tg_payment_dev -c "\dt"
+docker exec -it telepaygate_postgres psql -U tg_user -d telepaygate_dev -c "\dt"
 
 Drop and recreate database
 docker-compose down -v
@@ -623,8 +623,8 @@ text
 
 ### Getting Help
 
-1. Check logs: `docker logs tg_payment_postgres`
-2. Test database: `docker exec -it tg_payment_postgres psql -U tg_user`
+1. Check logs: `docker logs telepaygate_postgres`
+2. Test database: `docker exec -it telepaygate_postgres psql -U tg_user`
 3. Review recent commits: `git log --oneline -10`
 4. Check GitHub issues
 5. Ask in project chat/Discord

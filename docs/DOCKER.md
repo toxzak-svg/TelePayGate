@@ -46,7 +46,7 @@ This runs the `api` service in development mode (ts-node-dev) and the `dashboard
 
 Common commands
 
-- Build a production image: `docker build -t tg-payment-gateway .`
+- Build a production image: `docker build -t telepaygate .`
 - Start the default compose stack: `docker compose up -d`
 - Stop the stack: `docker compose down`
 - Run migrations: `docker compose run --rm migrations`
