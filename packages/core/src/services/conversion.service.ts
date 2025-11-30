@@ -309,6 +309,7 @@ export class ConversionService {
         console.error("executeP2PConversion failed:", err);
         await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed");
       }
+    }
 
   /**
    * Poll blockchain for conversion status
