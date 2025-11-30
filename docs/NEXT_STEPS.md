@@ -656,7 +656,7 @@ Track these KPIs weekly after launch:
 - **Documentation**: [docs/](./docs/)
 - **Discord**: [discord.gg/tg-payment-gateway](https://discord.gg/tg-payment-gateway)
 - **Email**: support@tg-payment-gateway.com
-- **GitHub Issues**: [github.com/toxzak-svg/telegram-payment-gateway/issues](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
+- **GitHub Issues**: [github.com/toxzak-svg/telepaygate/issues](https://github.com/toxzak-svg/telepaygate/issues)
 
 ---
 

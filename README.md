@@ -96,8 +96,8 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ```bash
 # Clone repository
-git clone https://github.com/toxzak-svg/telegram-payment-gateway.git
-cd telegram-payment-gateway
+git clone https://github.com/toxzak-svg/telepaygate.git
+cd telepaygate
 
 # Install dependencies
 npm install
@@ -297,7 +297,7 @@ Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` i
 ### Package Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/          # Business logic & services
 │   ├── api/           # REST API server
@@ -369,7 +369,7 @@ pending → awaiting_confirmation → confirmed
 ## 📁 Project Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/                    # @tg-payment/core
 │   │   └── src/
@@ -831,8 +831,8 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 - **Documentation**: [/docs](/docs)
 - **GitHub Copilot Setup**: [Copilot Configuration Guide](./docs/COPILOT_SETUP.md)
-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telegram-payment-gateway/discussions)
+-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telepaygate/issues)
+-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telepaygate/discussions)
 
 ---
 

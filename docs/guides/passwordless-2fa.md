@@ -40,7 +40,7 @@ This document describes the design, security considerations, API, database schem
 - `backup_codes` — stores `user_id`, `code_hash`, `used_at`, `created_at`.
 - `auth_audit` — audit log for auth events.
 
-See the sample migration SQL included in `/workspaces/telegram-payment-gateway/database/migrations/016_add_auth_tables.sql` for an implementation reference.
+See the sample migration SQL included in `/workspaces/telepaygate/database/migrations/016_add_auth_tables.sql` for an implementation reference.
 
 **API Contracts (summary)**
 
@@ -51,7 +51,7 @@ See the sample migration SQL included in `/workspaces/telegram-payment-gateway/d
 - `POST /api/v1/auth/backup-codes/generate` — generate backup codes; one-time display only.
 - `POST /api/v1/auth/logout` — revoke session.
 
-Full endpoint request/response shapes, headers, examples, and failure modes are in the API spec: `/workspaces/telegram-payment-gateway/docs/guides/passwordless-2fa-api.md`.
+Full endpoint request/response shapes, headers, examples, and failure modes are in the API spec: `/workspaces/telepaygate/docs/guides/passwordless-2fa-api.md`.
 
 **Session Management & Cookies**
 
@@ -117,4 +117,4 @@ Full endpoint request/response shapes, headers, examples, and failure modes are 
 
 ---
 
-For full API details and example requests/responses, see `/workspaces/telegram-payment-gateway/docs/guides/passwordless-2fa-api.md`.
+For full API details and example requests/responses, see `/workspaces/telepaygate/docs/guides/passwordless-2fa-api.md`.

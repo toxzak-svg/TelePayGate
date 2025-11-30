@@ -4,7 +4,7 @@
 **Status**: ✅ Configured and Deployed  
 **Service ID**: srv-d4d94fggjchc73dr0nug  
 **Region**: Ohio  
-**URL**: https://telegram-payment-gateway.onrender.com
+**URL**: https://telepaygate.onrender.com
 
 This document captures everything required to deploy the Telegram Payment Gateway on Render.com using the supplied `render.yaml` blueprint. The blueprint provisions the API, background workers, managed Redis, and managed PostgreSQL while running database migrations automatically before each deploy.
 
@@ -23,7 +23,7 @@ This document captures everything required to deploy the Telegram Payment Gatewa
 ## Prerequisites
 
 - Render account with access to Render Blueprints
-- GitHub repository: toxzak-svg/telegram-payment-gateway
+- GitHub repository: toxzak-svg/telepaygate
 - Render CLI (optional). Install: `npm install -g render`
 - **IMPORTANT**: Never commit secrets to Git. Use Render dashboard or API to set environment variables
 
@@ -104,9 +104,9 @@ No additional manual wiring is necessary—workers inherit the shared env groups
    ```
 3. **Launch or update the stack** (this creates/updates all services defined in the blueprint). Depending on your CLI version the subcommand may be `deploy` or the older `launch`:
    ```bash
-   render blueprint deploy --file render.yaml --name telegram-payment-gateway
+   render blueprint deploy --file render.yaml --name telepaygate
    # or
-   render blueprint launch --file render.yaml --name telegram-payment-gateway
+   render blueprint launch --file render.yaml --name telepaygate
    ```
 
    - Use `--dry-run` if you just want to verify what Render would change.

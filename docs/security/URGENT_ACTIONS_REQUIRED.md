@@ -40,7 +40,7 @@
 #### A. Generate New Wallet
 
 ```bash
-cd /workspaces/telegram-payment-gateway
+cd /workspaces/telepaygate
 npm run generate:wallet
 ```
 
@@ -65,7 +65,7 @@ Address: EQ_new_address_here
 #### C. Update Render Environment
 
 1. Go to: https://dashboard.render.com
-2. Select service: **telegram-payment-gateway** (srv-d4d94fggjchc73dr0nug)
+2. Select service: **telepaygate** (srv-d4d94fggjchc73dr0nug)
 3. Go to **Environment** tab
 4. Find `TON_WALLET_MNEMONIC` variable
 5. Click **Edit** and paste NEW 24-word mnemonic
@@ -125,7 +125,7 @@ TELEGRAM_BOT_TOKEN="NEW_TOKEN_HERE"
 
 1. Go to: https://cloud.trigger.dev
 2. Navigate to: Organizations → Your Org → Projects
-3. Select: **telegram-payment-gateway** (proj_fqtizcvgqqorjbcikxsa)
+3. Select: **telepaygate** (proj_fqtizcvgqqorjbcikxsa)
 4. Click: **Settings** → **API Keys**
 5. Find key starting with: `tr_dev_OCQW8...`
 6. Click **Delete** or **Revoke**

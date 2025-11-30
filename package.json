@@ -1,5 +1,5 @@
 {
-  "name": "telegram-payment-gateway",
+  "name": "telepaygate",
   "version": "0.1.0",
   "description": "Unified payment processing for Telegram Stars → TON → Fiat conversions",
   "private": true,

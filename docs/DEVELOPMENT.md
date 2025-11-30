@@ -31,8 +31,8 @@ text
 ### Initial Setup
 
 1. Clone repository
-   git clone https://github.com/yourusername/telegram-payment-gateway.git
-   cd telegram-payment-gateway
+   git clone https://github.com/yourusername/telepaygate.git
+   cd telepaygate
 
 2. Install dependencies
    npm install

@@ -590,5 +590,5 @@ text
 
 ## Support
 
-- GitHub Issues: [Report a bug](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
+- GitHub Issues: [Report a bug](https://github.com/toxzak-svg/telepaygate/issues)
 - Documentation: [docs.yourgateway.com](https://docs.yourgateway.com)
