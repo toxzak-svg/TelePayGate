@@ -65,7 +65,7 @@ describe("ConversionService", () => {
       jest.useFakeTimers();
       process.env.TON_MIN_CONFIRMATIONS = '2';
 
-      const tonService = (conversionService as any).tonService;
+      const {tonService} = conversionService as any;
 
       // First poll returns confirmations=1 (below threshold), second poll confirms
       tonService.getTransactionState
