@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tg_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tg_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-tg_payment_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-telepaygate_dev}
     ports:
       - "5432:5432"
     healthcheck:
@@ -32,7 +32,7 @@ services:
     container_name: telepaygate_api
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-tg_payment_dev}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-telepaygate_dev}
       REDIS_URL: redis://redis:6379
       PORT: 3000
       TON_API_KEY: ${TON_API_KEY:-}

@@ -19,7 +19,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: telepaygate_ci
         options: >-
-          --health-cmd="pg_isready -U postgres -d tg_payment_ci"
+          --health-cmd="pg_isready -U postgres -d telepaygate_ci"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10

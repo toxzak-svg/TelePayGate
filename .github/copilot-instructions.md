@@ -101,7 +101,7 @@ npm run build --workspaces            # Compile TypeScript
 
 ```bash
 # Database (PostgreSQL 16+)
-DATABASE_URL=postgresql://user:password@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://user:password@localhost:5432/telepaygate_dev
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 

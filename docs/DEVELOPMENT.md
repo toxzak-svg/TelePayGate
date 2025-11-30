@@ -56,10 +56,10 @@ text
 Create `.env` in project root:
 
 Database
-DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev
 POSTGRES_USER=tg_user
 POSTGRES_PASSWORD=tg_pass
-POSTGRES_DB=tg_payment_dev
+POSTGRES_DB=telepaygate_dev
 
 API
 PORT=3000

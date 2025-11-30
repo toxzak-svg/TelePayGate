@@ -26,14 +26,14 @@ export async function startPostgresFixture(): Promise<Fixture> {
   }
 
   const pg = new PostgreSqlContainer("postgres:16")
-    .withDatabase("tg_payment_tc")
+    .withDatabase("telepaygate_tc")
     .withUsername("tc_user")
     .withPassword("tc_pass");
 
   const container = await pg.start();
   const port = container.getMappedPort(5432);
   const host = container.getHost();
-  const databaseUrl = `postgresql://tc_user:tc_pass@${host}:${port}/tg_payment_tc`;
+  const databaseUrl = `postgresql://tc_user:tc_pass@${host}:${port}/telepaygate_tc`;
 
   // Run migrations (find repo-root `database/migrate.js` by walking up)
   try {
