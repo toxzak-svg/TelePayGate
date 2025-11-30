@@ -19,7 +19,7 @@ beforeAll(async () => {
   // use test db URL
   initDatabase(
     process.env.DATABASE_URL ||
-      "postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test",
+      "postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test",
   );
 });
 

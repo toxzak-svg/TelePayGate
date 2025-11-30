@@ -617,7 +617,7 @@ docker-compose up -d postgres
 
 Wait for init, then check logs
 sleep 10
-docker logs tg_payment_postgres
+docker logs telepaygate_postgres
 
 text
 

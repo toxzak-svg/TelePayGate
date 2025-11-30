@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const DB_URL = process.env.DATABASE_URL || 
-  `postgresql://${process.env.DB_USER || 'tg_user'}:${process.env.DB_PASSWORD || 'tg_pass'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'tg_payment_dev'}`;
+  `postgresql://${process.env.DB_USER || 'tg_user'}:${process.env.DB_PASSWORD || 'tg_pass'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'telepaygate_dev'}`;
 
 // Colors
 const colors = {
