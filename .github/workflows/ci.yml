@@ -55,8 +55,9 @@ jobs:
             sleep 1
           done
 
-      - name: Build (optional)
-        run: npm run build --workspaces --if-present
+      - name: Build (serial)
+        # Run the root build script which builds core first, then api, dashboard, sdk — avoids cross-workspace d.ts race conditions
+        run: npm run build --if-present
 
       - name: Run DB migrations (if available)
         run: |
