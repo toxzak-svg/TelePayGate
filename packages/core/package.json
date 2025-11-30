@@ -1,7 +1,7 @@
 {
   "name": "@tg-payment/core",
   "version": "0.1.0",
-  "description": "Core business logic for Telegram Payment Gateway",
+  "description": "Core business logic for TelePayGate",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

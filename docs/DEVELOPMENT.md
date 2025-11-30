@@ -1,6 +1,6 @@
 # Development Guide
 
-Complete guide for developers working on the Telegram Payment Gateway.
+Complete guide for developers working on the TelePayGate.
 
 ## Table of Contents
 

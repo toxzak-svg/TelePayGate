@@ -1,6 +1,6 @@
-# Telegram Payment Gateway SDK
+# TelePayGate SDK
 
-TypeScript/JavaScript SDK for integrating with the Telegram Payment Gateway API.
+TypeScript/JavaScript SDK for integrating with the TelePayGate API.
 
 ## Installation
 

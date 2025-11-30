@@ -6,7 +6,7 @@
 **Region**: Ohio  
 **URL**: https://telepaygate.onrender.com
 
-This document captures everything required to deploy the Telegram Payment Gateway on Render.com using the supplied `render.yaml` blueprint. The blueprint provisions the API, background workers, managed Redis, and managed PostgreSQL while running database migrations automatically before each deploy.
+This document captures everything required to deploy the TelePayGate on Render.com using the supplied `render.yaml` blueprint. The blueprint provisions the API, background workers, managed Redis, and managed PostgreSQL while running database migrations automatically before each deploy.
 
 ---
 

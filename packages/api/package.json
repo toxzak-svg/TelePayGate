@@ -1,7 +1,7 @@
 {
   "name": "@tg-payment/api",
   "version": "0.1.0",
-  "description": "REST API for Telegram Payment Gateway",
+  "description": "REST API for TelePayGate",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

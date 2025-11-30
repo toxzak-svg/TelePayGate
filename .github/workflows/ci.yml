@@ -34,9 +34,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --workspaces
+        run: npm ci --workspaces --no-audit --no-fund
 
       - name: Guard EXPOSE_TEST_TOKENS
         run: |
@@ -55,9 +57,9 @@ jobs:
             sleep 1
           done
 
-      - name: Build (serial)
-        # Run the root build script which builds core first, then api, dashboard, sdk — avoids cross-workspace d.ts race conditions
-        run: npm run build --if-present
+      - name: Build (optimized)
+        # Build core first, then build remaining workspaces in parallel (shorter wall-time, preserves d.ts ordering)
+        run: npm run build:parallel --if-present
 
       - name: Run DB migrations (if available)
         run: |
@@ -91,9 +93,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --workspaces
+        run: npm ci --workspaces --no-audit --no-fund
 
       - name: Prepare DB and run tests (fixture-backed)
         run: |

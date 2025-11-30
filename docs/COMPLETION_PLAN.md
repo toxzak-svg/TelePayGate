@@ -7,7 +7,7 @@
 
 ## 1. Overview
 
-This document outlines the plan to complete the remaining features required for the Telegram Payment Gateway to be production-ready. The features were identified during a project status verification on November 21, 2025.
+This document outlines the plan to complete the remaining features required for the TelePayGate to be production-ready. The features were identified during a project status verification on November 21, 2025.
 
 The following key areas will be addressed:
 

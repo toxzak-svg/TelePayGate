@@ -1,4 +1,4 @@
-# Copilot Instructions for Telegram Payment Gateway
+# Copilot Instructions for TelePayGate
 
 **Status**: Decentralized P2P payment processor | Telegram Stars → TON → Fiat conversions | P2P liquidity pools (no intermediaries)
 

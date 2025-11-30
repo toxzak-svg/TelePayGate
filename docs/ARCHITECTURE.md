@@ -1,6 +1,6 @@
 # Architecture Guide
 
-System architecture and design decisions for the Telegram Payment Gateway with decentralized P2P liquidity pools.
+System architecture and design decisions for TelePayGate with decentralized P2P liquidity pools.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ System architecture and design decisions for the Telegram Payment Gateway with d
 
 ## Overview
 
-The Telegram Payment Gateway is a monorepo-based microservices architecture built with TypeScript, designed to process Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** on TON blockchain DEXes (DeDust, Ston.fi).
+TelePayGate is a monorepo-based microservices architecture built with TypeScript, designed to process Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** on TON blockchain DEXes (DeDust, Ston.fi).
 
 ### Technology Stack
 

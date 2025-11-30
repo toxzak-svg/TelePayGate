@@ -18,7 +18,7 @@ COPY packages/sdk/package*.json ./packages/sdk/
 
 # Install dependencies (with cache mount for faster builds)
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production=false --ignore-scripts
+    npm ci --workspaces --only=production=false --ignore-scripts --no-audit --no-fund
 
 # Copy source code and database migrations
 COPY packages ./packages

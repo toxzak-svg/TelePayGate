@@ -1,6 +1,6 @@
 # Integration Guide
 
-Step-by-step guide to integrating Telegram Payment Gateway into your application.
+Step-by-step guide to integrating TelePayGate into your application.
 
 ## Table of Contents
 

@@ -1,5 +1,5 @@
 site_name: TelePayGate Documentation
-site_description: Docs site for the Telegram Payment Gateway
+site_description: Docs site for TelePayGate
 site_author: TelePayGate Team
 nav:
   - Home: README.md

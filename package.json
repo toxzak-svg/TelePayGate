@@ -11,7 +11,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api && npm run build -w @tg-payment/dashboard && npm run build -w @tg-payment/sdk",
+    "build": "npm run build -w @tg-payment/core && (npm run build -w @tg-payment/api & npm run build -w @tg-payment/dashboard & npm run build -w @tg-payment/sdk & wait)",
+    "build:parallel": "npm run build -w @tg-payment/core && (npm run build -w @tg-payment/api & npm run build -w @tg-payment/dashboard & npm run build -w @tg-payment/sdk & wait)",
     "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",

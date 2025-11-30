@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for Telegram Payment Gateway
+ * Core Type Definitions for TelePayGate
  */
 
 // User types

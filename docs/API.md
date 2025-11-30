@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for the Telegram Payment Gateway REST API.
+Complete reference for the TelePayGate REST API.
 
 ## Base URL
 
@@ -901,9 +901,9 @@ npm install @tg-payment/sdk
 
 text
 undefined
-import TelegramPaymentGateway from '@tg-payment/sdk';
+import TelePayGate from '@tg-payment/sdk';
 
-const gateway = new TelegramPaymentGateway({
+const gateway = new TelePayGate({
 apiKey: 'pk_your_key',
 apiSecret: 'sk_your_secret',
 });

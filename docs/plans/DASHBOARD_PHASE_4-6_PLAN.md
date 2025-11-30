@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document outlines the actionable plan to complete Dashboard Phases 4-6 for the Telegram Payment Gateway project.
+This document outlines the actionable plan to complete Dashboard Phases 4-6 for the TelePayGate project.
 
 ---
 
