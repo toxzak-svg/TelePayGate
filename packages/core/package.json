@@ -16,6 +16,7 @@
     "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
+    "uuid": "^9.0.0",
     "@dedust/sdk": "^0.8.7",
     "@ston-fi/sdk": "^2.7.0",
     "@ton/core": "^0.62.0",
@@ -35,6 +36,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "@types/uuid": "^9.0.0",
     "@types/jest": "^29.5.8",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.9.0",
