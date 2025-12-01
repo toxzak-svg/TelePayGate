@@ -19,6 +19,7 @@
     "test:prepare": "PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 telepaygate_test || true && DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test node database/migrate.cjs reset",
     "dev": "npm run dev --workspaces --if-present",
     "test:detect": "dotenv -e .env.test -- jest --detectOpenHandles --runInBand --forceExit",
+    "test:ci": "CI=true DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test node database/migrate.cjs reset && npm run test:run",
     "clean": "bash ./scripts/clean.sh",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
