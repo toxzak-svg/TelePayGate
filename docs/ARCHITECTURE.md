@@ -464,7 +464,7 @@ Local Machine
 │ ├── PostgreSQL container
 │ └── (Future: Redis, etc.)
 └── Node.js (host machine)
-└── API (ts-node-dev)
+└── API (dev: `tsx watch`)
 
 text
 
