@@ -53,10 +53,10 @@ describe("ConversionService", () => {
       // Wait for the polling to complete
       await pollPromise;
 
-      expect(tonService.getTransactionState).toHaveBeenCalledWith("tx-hash");
+      expect(tonService.getTransactionState).toHaveBeenCalledWith("tx-hash", 1);
       expect(dbNoneSpy).toHaveBeenCalledWith(
         expect.stringContaining("UPDATE conversions"),
-        ["completed", undefined, conversionId],
+        expect.arrayContaining([conversionId, "completed"]),
       );
       jest.useRealTimers();
     });

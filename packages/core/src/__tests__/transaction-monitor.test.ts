@@ -41,7 +41,7 @@ describe("TransactionMonitorService", () => {
 
     await (monitor as any).checkPendingTransactions();
 
-    expect(mockTonService.getTransaction).toHaveBeenCalledWith("hash-123");
+    expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-123");
     expect(mockDb.tx).toHaveBeenCalled();
   });
 
@@ -63,7 +63,7 @@ describe("TransactionMonitorService", () => {
 
     await (monitor as any).checkPendingTransactions();
       // TransactionMonitor calls getTransactionState internally
-      expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-123");
+      expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-456");
     expect(mockDb.none).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE conversions"),
       expect.arrayContaining([
@@ -83,8 +83,6 @@ describe("TransactionMonitorService", () => {
     };
 
     mockDb.any.mockResolvedValue([conversion]);
-
-      expect(mockTonService.getTransactionState).toHaveBeenCalledWith("hash-456");
     mockTonService.getTransactionState
       .mockResolvedValueOnce({ status: 'confirmed', confirmations: 1, success: true, hash: 'hash-789' })
       .mockResolvedValueOnce({ status: 'confirmed', confirmations: 2, success: true, hash: 'hash-789' });

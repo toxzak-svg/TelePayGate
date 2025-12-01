@@ -37,15 +37,11 @@ describe("TelegramService", () => {
   });
 
   test("should set webhook", async () => {
-    try {
-      const result = await service.initializeWebhook(
-        "https://example.com/webhook",
-      );
-      expect(result).toBeDefined();
-    } catch (err: any) {
-      // Webhook may fail in test environment - just verify method exists
-      expect(service.initializeWebhook).toBeDefined();
-    }
+    // Avoid hitting the real Telegram API in unit tests by stubbing setWebhook
+    (service as any).bot.telegram.setWebhook = jest.fn().mockResolvedValue({ ok: true });
+    const result = await service.initializeWebhook("https://example.com/webhook");
+    expect(result).toBeUndefined(); // initializeWebhook returns void
+    expect((service as any).bot.telegram.setWebhook).toHaveBeenCalledWith("https://example.com/webhook");
   });
 
   test("should get bot instance", () => {
