@@ -99,6 +99,60 @@ export default class AuthController {
     }
   }
 
+  static async registerEmail(req: Request, res: Response) {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
+    if (String(password).length < 8)
+      return respondError(res, "WEAK_PASSWORD", "Password must be at least 8 characters", 400);
+
+    try {
+      const user = await AuthService.registerDashboardUserWithPassword(email, password);
+      // create session
+      const session = await AuthService.createSessionForUser(user.id);
+
+      const isProd = process.env.NODE_ENV === "production";
+      const maxAge = session.expires_at ? Math.max(0, new Date(session.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
+      res.cookie("session_id", session.session_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
+      res.cookie("csrf_token", session.csrf_token, { httpOnly: false, secure: isProd, sameSite: "lax", maxAge });
+
+      return respondSuccess(res, { data: { user: { id: user.id, email: user.email, role: user.role } } }, 201);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return respondError(res, "INTERNAL_ERROR", message || "Registration failed", 500);
+    }
+  }
+
+  static async login(req: Request, res: Response) {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
+
+    try {
+      const result: any = await AuthService.loginWithPassword(email, password);
+      if (!result.ok) {
+        const map: any = {
+          not_found: [404, "USER_NOT_FOUND"],
+          no_password: [400, "NO_PASSWORD"],
+          inactive: [403, "INACTIVE"],
+          invalid_credentials: [401, "INVALID_CREDENTIALS"],
+        };
+        const [status, code] = map[result.reason] || [401, "INVALID_CREDENTIALS"];
+        return respondError(res, code, result.reason, status);
+      }
+
+      const isProd = process.env.NODE_ENV === "production";
+      const maxAge = result.expires_at ? Math.max(0, new Date(result.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
+      res.cookie("session_id", result.session_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
+      if (result.csrf_token) res.cookie("csrf_token", result.csrf_token, { httpOnly: false, secure: isProd, sameSite: "lax", maxAge });
+
+      return respondSuccess(res, { data: { user: result.user } }, 200);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return respondError(res, "INTERNAL_ERROR", message || "Login failed", 500);
+    }
+  }
+
   static async totpVerify(req: Request, res: Response) {
     if (!FEATURE_FLAG)
       return respondError(
