@@ -310,7 +310,13 @@ export class ConversionService {
         await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed");
       }
     } catch (err: any) {
-      console.error("executeP2PConversion initial update failed:", err);
+      // If an error happens at top level we log and try to mark conversion as failed
+      console.error("executeP2PConversion failed (top-level):", err);
+      try {
+        await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed (top-level)");
+      } catch (e) {
+        console.error("Failed to update conversion status after top-level error:", e);
+      }
     }
   }
 
@@ -428,6 +434,12 @@ export class ConversionService {
     const rateKey = `${sourceCurrency}-${targetCurrency}`;
     return rates[rateKey] || 0.001;
   }
+
+  /*
+   * NOTE: updateConversionStatus implemented below (keeps columns dynamic)
+   * The older, simpler helper was removed during the merge to avoid duplicate
+   * definitions.
+   */
 }
 
 export default ConversionService;

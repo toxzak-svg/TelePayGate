@@ -16,6 +16,7 @@
     "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.939.0",
     "@dedust/sdk": "^0.8.7",
     "@ston-fi/sdk": "^2.7.0",
     "@ton/core": "^0.62.0",
