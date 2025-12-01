@@ -309,7 +309,10 @@ export class ConversionService {
         console.error("executeP2PConversion failed:", err);
         await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed");
       }
+    } catch (err: any) {
+      console.error("executeP2PConversion initial update failed:", err);
     }
+  }
 
   /**
    * Poll blockchain for conversion status
@@ -364,6 +367,33 @@ export class ConversionService {
         }
       }, 5000);
     });
+  }
+
+  /**
+   * Update conversion status in database
+   */
+  private async updateConversionStatus(
+    conversionId: string,
+    status: string,
+    errorMessage?: string,
+  ): Promise<void> {
+    const updateFields = errorMessage
+      ? { status, error_message: errorMessage, updated_at: new Date() }
+      : { status, updated_at: new Date() };
+
+    if (status === "completed") {
+      Object.assign(updateFields, { completed_at: new Date() });
+    }
+
+    const columns = Object.keys(updateFields)
+      .map((k, i) => `${k} = $${i + 2}`)
+      .join(", ");
+    const values = Object.values(updateFields);
+
+    await this.db.none(
+      `UPDATE conversions SET ${columns} WHERE id = $1`,
+      [conversionId, ...values],
+    );
   }
 
   /**
