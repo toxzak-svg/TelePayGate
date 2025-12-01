@@ -25,6 +25,8 @@ router.use("/webhooks", webhookRoutes);
 // Auth (passwordless) routes — feature-flagged in controller
 router.post("/auth/magic-link", AuthController.requestMagicLink);
 router.post("/auth/magic-link/verify", AuthController.verifyMagicLink);
+router.post("/auth/register", AuthController.registerEmail);
+router.post("/auth/login", AuthController.login);
 router.post("/auth/totp/verify", AuthController.totpVerify);
 router.post("/auth/totp/enable", AuthController.enableTotp);
 router.post("/auth/totp/confirm", AuthController.totpConfirm);
