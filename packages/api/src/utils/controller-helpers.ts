@@ -115,29 +115,3 @@ export function getErrorMessage(error: unknown): string {
   }
   return String(error);
 }
-
-/**
- * Wrap async controller handler with consistent error handling
- * @param handler Async handler function
- * @param options Error handling options
- * @returns Wrapped handler
- */
-export function withErrorHandling<T>(
-  handler: () => Promise<T>,
-  options: {
-    onError?: (error: unknown) => void;
-    logError?: boolean;
-  } = {},
-): Promise<T> {
-  const { onError, logError = true } = options;
-
-  return handler().catch((error) => {
-    if (logError) {
-      console.error("Controller error:", error);
-    }
-    if (onError) {
-      onError(error);
-    }
-    throw error;
-  });
-}

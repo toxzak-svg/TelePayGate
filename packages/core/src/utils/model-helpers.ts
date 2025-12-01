@@ -59,15 +59,6 @@ export function camelToSnakeCase(str: string): string {
 }
 
 /**
- * Convert snake_case string to camelCase
- * @param str snake_case string
- * @returns camelCase string
- */
-export function snakeToCamelCase(str: string): string {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-}
-
-/**
  * Build WHERE clause with optional status filter
  * Common pattern in listing methods
  *

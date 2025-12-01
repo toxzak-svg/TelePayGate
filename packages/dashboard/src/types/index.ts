@@ -52,8 +52,6 @@ export interface User {
   updatedAt: string;
 }
 
-export type { DashboardStats } from "@tg-payment/core";
-
 export interface RevenueSummaryEntry {
   date: string;
   tonAmount: number;
