@@ -15,7 +15,7 @@ import {
   APIError,
 } from "./types";
 
-export class TelegramPaymentGateway {
+export class TelePayGate {
   private client: AxiosInstance;
   private apiKey: string;
   private apiSecret?: string;
@@ -235,4 +235,4 @@ export class TelegramPaymentGateway {
   }
 }
 
-export default TelegramPaymentGateway;
+export default TelePayGate;

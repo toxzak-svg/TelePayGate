@@ -1,13 +1,13 @@
 /**
  * @tg-payment/core
- * Core business logic for Telegram Payment Gateway
+ * Core business logic for TelePayGate
  *
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025
  */
 /**
  * @tg-payment/core
- * Core business logic for Telegram Payment Gateway
+ * Core business logic for TelePayGate
  *
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025

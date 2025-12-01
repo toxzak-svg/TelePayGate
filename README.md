@@ -1,4 +1,4 @@
-# Telegram Payment Gateway
+# TelePayGate
 
 Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
 
@@ -29,9 +29,9 @@ Contributing
 
 This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
 
-# Telegram Payment Gateway
+# TelePayGate
 
-> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
+> **Decentralized P2P Payment Processing Gateway** — TelePayGate accepts Telegram Stars and converts them into TON (and optionally fiat) using decentralized P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -120,6 +120,49 @@ npm run dev
 ```
 
 ## 🧭 Developer Notes: Response Helpers
+
+## ⚡ Faster installs & builds (safe, opt-in)
+
+To speed up local and CI installs and builds we added a few safe, non-breaking improvements:
+
+- A repository-level `.npmrc` disables npm audit and funding prompts and silences progress output (reduces noisy network calls):
+
+   ```text
+   audit=false
+   fund=false
+   progress=false
+   ```
+
+- Use this faster install command locally or in CI (skips audit/fund checks):
+
+   ```bash
+   npm ci --workspaces --no-audit --no-fund
+   ```
+
+- Build faster (root build runs the core build first, then builds remaining workspaces in parallel):
+
+   ```bash
+   npm run build:parallel
+   ```
+
+These edits are safe and optional — they do not change runtime behaviour, only speed up developer/CI workflows.
+
+### Troubleshooting: Permission errors during install
+
+If `npm ci` fails with EACCES / permission denied errors (e.g. renaming files inside `node_modules`), this usually means some previously-installed files are owned by root. Run the helper script to diagnose and repair ownership:
+
+```bash
+# show if any files are mis-owned and print the chown command to run
+bash scripts/fix-permissions.sh
+
+# when prompted by the previous script, run one of these (requires sudo):
+sudo chown -R $(id -u):$(id -g) $PWD
+# or to only fix node_modules dirs (faster):
+sudo find $PWD -name node_modules -type d -prune -exec chown -R $(id -u):$(id -g) {} +
+```
+
+Avoid running package managers with `sudo` in this repository in the future — it often leaves root-owned files which block later installs.
+
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 

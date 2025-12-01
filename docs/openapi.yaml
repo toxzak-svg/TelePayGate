@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: Telegram Payment Gateway API
+  title: TelePayGate API
 <<<<<<< HEAD
   version: "2.2.0"
   description: |
-    OpenAPI description for the Telegram Payment Gateway. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
+    OpenAPI description for the TelePayGate. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
 servers:
   - url: https://api.yourgateway.com/v1
     description: Production

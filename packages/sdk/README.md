@@ -1,6 +1,6 @@
-# Telegram Payment Gateway SDK
+# TelePayGate SDK
 
-TypeScript/JavaScript SDK for integrating with the Telegram Payment Gateway API.
+TypeScript/JavaScript SDK for integrating with the TelePayGate API.
 
 ## Installation
 
@@ -10,10 +10,10 @@ text
 
 ## Quick Start
 
-import TelegramPaymentGateway from '@tg-payment/sdk';
+import TelePayGate from '@tg-payment/sdk';
 
 // Initialize client
-const gateway = new TelegramPaymentGateway({
+const gateway = new TelePayGate({
 apiKey: 'pk_your_api_key',
 apiSecret: 'sk_your_api_secret',
 apiUrl: '<https://api.yourgateway.com/v1>', // optional
@@ -40,7 +40,7 @@ text
 
 ### Initialize Client
 
-const gateway = new TelegramPaymentGateway({
+const gateway = new TelePayGate({
 apiKey: 'pk_xxx', // Required: Your public API key
 apiSecret: 'sk_xxx', // Optional: Your secret API key
 apiUrl: 'https://...', // Optional: Custom API URL
@@ -216,7 +216,9 @@ USD: 2.50,
 EUR: 2.35
 },
 TON: {
-USD: 2525.25,
+import TelePayGate from '@tg-payment/sdk';
+
+const gateway = new TelePayGate({
 EUR: 2375.50
 }
 }
@@ -239,7 +241,7 @@ if ((error as APIError).code === 'MINIMUM_AMOUNT_NOT_MET') {
 console.error('Amount too small:', error.message);
 }
 }
-
+console.log('Estimated TON:', estimate.tonEquivalent);
 text
 
 **Error Structure:**

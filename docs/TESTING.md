@@ -1,6 +1,6 @@
 # Testing Guide
 
-This guide covers unit, integration, and end-to-end testing for the Telegram Payment Gateway.
+This guide covers unit, integration, and end-to-end testing for the TelePayGate.
 
 ## Test Types
 - Unit tests: `npm run test --workspaces`

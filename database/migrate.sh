@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Database migration script for Telegram Payment Gateway
+# Database migration script for TelePayGate
 # Usage: ./database/migrate.sh [command]
 # Commands: up, down, reset, status
 

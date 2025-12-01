@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import * as path from "path";
 
 // CRITICAL: Load .env from project root
-// In development with ts-node-dev, __dirname points to packages/api/src/config
+// In development with tsx watch or ts-node, __dirname points to packages/api/src/config
 // We need to go up 4 levels: config -> src -> api -> packages -> root
 const envPath = path.resolve(__dirname, "../../../../.env");
 console.log("🔍 Looking for .env at:", envPath);

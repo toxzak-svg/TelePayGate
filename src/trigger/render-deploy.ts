@@ -4,7 +4,7 @@ import { execSync } from "child_process";
 /**
  * Render Deployment Task
  *
- * Deploys the Telegram Payment Gateway to Render.com
+ * Deploys the TelePayGate to Render.com
  * Triggers deployment via Render API or git push
  */
 export const deployToRender = task({

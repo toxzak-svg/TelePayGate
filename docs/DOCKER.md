@@ -42,7 +42,7 @@ Use the override file to mount your working copy into the containers and run dev
 docker compose -f docker-compose.yml -f docker-compose.override.yml up --build
 ```
 
-This runs the `api` service in development mode (ts-node-dev) and the `dashboard` vite dev server. Code changes in your workspace will be reflected immediately inside the containers.
+This runs the `api` service in development mode (`tsx watch`), and the `dashboard` Vite dev server. Code changes in your workspace will be reflected immediately inside the containers.
 
 Common commands
 

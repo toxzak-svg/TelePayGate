@@ -1,6 +1,6 @@
 # Trigger.dev Integration Guide
 
-This guide explains how to use Trigger.dev to automate deployments to Render.com for the Telegram Payment Gateway.
+This guide explains how to use Trigger.dev to automate deployments to Render.com for the TelePayGate.
 
 ## 📋 Overview
 
