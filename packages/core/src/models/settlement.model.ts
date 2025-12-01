@@ -1,4 +1,5 @@
 import { Database } from "../db/connection";
+import { buildDynamicUpdate } from "../utils/model-helpers";
 
 export interface Settlement {
   id: string;
@@ -116,21 +117,7 @@ export class SettlementModel {
       completedAt?: Date;
     },
   ): Promise<Settlement> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        const dbKey = key.replace(
-          /[A-Z]/g,
-          (letter) => `_${letter.toLowerCase()}`,
-        );
-        fields.push(`${dbKey} = $${paramIndex}`);
-        values.push(value);
-        paramIndex++;
-      }
-    });
+    const { fields, values, nextParamIndex } = buildDynamicUpdate(updates);
 
     if (fields.length === 0) {
       return this.findById(id) as Promise<Settlement>;
@@ -139,7 +126,7 @@ export class SettlementModel {
     const result = await this.db.one(
       `UPDATE settlements 
        SET ${fields.join(", ")}, updated_at = NOW()
-       WHERE id = $${paramIndex} 
+       WHERE id = $${nextParamIndex} 
        RETURNING *`,
       [...values, id],
     );

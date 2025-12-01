@@ -1,3 +1,6 @@
+// Import shared types from core
+export type { DashboardStats } from "@tg-payment/core";
+
 export interface Payment {
   id: string;
   userId: string;
@@ -49,19 +52,7 @@ export interface User {
   updatedAt: string;
 }
 
-export interface DashboardStats {
-  totalRevenueTon: number;
-  totalRevenueStars: number;
-  totalTransactions: number;
-  totalPayments: number;
-  totalUsers: number;
-  activeMerchants: number;
-  successRate: number;
-  revenueChange: number;
-  transactionChange: number;
-  activeMerchantsChange: number;
-  successRateChange: number;
-}
+export type { DashboardStats } from "@tg-payment/core";
 
 export interface RevenueSummaryEntry {
   date: string;
