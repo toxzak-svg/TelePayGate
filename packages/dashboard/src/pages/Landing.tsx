@@ -2,115 +2,60 @@ import { Link } from 'react-router-dom';
 import { 
   Zap, 
   Shield, 
-  Globe, 
-  TrendingUp, 
+  Sparkles, 
   ArrowRight, 
-  CheckCircle,
-  Star,
-  Users,
-  DollarSign,
-  Clock
+  Check
 } from 'lucide-react';
 
 const features = [
   {
     icon: Zap,
-    title: 'Instant Conversions',
-    description: 'Convert Telegram Stars to TON and fiat currencies in seconds with our P2P liquidity pools.'
+    title: 'Lightning Fast',
+    description: 'Instant conversions from Telegram Stars to TON or fiat.'
   },
   {
     icon: Shield,
-    title: 'Decentralized & Secure',
-    description: 'No KYC, no intermediaries. Truly permissionless transactions on the TON blockchain.'
+    title: 'No KYC Required',
+    description: 'Fully decentralized. No intermediaries or verification.'
   },
   {
-    icon: Globe,
-    title: 'Global Access',
-    description: 'Accept payments from Telegram users worldwide with multi-currency support.'
-  },
-  {
-    icon: TrendingUp,
+    icon: Sparkles,
     title: 'Best Rates',
-    description: 'Aggregated rates from DeDust, Ston.fi, and P2P pools ensure optimal pricing.'
+    description: 'Aggregated from DeDust, Ston.fi, and P2P pools.'
   }
-];
-
-const stats = [
-  { value: '$1M+', label: 'Volume Processed', icon: DollarSign },
-  { value: '10K+', label: 'Active Users', icon: Users },
-  { value: '<3s', label: 'Avg. Settlement', icon: Clock },
-  { value: '99.9%', label: 'Uptime', icon: CheckCircle }
 ];
 
 const steps = [
-  { number: '01', title: 'Sign Up', description: 'Create your account in seconds with just an email' },
-  { number: '02', title: 'Get API Key', description: 'Receive your unique API key to integrate with your app' },
-  { number: '03', title: 'Integrate', description: 'Use our SDK to accept Telegram Stars payments' },
-  { number: '04', title: 'Get Paid', description: 'Receive TON or fiat directly to your wallet' }
-];
-
-const testimonials = [
-  {
-    quote: "TelePayGate transformed how we handle payments. The integration was seamless and our users love paying with Stars.",
-    author: "Alex Chen",
-    role: "Founder, TeleBot Games",
-    avatar: "AC"
-  },
-  {
-    quote: "Best rates in the market and zero KYC requirements. Finally a payment solution that respects user privacy.",
-    author: "Maria Santos",
-    role: "CEO, Digital Nomads App",
-    avatar: "MS"
-  },
-  {
-    quote: "The P2P liquidity pools ensure we always get competitive rates. Support team is incredible.",
-    author: "John Davis",
-    role: "CTO, Star Merchants",
-    avatar: "JD"
-  }
+  { step: '1', title: 'Create account', description: 'Sign up in seconds' },
+  { step: '2', title: 'Get your API key', description: 'Instant access' },
+  { step: '3', title: 'Start accepting', description: 'Integrate & go live' }
 ];
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-[#0a0a0f]">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-lg border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Zap className="h-8 w-8 text-blue-400" />
-              <span className="ml-2 text-xl font-bold text-white">TelePayGate</span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-lg font-semibold text-white">TelePayGate</span>
             </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-300 hover:text-white transition">Features</a>
-              <a href="#how-it-works" className="text-gray-300 hover:text-white transition">How It Works</a>
-              <a href="#testimonials" className="text-gray-300 hover:text-white transition">Testimonials</a>
-              <Link 
-                to="/login" 
-                className="text-gray-300 hover:text-white transition"
-              >
+            <div className="flex items-center gap-6">
+              <Link to="/onboarding" className="text-gray-400 hover:text-white transition text-sm hidden sm:block">
+                Docs
+              </Link>
+              <Link to="/login" className="text-gray-400 hover:text-white transition text-sm">
                 Login
               </Link>
               <Link 
                 to="/signup" 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-blue-500/25"
+                className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition"
               >
                 Get Started
-              </Link>
-            </div>
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center space-x-3">
-              <Link 
-                to="/login" 
-                className="text-gray-300 hover:text-white transition text-sm"
-              >
-                Login
-              </Link>
-              <Link 
-                to="/signup" 
-                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm"
-              >
-                Sign Up
               </Link>
             </div>
           </div>
@@ -118,154 +63,102 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
-            <Star className="h-4 w-4 text-yellow-400 mr-2" />
-            <span className="text-blue-300 text-sm">Telegram Stars → TON → Fiat</span>
+      <section className="pt-32 pb-24 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span className="text-gray-400 text-sm">Now supporting 50+ currencies</span>
           </div>
           
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            The Decentralized
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-              Payment Gateway
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
+            Accept{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400">
+              Telegram Stars
             </span>
-            for Telegram
           </h1>
           
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-10">
-            Accept Telegram Stars payments and convert them to TON or fiat currencies instantly. 
-            No KYC, no intermediaries — powered by P2P liquidity pools.
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            The decentralized payment gateway for converting Stars to TON and fiat. 
+            No KYC, instant settlements, best rates.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
               to="/signup" 
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-cyan-700 transition shadow-2xl hover:shadow-blue-500/25 flex items-center justify-center"
+              className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-8 py-4 rounded-full font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
             >
-              Start Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
+              Start for free
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link 
               to="/onboarding" 
-              className="w-full sm:w-auto bg-white/10 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/20 transition border border-white/20 flex items-center justify-center"
+              className="w-full sm:w-auto text-gray-300 hover:text-white px-8 py-4 transition font-medium"
             >
-              View Tutorial
+              View documentation →
             </Link>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-4xl mx-auto">
-            {stats.map((stat) => (
-              <div key={stat.label} className="bg-white/5 rounded-2xl p-6 border border-white/10">
-                <stat.icon className="h-8 w-8 text-blue-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
-              </div>
-            ))}
+          {/* Trust indicators */}
+          <div className="flex items-center justify-center gap-8 mt-16 text-gray-500 text-sm">
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-400" />
+              <span>No setup fees</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-400" />
+              <span>Instant payouts</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-400" />
+              <span>24/7 support</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Everything You Need
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Built for developers who want to integrate Telegram payments without the complexity
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6">
             {features.map((feature) => (
               <div 
                 key={feature.title} 
-                className="bg-white/5 rounded-2xl p-8 border border-white/10 hover:border-blue-500/50 transition group"
+                className="bg-white/[0.02] rounded-2xl p-8 border border-white/5 hover:border-white/10 transition group"
               >
-                <div className="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-500/30 transition">
-                  <feature.icon className="h-7 w-7 text-blue-400" />
+                <div className="w-12 h-12 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-xl flex items-center justify-center mb-5">
+                  <feature.icon className="h-6 w-6 text-violet-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-400">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      {/* How It Works */}
+      <section className="py-24 px-6 border-t border-white/5">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              How It Works
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Up and running in minutes
             </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Get started in minutes with our simple integration process
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <div key={step.number} className="relative">
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-blue-500/50 to-transparent" />
-                )}
-                <div className="text-5xl font-bold text-blue-500/30 mb-4">{step.number}</div>
-                <h3 className="text-xl font-semibold text-white mb-2">{step.title}</h3>
-                <p className="text-gray-400">{step.description}</p>
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <Link 
-              to="/onboarding" 
-              className="inline-flex items-center text-blue-400 hover:text-blue-300 transition font-medium"
-            >
-              View detailed tutorial
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Trusted by Developers
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Join thousands of developers already using TelePayGate
+            <p className="text-gray-500">
+              Simple integration, powerful results
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial) => (
-              <div 
-                key={testimonial.author} 
-                className="bg-white/5 rounded-2xl p-8 border border-white/10"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  ))}
+            {steps.map((item, index) => (
+              <div key={item.step} className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+                  {item.step}
                 </div>
-                <p className="text-gray-300 mb-6 italic">"{testimonial.quote}"</p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                    <span className="text-blue-400 font-semibold">{testimonial.avatar}</span>
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-white font-semibold">{testimonial.author}</div>
-                    <div className="text-gray-400 text-sm">{testimonial.role}</div>
-                  </div>
-                </div>
+                {index < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-6 left-1/2 w-full h-px bg-gradient-to-r from-violet-500/50 to-transparent" />
+                )}
+                <h3 className="text-white font-semibold mb-1">{item.title}</h3>
+                <p className="text-gray-500 text-sm">{item.description}</p>
               </div>
             ))}
           </div>
@@ -273,52 +166,39 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-3xl p-12 border border-blue-500/30">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Ready to Get Started?
+      <section className="py-24 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="bg-gradient-to-br from-violet-600/10 to-fuchsia-600/10 rounded-3xl p-12 border border-white/5">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to get started?
             </h2>
-            <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-              Create your free account today and start accepting Telegram Stars payments in minutes.
+            <p className="text-gray-400 mb-8">
+              Join developers building the future of Telegram payments.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link 
-                to="/signup" 
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-cyan-700 transition shadow-2xl hover:shadow-blue-500/25 flex items-center justify-center"
-              >
-                Create Free Account
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <a 
-                href="https://docs.telepaygate.com" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto text-gray-300 hover:text-white transition font-medium px-8 py-4"
-              >
-                Read Documentation
-              </a>
-            </div>
+            <Link 
+              to="/signup" 
+              className="inline-flex items-center gap-2 bg-white text-black px-8 py-4 rounded-full font-medium hover:bg-gray-100 transition"
+            >
+              Create free account
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/10">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center mb-4 md:mb-0">
-              <Zap className="h-6 w-6 text-blue-400" />
-              <span className="ml-2 text-lg font-bold text-white">TelePayGate</span>
+      <footer className="py-8 px-6 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-md flex items-center justify-center">
+              <Zap className="h-4 w-4 text-white" />
             </div>
-            <div className="flex items-center space-x-6">
-              <a href="#" className="text-gray-400 hover:text-white transition text-sm">Privacy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition text-sm">Terms</a>
-              <a href="#" className="text-gray-400 hover:text-white transition text-sm">Support</a>
-            </div>
+            <span className="text-sm text-gray-500">© {new Date().getFullYear()} TelePayGate</span>
           </div>
-          <div className="mt-8 pt-8 border-t border-white/10 text-center text-gray-500 text-sm">
-            © {new Date().getFullYear()} TelePayGate. Powered by TON Blockchain • Decentralized P2P
+          <div className="flex items-center gap-6 text-sm text-gray-500">
+            <a href="#" className="hover:text-white transition">Privacy</a>
+            <a href="#" className="hover:text-white transition">Terms</a>
+            <a href="#" className="hover:text-white transition">Support</a>
           </div>
         </div>
       </footer>
