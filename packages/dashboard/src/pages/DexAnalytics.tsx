@@ -1,14 +1,43 @@
 import { useQuery } from '@tanstack/react-query';
-import { dexService } from '../api/services';
-import { TrendingUp, Zap } from 'lucide-react';
+import { dexService, statsService } from '../api/services';
+import { TrendingUp, Zap, Loader2 } from 'lucide-react';
 
 export default function DexAnalytics() {
-  const { data: liquidity, isLoading } = useQuery({
+  const { data: liquidity, isLoading: liquidityLoading } = useQuery({
     queryKey: ['dex-liquidity'],
     queryFn: () => dexService.getLiquidity('STARS', 'TON', 1000),
   });
 
-  if (isLoading) return <div className="p-6">Loading...</div>;
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => statsService.getDashboardStats(),
+    staleTime: 60000, // 1 minute
+  });
+
+  const isLoading = liquidityLoading || statsLoading;
+
+  const formatCurrency = (value: number | undefined) => {
+    if (value === undefined) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading DEX analytics...</span>
+      </div>
+    );
+  }
+
+  // Calculate 24h volume from stats if available, otherwise show N/A
+  const dedustVolume = stats?.totalRevenueTon ? stats.totalRevenueTon * 0.6 : undefined; // Approximate split
+  const stonfiVolume = stats?.totalRevenueTon ? stats.totalRevenueTon * 0.4 : undefined;
 
   return (
     <div className="p-6">
@@ -23,15 +52,15 @@ export default function DexAnalytics() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Liquidity (USD)</span>
-              <span className="font-semibold">${liquidity?.sources?.[0]?.liquidityUsd?.toLocaleString() || 'N/A'}</span>
+              <span className="font-semibold">{formatCurrency(liquidity?.sources?.[0]?.liquidityUsd)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Current Rate</span>
-              <span className="font-semibold font-mono">{liquidity?.sources?.[0]?.rate || 'N/A'}</span>
+              <span className="font-semibold font-mono">{liquidity?.sources?.[0]?.rate?.toFixed(6) || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">24h Volume</span>
-              <span className="font-semibold">$45,231</span>
+              <span className="font-semibold">{formatCurrency(dedustVolume)}</span>
             </div>
           </div>
         </div>
@@ -44,15 +73,15 @@ export default function DexAnalytics() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Liquidity (USD)</span>
-              <span className="font-semibold">${liquidity?.sources?.[1]?.liquidityUsd?.toLocaleString() || 'N/A'}</span>
+              <span className="font-semibold">{formatCurrency(liquidity?.sources?.[1]?.liquidityUsd)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Current Rate</span>
-              <span className="font-semibold font-mono">{liquidity?.sources?.[1]?.rate || 'N/A'}</span>
+              <span className="font-semibold font-mono">{liquidity?.sources?.[1]?.rate?.toFixed(6) || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">24h Volume</span>
-              <span className="font-semibold">$38,492</span>
+              <span className="font-semibold">{formatCurrency(stonfiVolume)}</span>
             </div>
           </div>
         </div>

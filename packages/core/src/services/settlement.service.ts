@@ -10,6 +10,217 @@ export interface SettlementServiceConfig {
   batchSize?: number;
   processingIntervalMs?: number;
   tonUsdRate?: number;
+  fiatGateway?: FiatGatewayProvider;
+}
+
+/**
+ * Fiat Gateway Provider Interface
+ * Implement this interface to integrate with payment processors like Stripe, Wise, etc.
+ */
+export interface FiatGatewayProvider {
+  name: string;
+  
+  /**
+   * Execute a payout to the user's linked account
+   */
+  executePayout(params: {
+    userId: string;
+    amount: number;
+    currency: string;
+    reference: string;
+    metadata?: Record<string, string>;
+  }): Promise<FiatPayoutResult>;
+  
+  /**
+   * Check the status of a payout
+   */
+  getPayoutStatus(payoutId: string): Promise<FiatPayoutStatus>;
+  
+  /**
+   * Verify the gateway is properly configured
+   */
+  healthCheck(): Promise<boolean>;
+}
+
+export interface FiatPayoutResult {
+  success: boolean;
+  payoutId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
+  estimatedArrival?: Date;
+}
+
+export interface FiatPayoutStatus {
+  payoutId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  completedAt?: Date;
+  error?: string;
+}
+
+/**
+ * Stub Fiat Gateway for development/testing
+ * Replace with real implementation (Stripe, Wise, etc.) in production
+ */
+export class StubFiatGateway implements FiatGatewayProvider {
+  name = 'stub';
+
+  async executePayout(params: {
+    userId: string;
+    amount: number;
+    currency: string;
+    reference: string;
+  }): Promise<FiatPayoutResult> {
+    console.log(`💸 [STUB] Fiat payout: ${params.amount} ${params.currency} to user ${params.userId}`);
+    
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return {
+      success: true,
+      payoutId: `stub-${params.reference}-${Date.now()}`,
+      status: 'completed',
+      estimatedArrival: new Date(),
+    };
+  }
+
+  async getPayoutStatus(payoutId: string): Promise<FiatPayoutStatus> {
+    return {
+      payoutId,
+      status: 'completed',
+      completedAt: new Date(),
+    };
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+}
+
+/**
+ * Stripe Fiat Gateway (placeholder - implement with real Stripe SDK)
+ */
+export class StripeFiatGateway implements FiatGatewayProvider {
+  name = 'stripe';
+  
+  constructor(private apiKey?: string) {
+    this.apiKey = apiKey || process.env.STRIPE_SECRET_KEY;
+  }
+
+  async executePayout(params: {
+    userId: string;
+    amount: number;
+    currency: string;
+    reference: string;
+    metadata?: Record<string, string>;
+  }): Promise<FiatPayoutResult> {
+    if (!this.apiKey) {
+      return {
+        success: false,
+        payoutId: '',
+        status: 'failed',
+        error: 'Stripe API key not configured',
+      };
+    }
+
+    // TODO: Implement actual Stripe Payouts API integration
+    // const stripe = new Stripe(this.apiKey);
+    // const payout = await stripe.payouts.create({
+    //   amount: Math.round(params.amount * 100), // Stripe uses cents
+    //   currency: params.currency.toLowerCase(),
+    //   metadata: { reference: params.reference, userId: params.userId, ...params.metadata },
+    // });
+
+    console.log(`💸 [STRIPE] Would execute payout: ${params.amount} ${params.currency}`);
+    
+    return {
+      success: true,
+      payoutId: `stripe-${params.reference}-${Date.now()}`,
+      status: 'pending',
+      estimatedArrival: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days
+    };
+  }
+
+  async getPayoutStatus(payoutId: string): Promise<FiatPayoutStatus> {
+    // TODO: Implement stripe.payouts.retrieve(payoutId)
+    return {
+      payoutId,
+      status: 'pending',
+    };
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return !!this.apiKey;
+  }
+}
+
+/**
+ * Wise (TransferWise) Fiat Gateway (placeholder - implement with real API)
+ */
+export class WiseFiatGateway implements FiatGatewayProvider {
+  name = 'wise';
+  
+  constructor(private apiKey?: string) {
+    this.apiKey = apiKey || process.env.WISE_API_KEY;
+  }
+
+  async executePayout(params: {
+    userId: string;
+    amount: number;
+    currency: string;
+    reference: string;
+  }): Promise<FiatPayoutResult> {
+    if (!this.apiKey) {
+      return {
+        success: false,
+        payoutId: '',
+        status: 'failed',
+        error: 'Wise API key not configured',
+      };
+    }
+
+    // TODO: Implement actual Wise API integration
+    // 1. Create quote
+    // 2. Create recipient
+    // 3. Create transfer
+    // 4. Fund transfer
+
+    console.log(`💸 [WISE] Would execute payout: ${params.amount} ${params.currency}`);
+    
+    return {
+      success: true,
+      payoutId: `wise-${params.reference}-${Date.now()}`,
+      status: 'pending',
+      estimatedArrival: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day
+    };
+  }
+
+  async getPayoutStatus(payoutId: string): Promise<FiatPayoutStatus> {
+    return {
+      payoutId,
+      status: 'pending',
+    };
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return !!this.apiKey;
+  }
+}
+
+/**
+ * Factory function to create the appropriate fiat gateway
+ */
+export function createFiatGateway(provider?: string): FiatGatewayProvider {
+  const gatewayProvider = provider || process.env.FIAT_GATEWAY_PROVIDER || 'stub';
+  
+  switch (gatewayProvider.toLowerCase()) {
+    case 'stripe':
+      return new StripeFiatGateway();
+    case 'wise':
+      return new WiseFiatGateway();
+    case 'stub':
+    default:
+      return new StubFiatGateway();
+  }
 }
 
 interface ConversionRecord {
@@ -36,6 +247,7 @@ export class SettlementService {
   private readonly batchSize: number;
   private readonly tonUsdRate: number;
   private readonly processingIntervalMs: number;
+  private readonly fiatGateway: FiatGatewayProvider;
   private timer?: NodeJS.Timeout;
 
   constructor(
@@ -51,6 +263,7 @@ export class SettlementService {
       Number(process.env.SETTLEMENT_INTERVAL_MS || 60000);
     this.tonUsdRate =
       config.tonUsdRate ?? Number(process.env.SETTLEMENT_TON_USD_RATE || 5.5);
+    this.fiatGateway = config.fiatGateway ?? createFiatGateway();
   }
 
   async start(): Promise<void> {
@@ -202,7 +415,7 @@ export class SettlementService {
   }
 
   /**
-   * Execute fiat payout via gateway
+   * Execute fiat payout via configured gateway
    */
   private async executeFiatPayout(
     settlementId: string,
@@ -210,16 +423,40 @@ export class SettlementService {
     currency: string,
     userId: string,
   ): Promise<string> {
-    // TODO: Integrate with real fiat gateway (Stripe, Wise, etc.)
-    // For now, we simulate a successful payout
     console.log(
-      `💸 Executing fiat payout: ${amount} ${currency} to user ${userId}`,
+      `💸 Executing fiat payout via ${this.fiatGateway.name}: ${amount} ${currency} to user ${userId}`,
     );
 
-    // Simulate API latency
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const result = await this.fiatGateway.executePayout({
+      userId,
+      amount,
+      currency,
+      reference: settlementId,
+      metadata: {
+        source: 'telepaygate',
+        settlementId,
+      },
+    });
 
-    return `AUTO-SETTLED-${settlementId}-${Date.now()}`;
+    if (!result.success) {
+      throw new Error(`Fiat payout failed: ${result.error}`);
+    }
+
+    return result.payoutId;
+  }
+
+  /**
+   * Get the current fiat gateway provider name
+   */
+  getFiatGatewayName(): string {
+    return this.fiatGateway.name;
+  }
+
+  /**
+   * Check fiat gateway health
+   */
+  async checkFiatGatewayHealth(): Promise<boolean> {
+    return this.fiatGateway.healthCheck();
   }
 
   private calculateFiatAmount(

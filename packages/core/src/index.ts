@@ -85,6 +85,13 @@ export {
   ErrorHandler,
 } from "./utils/error-handler";
 
+export {
+  validateEnvironment,
+  validateEnvironmentOrExit,
+  getEnvironmentSummary,
+  EnvValidationResult,
+} from "./utils/env-validation";
+
 // ============================================
 // DATABASE
 // ============================================

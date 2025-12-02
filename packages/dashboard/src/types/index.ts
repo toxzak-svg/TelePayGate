@@ -52,13 +52,16 @@ export interface User {
 export interface DashboardStats {
   totalRevenueTon: number;
   totalRevenueStars: number;
+  totalRevenue: number;
   totalTransactions: number;
   totalPayments: number;
   totalUsers: number;
+  activeUsers: number;
   activeMerchants: number;
   successRate: number;
   revenueChange: number;
   transactionChange: number;
+  userChange: number;
   activeMerchantsChange: number;
   successRateChange: number;
 }

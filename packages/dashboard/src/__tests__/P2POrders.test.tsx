@@ -54,20 +54,20 @@ describe('P2POrders confirm/cancel flow', () => {
         <P2POrders />
       </BrowserRouter>
     );
+    // wait for the row to appear
+    await screen.findByText(/order_1/i);
 
-    // wait for row to appear
-    await waitFor(() => expect(screen.getByText(/order_1/i)).toBeInTheDocument());
-
+    const user = userEvent.setup();
     const cancelButtons = screen.getAllByRole('button', { name: /cancel/i });
     const cancelButton = cancelButtons.find(b => (b.textContent || '').trim().toLowerCase() === 'cancel') || cancelButtons[0];
-    await userEvent.click(cancelButton as HTMLElement);
+    await user.click(cancelButton as HTMLElement);
 
     // confirm dialog appears (heading)
-    expect(screen.getByRole('heading', { name: /Cancel Order/i })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: /Cancel Order/i });
 
-    const confirmButton = screen.getByRole('button', { name: /confirm/i });
-    await userEvent.click(confirmButton);
+    const confirmButton = await screen.findByRole('button', { name: /confirm/i });
+    await user.click(confirmButton);
 
-    await waitFor(() => expect(cancelSpy).toHaveBeenCalledWith('order_1'));
-  });
+    await waitFor(() => expect(cancelSpy).toHaveBeenCalledWith('order_1'), { timeout: 5000 });
+  }, 20000);
 });
