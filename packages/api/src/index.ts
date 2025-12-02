@@ -1,8 +1,20 @@
 import "module-alias/register";
 import "dotenv/config";
 import http from "http";
-import { initDatabase } from "@tg-payment/core";
+import { initDatabase, validateEnvironmentOrExit, getEnvironmentSummary } from "@tg-payment/core";
 import createServer from "./server";
+
+// Validate environment variables before starting
+console.log('🔍 Validating environment...\n');
+validateEnvironmentOrExit(process.env.NODE_ENV === 'production');
+
+// Log configured features
+const features = getEnvironmentSummary();
+console.log('📦 Configured features:');
+Object.entries(features).forEach(([feature, enabled]) => {
+  console.log(`   ${enabled ? '✓' : '○'} ${feature}`);
+});
+console.log('');
 
 // Initialize database
 const DATABASE_URL =

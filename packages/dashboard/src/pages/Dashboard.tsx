@@ -1,15 +1,84 @@
 
-import { DollarSign, TrendingUp, Users, Activity } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, Activity, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import AnalyticsCharts from '../components/analytics/AnalyticsCharts';
 import RecentTransactionsTable from '../components/analytics/RecentTransactionsTable';
+import { statsService } from '../api/services';
 
 export default function Dashboard() {
+  const { data: dashboardStats, isLoading, error } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => statsService.getDashboardStats(),
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const formatCurrency = (value: number | undefined) => {
+    if (value === undefined) return '$0';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatNumber = (value: number | undefined) => {
+    if (value === undefined) return '0';
+    return new Intl.NumberFormat('en-US').format(value);
+  };
+
+  const formatPercent = (value: number | undefined) => {
+    if (value === undefined) return '0%';
+    return `${value.toFixed(1)}%`;
+  };
+
   const stats = [
-    { name: 'Total Revenue', value: '$45,231', change: '+12.5%', icon: DollarSign, trend: 'up' },
-    { name: 'Transactions', value: '2,345', change: '+8.2%', icon: Activity, trend: 'up' },
-    { name: 'Active Users', value: '1,234', change: '+23.1%', icon: Users, trend: 'up' },
-    { name: 'Success Rate', value: '98.5%', change: '+2.3%', icon: TrendingUp, trend: 'up' },
+    { 
+      name: 'Total Revenue', 
+      value: formatCurrency(dashboardStats?.totalRevenue), 
+      change: dashboardStats?.revenueChange ? `${dashboardStats.revenueChange > 0 ? '+' : ''}${dashboardStats.revenueChange.toFixed(1)}%` : 'N/A', 
+      icon: DollarSign, 
+      trend: (dashboardStats?.revenueChange ?? 0) >= 0 ? 'up' : 'down' 
+    },
+    { 
+      name: 'Transactions', 
+      value: formatNumber(dashboardStats?.totalTransactions), 
+      change: dashboardStats?.transactionChange ? `${dashboardStats.transactionChange > 0 ? '+' : ''}${dashboardStats.transactionChange.toFixed(1)}%` : 'N/A', 
+      icon: Activity, 
+      trend: (dashboardStats?.transactionChange ?? 0) >= 0 ? 'up' : 'down' 
+    },
+    { 
+      name: 'Active Users', 
+      value: formatNumber(dashboardStats?.activeUsers), 
+      change: dashboardStats?.userChange ? `${dashboardStats.userChange > 0 ? '+' : ''}${dashboardStats.userChange.toFixed(1)}%` : 'N/A', 
+      icon: Users, 
+      trend: (dashboardStats?.userChange ?? 0) >= 0 ? 'up' : 'down' 
+    },
+    { 
+      name: 'Success Rate', 
+      value: formatPercent(dashboardStats?.successRate), 
+      change: dashboardStats?.successRateChange ? `${dashboardStats.successRateChange > 0 ? '+' : ''}${dashboardStats.successRateChange.toFixed(1)}%` : 'N/A', 
+      icon: TrendingUp, 
+      trend: (dashboardStats?.successRateChange ?? 0) >= 0 ? 'up' : 'down' 
+    },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Failed to load dashboard stats. Please try again.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -23,7 +92,9 @@ export default function Dashboard() {
                   <stat.icon className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
-              <span className="text-sm font-medium text-green-600">{stat.change}</span>
+              <span className={`text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                {stat.change}
+              </span>
             </div>
             <div className="mt-4">
               <h3 className="text-sm font-medium text-gray-500">{stat.name}</h3>
