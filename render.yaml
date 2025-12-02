@@ -180,6 +180,36 @@ services:
           property: connectionString
 
   # --------------------------------------------------------------------------------
+  # Dashboard (Static Site)
+  # --------------------------------------------------------------------------------
+  - type: web
+    name: telepaygate-dashboard
+    runtime: static
+    buildCommand: npm ci && npm run build -w @tg-payment/dashboard
+    staticPublishPath: packages/dashboard/dist
+    pullRequestPreviewsEnabled: true
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://telegram-payment-api.onrender.com/api/v1
+      - key: NODE_VERSION
+        value: "20"
+    autoDeploy: false
+
+  # --------------------------------------------------------------------------------
   # Redis Service
   # --------------------------------------------------------------------------------
   - type: redis
