@@ -32,19 +32,19 @@ export default function Onboarding() {
   };
 
   const CodeBlock = ({ code, id, label }: { code: string; id: string; label?: string }) => (
-    <div className="bg-[#0d0d12] rounded-xl border border-white/5 overflow-hidden">
+    <div className="bg-[#0d0d12] rounded-lg sm:rounded-xl border border-white/5 overflow-hidden">
       {label && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/5">
           <span className="text-xs text-gray-500">{label}</span>
           <button 
             onClick={() => copyToClipboard(code, id)}
-            className="text-gray-500 hover:text-white transition"
+            className="text-gray-500 hover:text-white transition p-1"
           >
-            {copied === id ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+            {copied === id ? <Check className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-green-400" /> : <Copy className="h-3.5 sm:h-4 w-3.5 sm:w-4" />}
           </button>
         </div>
       )}
-      <pre className="p-4 text-sm font-mono overflow-x-auto">
+      <pre className="p-3 sm:p-4 text-xs sm:text-sm font-mono overflow-x-auto">
         <code className="text-gray-300">{code}</code>
       </pre>
     </div>
@@ -56,26 +56,26 @@ export default function Onboarding() {
       title: 'Create account',
       icon: User,
       content: (
-        <div className="space-y-6">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             Sign up with your email to get started. You'll receive an API key immediately.
           </p>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {['Valid email address', 'TON wallet for payouts', 'Webhook URL (optional)'].map((item) => (
-              <div key={item} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-violet-500/20 flex items-center justify-center">
-                  <Check className="h-3 w-3 text-violet-400" />
+              <div key={item} className="flex items-center gap-2 sm:gap-3">
+                <div className="w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <Check className="h-2.5 sm:h-3 w-2.5 sm:w-3 text-violet-400" />
                 </div>
-                <span className="text-gray-300 text-sm">{item}</span>
+                <span className="text-gray-300 text-xs sm:text-sm">{item}</span>
               </div>
             ))}
           </div>
           <Link 
             to="/signup" 
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium hover:opacity-90 transition"
           >
             Create account
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
           </Link>
         </div>
       )
@@ -85,8 +85,8 @@ export default function Onboarding() {
       title: 'Get API key',
       icon: Key,
       content: (
-        <div className="space-y-6">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             After signup, you'll receive your API key. Keep it secure.
           </p>
           <CodeBlock 
@@ -94,8 +94,8 @@ export default function Onboarding() {
             id="api-key" 
             label="Your API Key"
           />
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-            <p className="text-amber-200 text-sm">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <p className="text-amber-200 text-xs sm:text-sm">
               Never share or commit your API key. Use environment variables.
             </p>
           </div>
@@ -107,8 +107,8 @@ export default function Onboarding() {
       title: 'Install SDK',
       icon: Terminal,
       content: (
-        <div className="space-y-4">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-3 sm:space-y-4">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             Install the TelePayGate SDK in your project.
           </p>
           <CodeBlock 
@@ -129,8 +129,8 @@ export default function Onboarding() {
       title: 'Initialize',
       icon: Code,
       content: (
-        <div className="space-y-6">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             Initialize the client with your API key.
           </p>
           <CodeBlock 
@@ -150,8 +150,8 @@ const client = new TelePayGate({
       title: 'Create payment',
       icon: CreditCard,
       content: (
-        <div className="space-y-6">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             Create a payment to request Telegram Stars from users.
           </p>
           <CodeBlock 
@@ -173,8 +173,8 @@ console.log(payment.invoiceUrl);`}
       title: 'Handle webhooks',
       icon: Webhook,
       content: (
-        <div className="space-y-6">
-          <p className="text-gray-400 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-gray-400 leading-relaxed text-sm sm:text-base">
             Receive real-time notifications when payments complete.
           </p>
           <CodeBlock 
@@ -203,21 +203,21 @@ console.log(payment.invoiceUrl);`}
     <div className="min-h-screen bg-[#0a0a0f]">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
+              <div className="w-7 sm:w-8 h-7 sm:h-8 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg flex items-center justify-center">
+                <Zap className="h-4 sm:h-5 w-4 sm:w-5 text-white" />
               </div>
-              <span className="text-lg font-semibold text-white">TelePayGate</span>
+              <span className="text-base sm:text-lg font-semibold text-white">TelePayGate</span>
             </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/login" className="text-gray-400 hover:text-white transition text-sm">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link to="/login" className="text-gray-400 hover:text-white transition text-xs sm:text-sm">
                 Login
               </Link>
               <Link 
                 to="/signup" 
-                className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition"
+                className="bg-white text-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium hover:bg-gray-100 transition"
               >
                 Get Started
               </Link>
@@ -227,46 +227,46 @@ console.log(payment.invoiceUrl);`}
       </nav>
 
       {/* Content */}
-      <div className="pt-28 pb-20 px-6">
+      <div className="pt-20 sm:pt-28 pb-12 sm:pb-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-white mb-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3">
               Quick Start Guide
             </h1>
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-sm sm:text-base">
               Get up and running in under 5 minutes
             </p>
           </div>
 
-          {/* Progress */}
-          <div className="flex items-center justify-center gap-2 mb-12">
+          {/* Progress - Mobile optimized */}
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 sm:mb-12 overflow-x-auto pb-2">
             {steps.map((step, index) => (
               <button
                 key={step.id}
                 onClick={() => setCurrentStep(index)}
-                className="flex items-center"
+                className="flex items-center flex-shrink-0"
               >
                 <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition ${
+                  className={`w-7 sm:w-8 h-7 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition ${
                     index <= currentStep 
                       ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white' 
                       : 'bg-white/5 text-gray-500'
                   }`}
                 >
-                  {index < currentStep ? <Check className="h-4 w-4" /> : step.id}
+                  {index < currentStep ? <Check className="h-3 sm:h-4 w-3 sm:w-4" /> : step.id}
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-8 h-px mx-1 ${index < currentStep ? 'bg-violet-500' : 'bg-white/10'}`} />
+                  <div className={`w-4 sm:w-8 h-px mx-0.5 sm:mx-1 ${index < currentStep ? 'bg-violet-500' : 'bg-white/10'}`} />
                 )}
               </button>
             ))}
           </div>
 
-          {/* Main Content */}
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Step List */}
-            <div className="lg:col-span-1 space-y-2">
+          {/* Main Content - Stack on mobile */}
+          <div className="grid lg:grid-cols-4 gap-6 sm:gap-8">
+            {/* Step List - Hidden on mobile, visible on lg */}
+            <div className="hidden lg:block lg:col-span-1 space-y-2">
               {steps.map((step, index) => (
                 <button
                   key={step.id}
@@ -287,17 +287,17 @@ console.log(payment.invoiceUrl);`}
 
             {/* Content Area */}
             <div className="lg:col-span-3">
-              <div className="bg-white/[0.02] rounded-2xl p-8 border border-white/5">
-                <div className="flex items-center gap-4 mb-6">
+              <div className="bg-white/[0.02] rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-white/5">
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
                   {(() => {
                     const StepIcon = steps[currentStep].icon;
                     return (
-                      <div className="w-10 h-10 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-xl flex items-center justify-center">
-                        <StepIcon className="h-5 w-5 text-violet-400" />
+                      <div className="w-9 sm:w-10 h-9 sm:h-10 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
+                        <StepIcon className="h-4 sm:h-5 w-4 sm:w-5 text-violet-400" />
                       </div>
                     );
                   })()}
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg sm:text-xl font-semibold text-white">
                     {steps[currentStep].title}
                   </h2>
                 </div>
@@ -305,35 +305,36 @@ console.log(payment.invoiceUrl);`}
                 {steps[currentStep].content}
 
                 {/* Navigation */}
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/5">
+                <div className="flex items-center justify-between mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-white/5">
                   <button
                     onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
                     disabled={currentStep === 0}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
+                    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm transition ${
                       currentStep === 0
                         ? 'text-gray-600 cursor-not-allowed'
                         : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <ArrowLeft className="h-4 w-4" />
-                    Previous
+                    <ArrowLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Back</span>
                   </button>
                   
                   {currentStep < steps.length - 1 ? (
                     <button
                       onClick={() => setCurrentStep(currentStep + 1)}
-                      className="flex items-center gap-2 bg-white/10 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition"
+                      className="flex items-center gap-1.5 sm:gap-2 bg-white/10 text-white px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-white/20 transition"
                     >
                       Next
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                     </button>
                   ) : (
                     <Link
                       to="/signup"
-                      className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition"
+                      className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-4 sm:px-5 py-2 rounded-lg text-xs sm:text-sm font-medium hover:opacity-90 transition"
                     >
                       Get started
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                     </Link>
                   )}
                 </div>

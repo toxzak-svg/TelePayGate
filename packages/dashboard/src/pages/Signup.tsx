@@ -89,16 +89,16 @@ export default function Signup() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4 sm:p-6">
         <div className="max-w-sm w-full text-center">
-          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-8 w-8 text-green-400" />
+          <div className="w-14 sm:w-16 h-14 sm:h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+            <CheckCircle className="h-7 sm:h-8 w-7 sm:w-8 text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Account Created!</h1>
-          <p className="text-gray-400 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Account Created!</h1>
+          <p className="text-gray-400 mb-5 sm:mb-6 text-sm sm:text-base">
             Check your email for your API key.
           </p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs sm:text-sm">
             Redirecting to login...
           </p>
         </div>
@@ -107,37 +107,37 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4 sm:p-6">
       <div className="max-w-sm w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl flex items-center justify-center">
-              <Zap className="h-6 w-6 text-white" />
+        <div className="text-center mb-6 sm:mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 mb-5 sm:mb-6">
+            <div className="w-9 sm:w-10 h-9 sm:h-10 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <Zap className="h-5 sm:h-6 w-5 sm:w-6 text-white" />
             </div>
-            <span className="text-xl font-semibold text-white">TelePayGate</span>
+            <span className="text-lg sm:text-xl font-semibold text-white">TelePayGate</span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">
             Create your account
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs sm:text-sm">
             Start accepting Telegram Stars payments
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-2">
+            <label htmlFor="email" className="block text-xs sm:text-sm text-gray-400 mb-1.5 sm:mb-2">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
               <input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -147,16 +147,16 @@ export default function Signup() {
 
           {/* Password Field */}
           <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-2">
+            <label htmlFor="password" className="block text-xs sm:text-sm text-gray-400 mb-1.5 sm:mb-2">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Min. 8 characters"
-                className="w-full pl-11 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                className="w-full pl-10 sm:pl-11 pr-11 sm:pr-12 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
@@ -164,25 +164,25 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition p-1"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? <EyeOff className="h-4 sm:h-5 w-4 sm:w-5" /> : <Eye className="h-4 sm:h-5 w-4 sm:w-5" />}
               </button>
             </div>
           </div>
 
           {/* Confirm Password Field */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm text-gray-400 mb-2">
+            <label htmlFor="confirmPassword" className="block text-xs sm:text-sm text-gray-400 mb-1.5 sm:mb-2">
               Confirm password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 sm:h-5 w-4 sm:w-5 text-gray-500" />
               <input
                 id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm your password"
-                className="w-full pl-11 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                className="w-full pl-10 sm:pl-11 pr-11 sm:pr-12 py-2.5 sm:py-3 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl text-white placeholder-gray-600 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}
@@ -190,15 +190,15 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition p-1"
               >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showConfirmPassword ? <EyeOff className="h-4 sm:h-5 w-4 sm:w-5" /> : <Eye className="h-4 sm:h-5 w-4 sm:w-5" />}
               </button>
             </div>
           </div>
 
           {/* Terms Checkbox */}
-          <div className="flex items-start gap-3 pt-2">
+          <div className="flex items-start gap-2.5 sm:gap-3 pt-1 sm:pt-2">
             <input
               id="terms"
               type="checkbox"
@@ -207,7 +207,7 @@ export default function Signup() {
               className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-white/5 text-violet-600 focus:ring-violet-500"
               disabled={loading}
             />
-            <label htmlFor="terms" className="text-sm text-gray-500">
+            <label htmlFor="terms" className="text-xs sm:text-sm text-gray-500">
               I agree to the{' '}
               <a href="#" className="text-violet-400 hover:text-violet-300 transition">
                 Terms
@@ -221,9 +221,9 @@ export default function Signup() {
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div className="flex items-center gap-2 p-2.5 sm:p-3 bg-red-500/10 border border-red-500/20 rounded-lg sm:rounded-xl">
               <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
-              <p className="text-red-400 text-sm">{error}</p>
+              <p className="text-red-400 text-xs sm:text-sm">{error}</p>
             </div>
           )}
 
@@ -231,7 +231,7 @@ export default function Signup() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white py-3 rounded-xl font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 mt-6"
+            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 mt-4 sm:mt-6 text-sm"
           >
             {loading ? (
               <>
@@ -248,7 +248,7 @@ export default function Signup() {
         </form>
 
         {/* Login Link */}
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-gray-500 text-xs sm:text-sm mt-5 sm:mt-6">
           Already have an account?{' '}
           <Link to="/login" className="text-violet-400 hover:text-violet-300 transition">
             Sign in
