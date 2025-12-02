@@ -4,12 +4,12 @@ import { useAuth } from '../../context/AuthContext';
 import useTheme from '../../hooks/useTheme';
 
 const navigation = [
-  { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-  { name: 'Transactions', to: '/transactions', icon: ArrowLeftRight },
-  { name: 'P2P Orders', to: '/p2p-orders', icon: Zap },
-  { name: 'DEX Analytics', to: '/dex-analytics', icon: TrendingUp },
-  { name: 'Webhooks', to: '/webhooks', icon: Bell },
-  { name: 'Settings', to: '/settings', icon: Settings },
+  { name: 'Dashboard', to: '/app/dashboard', icon: LayoutDashboard },
+  { name: 'Transactions', to: '/app/transactions', icon: ArrowLeftRight },
+  { name: 'P2P Orders', to: '/app/p2p-orders', icon: Zap },
+  { name: 'DEX Analytics', to: '/app/dex-analytics', icon: TrendingUp },
+  { name: 'Webhooks', to: '/app/webhooks', icon: Bell },
+  { name: 'Settings', to: '/app/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
