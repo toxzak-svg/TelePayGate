@@ -67,15 +67,15 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && rm -rf dist/__tests__",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force && rm -rf dist/__tests__",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "dotenv -e .env.test -- jest --passWithNoTests --forceExit",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "telepaygate-core": "^0.1.0",
+    "telepaygate-core": "^0.1.2",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
