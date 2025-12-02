@@ -6,7 +6,10 @@ import ToastProvider from './components/common/ToastProvider';
 import { queryClient } from './api/queryClient';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Layout from './components/layout/Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import PasswordlessLogin from './pages/PasswordlessLogin';
 import Transactions from './pages/Transactions';
@@ -24,17 +27,22 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Public pages */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth/passwordless" element={<PasswordlessLogin />} />
+            {/* Protected dashboard routes */}
             <Route
-              path="/"
+              path="/app"
               element={
                 <ProtectedRoute>
                   <Layout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<Navigate to="/app/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="p2p-orders" element={<P2POrders />} />
