@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getDatabase } from "@tg-payment/core";
+import { getDatabase } from "telepaygate-core";
 
 export function requireDashboardRole(
   role: "admin" | "editor" | "viewer" | "dev",

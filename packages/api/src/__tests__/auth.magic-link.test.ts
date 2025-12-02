@@ -28,7 +28,7 @@ describe("Magic Link Authentication", () => {
     }
     
     const { buildTestApp } = await import("./integration/app.test-setup");
-    const { getDatabase } = await import("@tg-payment/core");
+    const { getDatabase } = await import("telepaygate-core");
     
     app = buildTestApp();
     agent = request.agent(app);
@@ -46,7 +46,7 @@ describe("Magic Link Authentication", () => {
   }, 15000);
 
   test("should issue a magic link and persist token", async () => {
-    const { getDatabase } = await import("@tg-payment/core");
+    const { getDatabase } = await import("telepaygate-core");
     const res = await request(app)
       .post("/api/v1/auth/magic-link")
       .send({ email: testEmail });

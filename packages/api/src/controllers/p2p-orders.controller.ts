@@ -3,7 +3,7 @@ import {
   getDatabase,
   StarsOrderModel,
   StarsP2PService,
-} from "@tg-payment/core";
+} from "telepaygate-core";
 import {
   parsePagination,
   requireUserId,

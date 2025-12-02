@@ -1,4 +1,4 @@
-import { initDatabase, getDatabase } from "@tg-payment/core";
+import { initDatabase, getDatabase } from "telepaygate-core";
 
 // Initialize database connection
 const DATABASE_URL =

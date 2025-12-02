@@ -1,7 +1,7 @@
 import "module-alias/register";
 import "dotenv/config";
 import http from "http";
-import { initDatabase, validateEnvironmentOrExit, getEnvironmentSummary } from "@tg-payment/core";
+import { initDatabase, validateEnvironmentOrExit, getEnvironmentSummary } from "telepaygate-core";
 import createServer from "./server";
 
 // Validate environment variables before starting

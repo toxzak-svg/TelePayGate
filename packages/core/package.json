@@ -1,5 +1,5 @@
 {
-  "name": "@telepaygate/core",
+  "name": "telepaygate-core",
   "version": "0.1.0",
   "description": "Core business logic for TelePayGate - Telegram Stars to TON/Fiat payment processing",
   "author": "TelePayGate Team",

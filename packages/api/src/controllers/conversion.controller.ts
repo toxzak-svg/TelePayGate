@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { DirectConversionService } from "@tg-payment/core";
+import { DirectConversionService } from "telepaygate-core";
 import {
   requireUserId,
   parsePagination,

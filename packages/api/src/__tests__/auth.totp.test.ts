@@ -24,7 +24,7 @@ describe("TOTP Setup and Verification", () => {
     }
     
     const { buildTestApp } = await import("./integration/app.test-setup");
-    const { getDatabase } = await import("@tg-payment/core");
+    const { getDatabase } = await import("telepaygate-core");
     app = buildTestApp();
     db = getDatabase();
     

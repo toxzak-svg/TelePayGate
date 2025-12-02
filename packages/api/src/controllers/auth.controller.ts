@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { AuthService } from "@tg-payment/core";
-import { getDatabase } from "@tg-payment/core";
+import { AuthService } from "telepaygate-core";
+import { getDatabase } from "telepaygate-core";
 import {
   respondSuccess,
   respondError,

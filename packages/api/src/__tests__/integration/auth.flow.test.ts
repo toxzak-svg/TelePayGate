@@ -30,14 +30,14 @@ beforeAll(async () => {
     // Now import modules that rely on DATABASE_URL
     const srv = await import("../../server");
     createServer = srv.default;
-    const coreMod = await import("@tg-payment/core");
+    const coreMod = await import("telepaygate-core");
     initDatabase = coreMod.initDatabase;
     AuthService = coreMod.AuthService;
   } else {
     // Non-fixture path: import modules normally
     const srv = await import("../../server");
     createServer = srv.default;
-    const coreMod = await import("@tg-payment/core");
+    const coreMod = await import("telepaygate-core");
     initDatabase = coreMod.initDatabase;
     AuthService = coreMod.AuthService;
   }

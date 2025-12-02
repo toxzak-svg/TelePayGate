@@ -1,4 +1,4 @@
-import { AuthService, getDatabase, initDatabase } from "@tg-payment/core";
+import { AuthService, getDatabase, initDatabase } from "telepaygate-core";
 describe("Backup Codes Integration", () => {
   const codes = AuthService.generateBackupCodes(5);
   let userId: string;

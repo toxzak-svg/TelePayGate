@@ -10,7 +10,7 @@ describe("Email/password registration & login", () => {
 
   beforeAll(async () => {
     const { buildTestApp } = await import("./integration/app.test-setup");
-    const { getDatabase } = await import("@tg-payment/core");
+    const { getDatabase } = await import("telepaygate-core");
     
     app = buildTestApp();
     const db = getDatabase();
@@ -18,7 +18,7 @@ describe("Email/password registration & login", () => {
   }, 30000);
 
   test("register should create a dashboard user and set cookies", async () => {
-    const { getDatabase } = await import("@tg-payment/core");
+    const { getDatabase } = await import("telepaygate-core");
     const res = await request(app).post("/api/v1/auth/register").send({ email, password });
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);

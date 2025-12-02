@@ -1,4 +1,4 @@
-import { getDatabase, closeDatabase } from "@tg-payment/core";
+import { getDatabase, closeDatabase } from "telepaygate-core";
 
 export async function cleanDatabase() {
   const db = getDatabase();

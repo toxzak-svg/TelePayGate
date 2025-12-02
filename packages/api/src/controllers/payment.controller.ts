@@ -4,9 +4,9 @@ import {
   FeeService,
   PaymentStatus,
   getDatabase,
-} from "@tg-payment/core";
-import type { Database } from "@tg-payment/core";
-import { TelegramService } from "@tg-payment/core";
+} from "telepaygate-core";
+import type { Database } from "telepaygate-core";
+import { TelegramService } from "telepaygate-core";
 import { respondSuccess, respondError } from "../utils/response";
 import {
   parsePagination,
