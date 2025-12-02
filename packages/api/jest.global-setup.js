@@ -1,5 +1,19 @@
 const path = require('path');
 const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Load .env.test from workspace root before anything else
+const envTestPath = path.resolve(__dirname, '../../.env.test');
+if (fs.existsSync(envTestPath)) {
+  const result = dotenv.config({ path: envTestPath });
+  if (result.error) {
+    console.warn('[jest.global-setup] Failed to load .env.test:', result.error);
+  } else {
+    console.log('[jest.global-setup] Loaded .env.test from', envTestPath);
+  }
+} else {
+  console.warn('[jest.global-setup] .env.test not found at', envTestPath);
+}
 
 module.exports = async () => {
   if (process.env.USE_TESTCONTAINERS !== 'true') {

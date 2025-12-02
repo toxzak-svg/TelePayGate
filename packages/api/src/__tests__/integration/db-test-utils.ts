@@ -1,4 +1,4 @@
-import { getDatabase } from "@tg-payment/core";
+import { getDatabase, closeDatabase } from "@tg-payment/core";
 
 export async function cleanDatabase() {
   const db = getDatabase();
@@ -18,8 +18,5 @@ export async function cleanDatabase() {
 }
 
 export async function disconnectDatabase() {
-  const db = getDatabase();
-  if (db) {
-    await db.$pool.end();
-  }
+  closeDatabase();
 }

@@ -39,7 +39,7 @@ describe("Payments API - webhook", () => {
       cleanDatabase = dbUtils.cleanDatabase;
       disconnectDatabase = dbUtils.disconnectDatabase;
     }
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (fixture) {
@@ -50,12 +50,12 @@ describe("Payments API - webhook", () => {
     if (disconnectDatabase) {
       await disconnectDatabase();
     }
-  });
+  }, 15000);
 
   beforeEach(async () => {
     // Only clean database, do not insert user
     await cleanDatabase();
-  });
+  }, 15000);
 
   test("POST /api/v1/payments/webhook - acknowledges webhook", async () => {
     const payload = {

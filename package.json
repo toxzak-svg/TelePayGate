@@ -51,13 +51,13 @@
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
     "eslint": "^8.53.0",
-    "postcss": "^8.5.6",
     "normalize-range": "^0.1.2",
+    "postcss": "^8.5.6",
     "prettier": "^3.0.3",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5.2.2",
-    "testcontainers": "^9.1.0"
+    "testcontainers": "^9.1.0",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
