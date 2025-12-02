@@ -1,6 +1,6 @@
 {
   "name": "telepaygate-core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Core business logic for TelePayGate - Telegram Stars to TON/Fiat payment processing",
   "author": "TelePayGate Team",
   "license": "MIT",
@@ -78,12 +78,12 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && rm -rf dist/__tests__",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force && rm -rf dist/__tests__",
     "dev": "tsx watch src/index.ts",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run clean && npm run build",
     "worker:monitor": "ts-node src/workers/deposit-settlement.worker.ts",
     "worker:fees": "ts-node src/workers/fee-collection.worker.ts",
