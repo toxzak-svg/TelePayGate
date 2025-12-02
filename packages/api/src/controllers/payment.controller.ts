@@ -8,6 +8,11 @@ import {
 import type { Database } from "@tg-payment/core";
 import { TelegramService } from "@tg-payment/core";
 import { respondSuccess, respondError } from "../utils/response";
+import {
+  parsePagination,
+  requireUserId,
+  buildPaginationMeta,
+} from "../utils/controller-helpers";
 import { validate as validateUuid, v5 as uuidv5 } from "uuid";
 
 const USER_ID_NAMESPACE = "3b9d87a2-54d7-4878-9d87-351edcb2564b";
@@ -170,26 +175,15 @@ export class PaymentController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: "MISSING_USER_ID",
-            message: "X-User-Id header is required",
-          },
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const normalizedUserId = PaymentController.normalizeUserId(userId);
 
       const db = getDatabase();
       await PaymentController.ensureUserExists(db, normalizedUserId);
       const paymentModel = new PaymentModel(db);
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-      const offset = (page - 1) * limit;
+      const { page, limit, offset } = parsePagination(req);
       const status = req.query.status as PaymentStatus | undefined;
 
       const { payments, total } = await paymentModel.listByUser(
@@ -210,12 +204,7 @@ export class PaymentController {
           telegramPaymentId: p.telegramPaymentId,
           createdAt: p.createdAt,
         })),
-        meta: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
+        meta: buildPaginationMeta(total, page, limit),
       });
     } catch (error) {
       next(error);
@@ -232,17 +221,8 @@ export class PaymentController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: "MISSING_USER_ID",
-            message: "X-User-Id header is required",
-          },
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const normalizedUserId = PaymentController.normalizeUserId(userId);
 

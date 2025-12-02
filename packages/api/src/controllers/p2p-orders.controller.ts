@@ -4,21 +4,17 @@ import {
   StarsOrderModel,
   StarsP2PService,
 } from "@tg-payment/core";
+import {
+  parsePagination,
+  requireUserId,
+  buildPaginationMeta,
+} from "../utils/controller-helpers";
 
 export class P2POrdersController {
   static async createOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: {
-              code: "MISSING_USER_ID",
-              message: "X-User-Id header required",
-            },
-          });
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const { type, starsAmount, tonAmount, rate } = req.body;
       if (!type || (type !== "sell" && type !== "buy"))
@@ -86,25 +82,18 @@ export class P2POrdersController {
   static async listOpenOrders(req: Request, res: Response, next: NextFunction) {
     try {
       const type = req.query.type as "sell" | "buy" | undefined;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-      const offset = (page - 1) * limit;
+      const { page, limit, offset } = parsePagination(req);
 
       const db = getDatabase();
       const model = new StarsOrderModel(db);
       const orders = await model.listOpenOrders(type, limit, offset);
-      const totalRow: any = await model.countOpenOrders(type);
+      const totalRow: { total: number } | null = await model.countOpenOrders(type);
       const total = totalRow?.total ?? 0;
 
       res.status(200).json({
         success: true,
         data: orders,
-        meta: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
+        meta: buildPaginationMeta(total, page, limit),
       });
     } catch (err) {
       next(err);
@@ -132,17 +121,9 @@ export class P2POrdersController {
 
   static async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: {
-              code: "MISSING_USER_ID",
-              message: "X-User-Id header required",
-            },
-          });
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
       const { id } = req.params;
       const db = getDatabase();
       const model = new StarsOrderModel(db);
