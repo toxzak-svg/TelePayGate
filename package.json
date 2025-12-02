@@ -11,9 +11,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @tg-payment/core && (npm run build -w @tg-payment/api & npm run build -w @tg-payment/dashboard & npm run build -w @tg-payment/sdk & wait)",
-    "build:parallel": "npm run build -w @tg-payment/core && (npm run build -w @tg-payment/api & npm run build -w @tg-payment/dashboard & npm run build -w @tg-payment/sdk & wait)",
-    "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
+    "build": "npm run build -w telepaygate-core && (npm run build -w telepaygate-api & npm run build -w @tg-payment/dashboard & npm run build -w telepaygate-sdk & wait)",
+    "build:parallel": "npm run build -w telepaygate-core && (npm run build -w telepaygate-api & npm run build -w @tg-payment/dashboard & npm run build -w telepaygate-sdk & wait)",
+    "build:backend": "npm run build -w telepaygate-core && npm run build -w telepaygate-api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
     "test:prepare": "PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 telepaygate_test || true && DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test node database/migrate.cjs reset",
@@ -23,7 +23,7 @@
     "clean": "bash ./scripts/clean.sh",
     "lint": "eslint . --ext .ts --fix",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
-    "worker:fees": "npm run worker:fees -w @tg-payment/core",
+    "worker:fees": "npm run worker:fees -w telepaygate-core",
     "wallet:update": "node packages/core/scripts/update-platform-wallet.js",
     "migrate": "node database/migrate.cjs up",
     "migrate:status": "node database/migrate.cjs status",

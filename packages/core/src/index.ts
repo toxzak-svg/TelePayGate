@@ -120,13 +120,12 @@ export { ServerBase } from "./server";
 // ============================================
 // VERSION INFO
 // ============================================
-export const VERSION = "2.0.0";
+export const VERSION = "0.1.2";
 export const API_VERSION = "v1";
 export const INTEGRATION_METHOD = "DIRECT_TON"; // No Fragment
 
-console.log("✅ @tg-payment/core v2.0.0 initialized");
-console.log("🔗 Integration: Direct TON Blockchain (No Fragment API)");
-console.log("📦 Features: No KYC | No Holding Period | Instant Withdrawals");
+// Note: Removed console.log side effects for cleaner npm package
+// Use initializeKmsProvider() to set up AWS KMS if needed
 
 // If an AWS KMS key is configured, wire the AWS provider into KMS abstraction.
 try {
