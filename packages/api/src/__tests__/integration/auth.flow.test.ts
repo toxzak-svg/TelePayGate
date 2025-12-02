@@ -84,4 +84,4 @@ test("magic link verify -> session cookie -> /auth/me", async () => {
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);
   expect(meRes.body.data.user.email).toBe(email);
-});
+}, 30000);

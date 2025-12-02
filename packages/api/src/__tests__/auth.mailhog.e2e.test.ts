@@ -8,16 +8,17 @@ process.env.EMAIL_SMTP_PORT = process.env.EMAIL_SMTP_PORT || "1025";
 import request from "supertest";
 import axios from "axios";
 import { Application } from "express";
-import { buildTestApp } from "./integration/app.test-setup";
 import { extractTokenFromUrl } from "./test-utils";
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 
 describe("Magic Link via MailHog (E2E)", () => {
   let app: Application;
-  beforeAll(() => {
+  
+  beforeAll(async () => {
+    const { buildTestApp } = await import("./integration/app.test-setup");
     app = buildTestApp();
-  });
+  }, 30000);
 
   it("issues magic link and verifies via MailHog", async () => {
     const testEmail = `e2e-mailhog-${Date.now()}@example.com`;

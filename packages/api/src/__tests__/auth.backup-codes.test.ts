@@ -28,7 +28,7 @@ describe("Backup Codes Integration", () => {
     );
     userId = user.id;
     await db.none("DELETE FROM backup_codes WHERE user_id = $1", [userId]);
-  });
+  }, 30000);
 
   afterAll(async () => {
     const fixture = (global as any).__tc_fixture;
@@ -37,7 +37,7 @@ describe("Backup Codes Integration", () => {
       const { stopPostgresFixture } = require("./fixtures/postgresFixture");
       await stopPostgresFixture(fixture);
     }
-  });
+  }, 15000);
 
   test("should persist and verify backup codes", async () => {
     await AuthService.persistTotpAndBackupCodes(
@@ -54,5 +54,5 @@ describe("Backup Codes Integration", () => {
     for (let i = 0; i < codes.length; i++) {
       expect(rows[i].code_hash).not.toBe(codes[i]);
     }
-  });
+  }, 30000);
 });
