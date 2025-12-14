@@ -37,7 +37,7 @@ describe('TelePayGate SDK', () => {
 
   describe('constructor', () => {
     it('should create client with default options', () => {
-      const defaultClient = new TelePayGate({
+      new TelePayGate({
         apiKey: 'pk_test_abc',
       });
 
@@ -54,7 +54,7 @@ describe('TelePayGate SDK', () => {
     });
 
     it('should create client with custom options', () => {
-      const customClient = new TelePayGate({
+      new TelePayGate({
         apiKey: 'pk_test_xyz',
         apiSecret: 'sk_test_secret',
         apiUrl: 'https://custom.api.com',

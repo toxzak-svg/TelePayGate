@@ -1,17 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { respondSuccess, respondError, newRequestId } from "../utils/response";
 
-declare global {
-  namespace Express {
-    interface Response {
-      replySuccess: (data?: unknown, status?: number) => Response;
-      replyError: (
-        code: string,
-        message: string,
-        status?: number,
-        meta?: unknown,
-      ) => Response;
-    }
+declare module 'express-serve-static-core' {
+  interface Response {
+    replySuccess: (data?: unknown, status?: number) => Response;
+    replyError: (
+      code: string,
+      message: string,
+      status?: number,
+      _meta?: unknown,
+    ) => Response;
   }
 }
 
@@ -54,7 +52,7 @@ export function responseMiddleware(
     code: string,
     message: string,
     status = 500,
-    meta?: unknown,
+    _meta?: unknown,
   ) => {
     // eslint-disable-next-line no-console
     console.warn(
