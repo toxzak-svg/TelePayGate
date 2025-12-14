@@ -111,11 +111,11 @@ export class WalletManagerService {
           clearInterval(interval);
         }
         // Expire if past deadline
-        const dep: any = await this.db.oneOrNone(
+        const dep = (await this.db.oneOrNone(
           "SELECT * FROM manual_deposits WHERE id = $1",
           [depositId],
-        );
-        if (dep && new Date(dep.expires_at) < new Date()) {
+        )) as { expires_at?: string } | null;
+        if (dep && dep.expires_at && new Date(dep.expires_at) < new Date()) {
           await this.db.none(
             "UPDATE manual_deposits SET status = $1 WHERE id = $2",
             ["expired", depositId],
