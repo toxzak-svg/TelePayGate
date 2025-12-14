@@ -7,10 +7,9 @@ export function requireDashboardRole(
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const db = getDatabase();
+
       // dashboardUserId may be attached by authenticate fallback
-      const dashboardUserId = (req as any).dashboardUserId as
-        | string
-        | undefined;
+      const dashboardUserId = (req as unknown as { dashboardUserId?: string }).dashboardUserId;
 
       if (!dashboardUserId) {
         // try session cookie
@@ -21,47 +20,41 @@ export function requireDashboardRole(
           .find((c) => c.startsWith("session_id="))
           ?.split("=")[1];
         if (!sessionId)
-          return res
-            .status(403)
-            .json({
-              success: false,
-              error: {
-                code: "FORBIDDEN",
-                message: "Not authenticated as dashboard user",
-              },
-            });
-        const session = await db.oneOrNone(
+          return res.status(403).json({
+            success: false,
+            error: { code: "FORBIDDEN", message: "Not authenticated as dashboard user" },
+          });
+
+        const session = (await db.oneOrNone(
           "SELECT * FROM sessions WHERE session_token = $1",
           [sessionId],
-        );
+        )) as Record<string, unknown> | null;
+
         if (!session)
-          return res
-            .status(403)
-            .json({
-              success: false,
-              error: { code: "FORBIDDEN", message: "Session not found" },
-            });
-        (req as any).dashboardUserId = session.user_id;
+          return res.status(403).json({
+            success: false,
+            error: { code: "FORBIDDEN", message: "Session not found" },
+          });
+
+        (req as unknown as { dashboardUserId?: string }).dashboardUserId = String(session["user_id"]);
       }
 
-      const dashUser = await db.oneOrNone(
+      const dashUser = (await db.oneOrNone(
         "SELECT * FROM dashboard_users WHERE id = $1",
-        [(req as any).dashboardUserId],
-      );
+        [(req as unknown as { dashboardUserId?: string }).dashboardUserId],
+      )) as Record<string, unknown> | null;
+
       if (!dashUser)
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: { code: "FORBIDDEN", message: "Dashboard user not found" },
-          });
-      if (!dashUser.is_active)
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: { code: "FORBIDDEN", message: "Account inactive" },
-          });
+        return res.status(403).json({
+          success: false,
+          error: { code: "FORBIDDEN", message: "Dashboard user not found" },
+        });
+
+      if (!dashUser["is_active"])
+        return res.status(403).json({
+          success: false,
+          error: { code: "FORBIDDEN", message: "Account inactive" },
+        });
 
       const rolesHierarchy: Record<string, number> = {
         viewer: 1,
@@ -69,26 +62,23 @@ export function requireDashboardRole(
         editor: 3,
         admin: 4,
       };
-      if (rolesHierarchy[dashUser.role] < rolesHierarchy[role]) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: { code: "FORBIDDEN", message: "Insufficient role" },
-          });
+
+      if ((rolesHierarchy[String(dashUser["role"])]) < rolesHierarchy[role]) {
+        return res.status(403).json({
+          success: false,
+          error: { code: "FORBIDDEN", message: "Insufficient role" },
+        });
       }
 
       // attach dashboard user to request
-      (req as any).dashboardUser = dashUser;
+      (req as unknown as { dashboardUser?: Record<string, unknown> }).dashboardUser = dashUser;
       next();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Role middleware error", err);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error: { code: "SERVER_ERROR", message: "Role check failed" },
-        });
+      res.status(500).json({
+        success: false,
+        error: { code: "SERVER_ERROR", message: "Role check failed" },
+      });
     }
   };
 }
