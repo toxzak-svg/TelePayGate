@@ -133,7 +133,7 @@ export class PaymentController {
    * Get payment by ID
    * GET /api/v1/payments/:id
    */
-  static async getPayment(req: Request, res: Response): Promise<void> {
+  static async getPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const db = getDatabase();
@@ -161,7 +161,7 @@ export class PaymentController {
         },
       });
     } catch (error) {
-      // ...existing code...
+      next(error);
     }
   }
 

@@ -331,7 +331,7 @@ export class ConversionService {
     const maxPolls = 60; // 5 minutes (5s intervals)
     let polls = 0;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const intervalId = setInterval(async () => {
         if (polls >= maxPolls) {
           clearInterval(intervalId);
