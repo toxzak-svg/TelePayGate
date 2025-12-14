@@ -55,6 +55,41 @@ services:
         condition: service_started
     command: node packages/api/dist/index.js
 
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telepaygate_dashboard
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: serve -s packages/dashboard/dist -l 5000
+
+  sdk_builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telepaygate_sdk_builder
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    command: sh -c "npm run -w telepaygate-sdk build && sleep infinity"
+
+  dashboard_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: telepaygate_dashboard_prod
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
   mailhog:
     image: mailhog/mailhog:latest
     container_name: telepaygate_mailhog

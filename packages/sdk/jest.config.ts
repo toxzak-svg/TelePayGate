@@ -9,6 +9,8 @@ const config: Config = {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
+    '!src/types.ts',
+    '!src/index.ts',
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',
   ],

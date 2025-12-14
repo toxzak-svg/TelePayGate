@@ -112,7 +112,7 @@ services:
     name: telegram-payment-api
     env: node
     plan: starter
-    buildCommand: npm ci && npm run build:backend
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
     startCommand: node packages/api/dist/server.js
     preDeployCommand: npm run migrate
     healthCheckPath: /health
@@ -131,7 +131,7 @@ services:
           property: connectionString
       - key: PORT
         value: 10000
-    autoDeploy: false
+    autoDeploy: true
 
   # --------------------------------------------------------------------------------
   # Background Worker: Deposit Monitor & Settlement
@@ -140,7 +140,7 @@ services:
     name: worker-deposit-monitor
     env: node
     plan: starter
-    buildCommand: npm ci && npm run build:backend
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
     startCommand: node packages/core/dist/workers/deposit-settlement.worker.js
     envVarGroups:
       - shared-runtime
@@ -163,7 +163,7 @@ services:
     name: worker-fee-collection
     env: node
     plan: starter
-    buildCommand: npm ci && npm run build:backend
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
     startCommand: node packages/core/dist/workers/fee-collection.worker.js
     envVarGroups:
       - shared-runtime
@@ -207,7 +207,7 @@ services:
         value: https://telegram-payment-api.onrender.com/api/v1
       - key: NODE_VERSION
         value: "20"
-    autoDeploy: false
+    autoDeploy: true
 
   # --------------------------------------------------------------------------------
   # Redis Service
