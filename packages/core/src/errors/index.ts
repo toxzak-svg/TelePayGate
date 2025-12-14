@@ -3,7 +3,7 @@ export class PaymentGatewayError extends Error {
     public code: string,
     message: string,
     public statusCode: number = 400,
-    public details?: Record<string, any>,
+    public details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "PaymentGatewayError";
@@ -11,7 +11,7 @@ export class PaymentGatewayError extends Error {
 }
 
 export class ValidationError extends PaymentGatewayError {
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super("VALIDATION_ERROR", message, 400, details);
   }
 }
@@ -35,7 +35,7 @@ export class ExternalApiError extends PaymentGatewayError {
 }
 
 export class ConversionError extends PaymentGatewayError {
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(message: string, details?: Record<string, unknown>) {
     super("CONVERSION_ERROR", message, 400, details);
   }
 }

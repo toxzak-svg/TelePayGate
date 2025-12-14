@@ -3,7 +3,7 @@ import { Pool } from "pg";
 
 const pgp = pgPromise();
 
-export type Database = pgPromise.IDatabase<any>;
+export type Database = pgPromise.IDatabase<Record<string, unknown>>;
 
 let db: Database | null = null;
 let pool: Pool | null = null;
