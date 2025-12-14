@@ -209,11 +209,11 @@ export default function Signup() {
             />
             <label htmlFor="terms" className="text-xs sm:text-sm text-gray-500">
               I agree to the{' '}
-              <a href="#" className="text-violet-400 hover:text-violet-300 transition">
+              <a href="/TERMS/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition">
                 Terms
               </a>{' '}
               and{' '}
-              <a href="#" className="text-violet-400 hover:text-violet-300 transition">
+              <a href="/PRIVACY/" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition">
                 Privacy Policy
               </a>
             </label>

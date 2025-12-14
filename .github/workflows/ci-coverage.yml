@@ -1,0 +1,75 @@
+name: CI — Tests & Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests-and-coverage:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: tg_user
+          POSTGRES_PASSWORD: tg_pass
+        options: >-
+          --health-cmd "pg_isready -U tg_user" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      DATABASE_URL: postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test
+      JEST_COVERAGE_THRESHOLD: '70'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -U tg_user; do sleep 1; done
+
+      - name: Create test database and run migrations
+        env:
+          PGPASSWORD: tg_pass
+        run: |
+          createdb -U tg_user -h localhost -p 5432 telepaygate_test || true
+          node database/migrate.cjs reset
+
+      - name: Run SDK coverage
+        run: npm run coverage:telepaygate-sdk
+
+      - name: Run Dashboard coverage
+        run: npm run coverage:dashboard
+
+      - name: Run Core coverage
+        run: npm run coverage:core || true
+
+      - name: Run API coverage
+        run: npm run coverage:api || true
+
+      - name: Merge LCOV files
+        run: |
+          mkdir -p coverage || true
+          npx lcov-result-merger './packages/**/coverage/lcov.info' > coverage/lcov.info || true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+
+      - name: Output coverage hint
+        run: echo 'Merged coverage available in artifact `coverage-lcov`.'

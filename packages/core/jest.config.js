@@ -1,6 +1,7 @@
+const base = require('../../jest.base.config.cjs');
+
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  ...base,
   roots: ['<rootDir>/src'],
 
   testMatch: ['**/__tests__/**/*.test.ts'],
@@ -10,14 +11,6 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/**/index.ts'
   ],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
-    }
-  },
   globalSetup: '<rootDir>/jest.global-setup.js',
   globalTeardown: '<rootDir>/jest.global-teardown.js',
 };

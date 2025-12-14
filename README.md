@@ -740,6 +740,17 @@ curl https://your-domain.com/api/v1/health
 
 ---
 
+## Documentation site
+
+Built with MkDocs. To preview locally and verify `PRIVACY`/`TERMS` pages before publishing run:
+
+```bash
+pip install mkdocs mkdocs-material
+./scripts/deploy-mkdocs.sh serve
+```
+
+Ensure `docs/PRIVACY.md` and `docs/TERMS.md` contain production contact info and publicly-accessible HTTPS URLs before submission to Telegram Apps Center.
+
 ## 📊 Monitoring & Observability
 
 ### Key Metrics

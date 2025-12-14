@@ -193,9 +193,9 @@ export default function Landing() {
             <span className="text-xs sm:text-sm text-gray-500">© {new Date().getFullYear()} TelePayGate</span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-gray-500">
-            <a href="#" className="hover:text-white transition">Privacy</a>
-            <a href="#" className="hover:text-white transition">Terms</a>
-            <a href="#" className="hover:text-white transition">Support</a>
+            <a href="/PRIVACY/" className="hover:text-white transition" target="_blank" rel="noopener noreferrer">Privacy</a>
+            <a href="/TERMS/" className="hover:text-white transition" target="_blank" rel="noopener noreferrer">Terms</a>
+            <a href="mailto:support@example.com" className="hover:text-white transition">Support</a>
           </div>
         </div>
       </footer>

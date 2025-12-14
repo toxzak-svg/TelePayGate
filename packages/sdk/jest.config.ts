@@ -1,8 +1,9 @@
 import type { Config } from 'jest';
+// Extend root base config to centralize coverage thresholds
+const base: Config = require('../../jest.base.config.cjs');
 
 const config: Config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  ...base,
   rootDir: '.',
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.spec.ts'],
   collectCoverageFrom: [
@@ -12,14 +13,6 @@ const config: Config = {
     '!src/**/*.spec.ts',
   ],
   coverageDirectory: 'coverage',
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -28,8 +21,6 @@ const config: Config = {
       tsconfig: 'tsconfig.json',
     }],
   },
-  clearMocks: true,
-  restoreMocks: true,
 };
 
 export default config;
