@@ -1,0 +1,14 @@
+[1mdiff --git a/Dockerfile b/Dockerfile[m
+[1mindex fb32e12..d8c2686 100644[m
+[1m--- a/Dockerfile[m
+[1m+++ b/Dockerfile[m
+[36m@@ -18,8 +18,7 @@[m [mCOPY packages/sdk/package*.json ./packages/sdk/[m
+ [m
+ # Install dependencies (with cache mount for faster builds)[m
+ RUN --mount=type=cache,target=/root/.npm \[m
+[31m-    npm install --workspaces --ignore-scripts --no-audit --no-fund[m
+[31m-[m
+[32m+[m[32mnpm install --workspaces --ignore-scripts --no-audit --no-fund[m
+ # Copy source code and database migrations[m
+ COPY packages ./packages[m
+ COPY database ./database[m
