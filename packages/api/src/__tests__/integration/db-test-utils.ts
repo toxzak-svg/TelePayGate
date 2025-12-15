@@ -1,4 +1,7 @@
-import { getDatabase, closeDatabase } from "telepaygate-core";
+import * as core from "telepaygate-core";
+
+const getDatabase = (core as any).getDatabase || (core as any).default?.getDatabase;
+const closeDatabase = (core as any).closeDatabase || (core as any).default?.closeDatabase;
 
 export async function cleanDatabase() {
   const db = getDatabase();
@@ -18,5 +21,9 @@ export async function cleanDatabase() {
 }
 
 export async function disconnectDatabase() {
-  closeDatabase();
+  if (typeof closeDatabase === "function") {
+    // closeDatabase may be sync; wrap in Promise for safety
+    return Promise.resolve(closeDatabase());
+  }
+  console.warn("closeDatabase not available on telepaygate-core exports");
 }

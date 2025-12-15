@@ -7,7 +7,7 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
-  rawPayload?: any;
+  rawPayload?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,7 +33,7 @@ export class PaymentModel {
     starsAmount: number;
     telegramPaymentId: string;
     status?: PaymentStatus;
-    rawPayload?: any;
+    rawPayload?: unknown;
   }): Promise<Payment> {
     const result = await this.db.one(
       `INSERT INTO payments (
@@ -114,7 +114,7 @@ export class PaymentModel {
     const { limit = 20, offset = 0, status } = options;
 
     let whereClause = "WHERE user_id = $1";
-    const params: any[] = [userId];
+    const params: unknown[] = [userId];
 
     if (status) {
       whereClause += " AND status = $2";
@@ -213,20 +213,19 @@ export class PaymentModel {
   /**
    * Map database row to Payment object
    */
-  private mapToPayment(row: any): Payment {
+  private mapToPayment(row: Record<string, unknown>): Payment {
+    const r = row as Record<string, unknown>;
+    const raw = r["raw_payload"];
     return {
-      id: row.id,
-      userId: row.user_id,
-      telegramInvoiceId: row.telegram_invoice_id,
-      starsAmount: parseFloat(row.stars_amount),
-      status: row.status as PaymentStatus,
-      telegramPaymentId: row.telegram_payment_id,
-      rawPayload:
-        typeof row.raw_payload === "string"
-          ? JSON.parse(row.raw_payload)
-          : row.raw_payload,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
+      id: String(r["id"]),
+      userId: String(r["user_id"]),
+      telegramInvoiceId: String(r["telegram_invoice_id"]),
+      starsAmount: parseFloat(String(r["stars_amount"] || "0")),
+      status: String(r["status"]) as PaymentStatus,
+      telegramPaymentId: String(r["telegram_payment_id"]),
+      rawPayload: typeof raw === "string" ? JSON.parse(raw) : raw,
+      createdAt: new Date(String(r["created_at"])),
+      updatedAt: new Date(String(r["updated_at"])),
     };
   }
 }

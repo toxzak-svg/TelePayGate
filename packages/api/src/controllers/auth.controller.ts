@@ -28,13 +28,14 @@ export default class AuthController {
         ip: req.ip,
         userAgent: req.get("User-Agent") || undefined,
       });
-      const responseData = {
+      const responseData: Record<string, unknown> = {
         message: "Magic link issued",
         token_jti: result.token_jti,
         expires_at: result.expires_at,
       };
       if (process.env.EXPOSE_TEST_TOKENS === "true") {
-        (responseData as any).token = result.token;
+        (responseData as Record<string, unknown> & { token?: string }).token =
+          result.token;
       }
       return respondSuccess(res, { data: responseData }, 202);
     } catch (err: unknown) {
@@ -129,24 +130,48 @@ export default class AuthController {
       return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
 
     try {
-      const result: any = await AuthService.loginWithPassword(email, password);
-      if (!result.ok) {
-        const map: any = {
+      const result: unknown = await AuthService.loginWithPassword(
+        email,
+        password,
+      );
+      const loginResult = result as {
+        ok: boolean;
+        reason?: string;
+        expires_at?: string;
+        session_token?: string;
+        csrf_token?: string;
+        user?: unknown;
+      };
+      if (!loginResult.ok) {
+        const map: Record<string, [number, string]> = {
           not_found: [404, "USER_NOT_FOUND"],
           no_password: [400, "NO_PASSWORD"],
           inactive: [403, "INACTIVE"],
           invalid_credentials: [401, "INVALID_CREDENTIALS"],
         };
-        const [status, code] = map[result.reason] || [401, "INVALID_CREDENTIALS"];
+        const [status, code] = map[loginResult.reason as string] || [401, "INVALID_CREDENTIALS"];
         return respondError(res, code, result.reason, status);
       }
 
       const isProd = process.env.NODE_ENV === "production";
-      const maxAge = result.expires_at ? Math.max(0, new Date(result.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
-      res.cookie("session_id", result.session_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
-      if (result.csrf_token) res.cookie("csrf_token", result.csrf_token, { httpOnly: false, secure: isProd, sameSite: "lax", maxAge });
+      const maxAge = loginResult.expires_at
+        ? Math.max(0, new Date(loginResult.expires_at).getTime() - Date.now())
+        : 24 * 60 * 60 * 1000;
+      res.cookie("session_id", loginResult.session_token as string, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: "lax",
+        maxAge,
+      });
+      if (loginResult.csrf_token)
+        res.cookie("csrf_token", loginResult.csrf_token as string, {
+          httpOnly: false,
+          secure: isProd,
+          sameSite: "lax",
+          maxAge,
+        });
 
-      return respondSuccess(res, { data: { user: result.user } }, 200);
+      return respondSuccess(res, { data: { user: loginResult.user } }, 200);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       return respondError(res, "INTERNAL_ERROR", message || "Login failed", 500);

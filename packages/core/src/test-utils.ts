@@ -27,7 +27,8 @@ export function setupDexIntegrationTest() {
     process.env.STONFI_API_URL || "https://api.ston.fi";
 
   const dexService = new DexAggregatorService();
-  (dexService as any).tonService = {
+  const dexAny = dexService as unknown as { tonService?: Record<string, unknown> };
+  dexAny.tonService = {
     getWalletAddress: () => "EQC-test-wallet-address",
     initializeWallet: jest.fn().mockResolvedValue(undefined),
     getTransaction: jest.fn(),
