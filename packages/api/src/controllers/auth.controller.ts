@@ -150,7 +150,7 @@ export default class AuthController {
           invalid_credentials: [401, "INVALID_CREDENTIALS"],
         };
         const [status, code] = map[loginResult.reason as string] || [401, "INVALID_CREDENTIALS"];
-        return respondError(res, code, result.reason, status);
+        return respondError(res, code, loginResult.reason || "Login failed", status);
       }
 
       const isProd = process.env.NODE_ENV === "production";

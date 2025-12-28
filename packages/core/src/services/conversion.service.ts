@@ -287,6 +287,40 @@ export class ConversionService {
           route,
         );
 
+        const userRow = await this.db.oneOrNone(
+          "SELECT u.webhook_url FROM conversions c JOIN users u ON c.user_id = u.id WHERE c.id = $1",
+          [conversionId],
+        );
+        if (userRow?.webhook_url) {
+          await this.db.none(
+            `INSERT INTO webhook_events (
+              id, user_id, webhook_url, event, payload, signature,
+              status, attempts, max_attempts, created_at
+            ) VALUES (
+              gen_random_uuid(),
+              (SELECT user_id FROM conversions WHERE id = $1),
+              $2,
+              'conversion.executed',
+              $3,
+              '',
+              'pending',
+              0,
+              5,
+              NOW()
+            )`,
+            [
+              conversionId,
+              userRow.webhook_url,
+              JSON.stringify({
+                conversionId,
+                provider: execResult.dexProvider || route.sources[0].provider,
+                poolId: execResult.dexPoolId,
+                txHash: execResult.txHash,
+              }),
+            ],
+          );
+        }
+
         // If we obtained a tx hash, record it and start polling
         if (execResult && execResult.txHash) {
           await this.db.none(
@@ -354,6 +388,39 @@ export class ConversionService {
 
             if (feeResult) {
               await this.feeService.markFeeCollected(feeResult.id, state.hash || txHash);
+            }
+
+            const userRow2 = await this.db.oneOrNone(
+              "SELECT u.webhook_url, c.user_id FROM conversions c JOIN users u ON c.user_id = u.id WHERE c.id = $1",
+              [conversionId],
+            );
+            if (userRow2?.webhook_url) {
+              await this.db.none(
+                `INSERT INTO webhook_events (
+                  id, user_id, webhook_url, event, payload, signature,
+                  status, attempts, max_attempts, created_at
+                ) VALUES (
+                  gen_random_uuid(),
+                  $1,
+                  $2,
+                  'conversion.completed',
+                  $3,
+                  '',
+                  'pending',
+                  0,
+                  5,
+                  NOW()
+                )`,
+                [
+                  userRow2.user_id,
+                  userRow2.webhook_url,
+                  JSON.stringify({
+                    conversionId,
+                    txHash,
+                    status: "completed",
+                  }),
+                ],
+              );
             }
 
             console.log("✅ Conversion completed:", { conversionId, txHash });

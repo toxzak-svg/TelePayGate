@@ -1,6 +1,7 @@
 import { IDatabase } from "pg-promise";
 import { DexAggregatorService } from "./dex-aggregator.service";
 import { StarsP2PService } from "./stars-p2p.service";
+import { FragmentService } from "./fragment.service";
 
 export interface LiquiditySource {
   type: "p2p" | "dex";
@@ -35,11 +36,13 @@ export class P2PLiquidityService {
   private db: IDatabase<any>;
   private dexAggregator: DexAggregatorService;
   private p2pService: StarsP2PService;
+  private fragmentService: FragmentService;
 
   constructor(db: IDatabase<any>) {
     this.db = db;
     this.dexAggregator = new DexAggregatorService();
     this.p2pService = new StarsP2PService(db);
+    this.fragmentService = new FragmentService();
   }
 
   /**
@@ -102,6 +105,31 @@ export class P2PLiquidityService {
         });
       }
 
+      // Fragment route (optional)
+      const fragmentQuote = await this.fragmentService.getQuote(
+        fromCurrency,
+        toCurrency,
+        amount,
+      );
+      if (fragmentQuote) {
+        routes.push({
+          sources: [
+            {
+              type: "dex",
+              provider: "dedust",
+              rate: fragmentQuote.rate,
+              liquidity: fragmentQuote.liquidity,
+              fee: fragmentQuote.fee,
+              executionTime: fragmentQuote.estimatedTime,
+            },
+          ],
+          totalRate: fragmentQuote.rate,
+          totalFee: fragmentQuote.fee,
+          estimatedTime: fragmentQuote.estimatedTime,
+          confidence: 0.9,
+        });
+      }
+
       if (routes.length === 0) {
         throw new Error("No liquidity routes available for conversion");
       }
@@ -142,7 +170,10 @@ export class P2PLiquidityService {
           ...result,
         };
       } else {
-        const result = await this.executeDexConversion(conversionId, source);
+        const result =
+          this.fragmentService.isEnabled()
+            ? await this.executeFragmentConversion(conversionId, route)
+            : await this.executeDexConversion(conversionId, source);
         return {
           success: true,
           dexProvider: source.provider,
@@ -324,6 +355,32 @@ export class P2PLiquidityService {
       console.error("DEX conversion execution error:", error);
       throw new Error(`DEX conversion failed: ${error.message}`);
     }
+  }
+
+  private async executeFragmentConversion(
+    conversionId: string,
+    route: ConversionRoute,
+  ) {
+    const conversion = await this.db.oneOrNone(
+      "SELECT * FROM conversions WHERE id = $1",
+      [conversionId],
+    );
+    if (!conversion) {
+      throw new Error("Conversion not found");
+    }
+    const amount = conversion.source_amount as number;
+    const rate = route.totalRate;
+    const minOutput = amount * rate * 0.95;
+    const result = await this.fragmentService.execute(
+      conversion.source_currency,
+      conversion.target_currency,
+      amount,
+      minOutput,
+    );
+    return {
+      txHash: result.txHash,
+      dexPoolId: "fragment",
+    };
   }
 
   private async getMarketRate(from: string, to: string): Promise<string> {

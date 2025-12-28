@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "packages/dashboard/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm ci && npm run build -w @tg-payment/dashboard",
+        "outputDirectory": "packages/dashboard/dist"
+      }
+    },
+    {
+      "src": "packages/api/vercel.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "/packages/api/vercel.ts"
+    },
+    {
+      "source": "/health",
+      "destination": "/packages/api/vercel.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/packages/dashboard/dist/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "VITE_API_URL": "/api/v1"
+  },
+  "functions": {
+    "packages/api/vercel.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "preview": true,
+      "production": true
+    }
+  }
+}
