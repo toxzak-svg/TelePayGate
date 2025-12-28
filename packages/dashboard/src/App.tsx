@@ -16,6 +16,7 @@ import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
 import P2POrders from './pages/P2POrders';
 import DexAnalytics from './pages/DexAnalytics';
+import NitroSwaps from './pages/NitroSwaps';
 import Webhooks from './pages/Webhooks';
 import useTheme from './hooks/useTheme';
 

@@ -29,6 +29,7 @@ export { ReconciliationService } from "./services/reconciliation.service";
 export { WithdrawalService } from "./services/withdrawal.service";
 export { StarsP2PService } from "./services/stars-p2p.service";
 export { FragmentService } from "./services/fragment.service";
+export { NitroSwapsService } from "./services/nitroswaps.service";
 export { AuthService } from "./services/auth.service";
 export {
   AdminAnalyticsService,

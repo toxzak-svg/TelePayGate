@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { NitroSwapsService } from "telepaygate-core/services/nitroswaps.service";
+import { NitroSwapsService } from "telepaygate-core";
 
 const nitroService = new NitroSwapsService();
 
