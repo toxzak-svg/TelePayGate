@@ -46,10 +46,11 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="p2p-orders" element={<P2POrders />} />
-              <Route path="dex-analytics" element={<DexAnalytics />} />
-              <Route path="webhooks" element={<Webhooks />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
+          <Route path="dex-analytics" element={<DexAnalytics />} />
+          <Route path="nitro-swaps" element={<NitroSwaps />} />
+          <Route path="webhooks" element={<Webhooks />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
           </Routes>
           {/* Toast provider for notifications */}
           <ToastProvider />

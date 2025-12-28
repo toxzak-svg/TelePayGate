@@ -100,6 +100,23 @@ const ENV_VARS: EnvVarConfig[] = [
     description: 'Ston.fi API URL',
     pattern: /^https?:\/\/.+/,
   },
+  {
+    name: 'NITRO_FEATURE_ENABLED',
+    required: false,
+    description: 'Enable NitroSwaps feature',
+    validator: (v) => ['true', 'false'].includes(v),
+  },
+  {
+    name: 'NITRO_API_URL',
+    required: false,
+    description: 'NitroSwaps API base URL',
+    pattern: /^https?:\/\/.+/,
+  },
+  {
+    name: 'NITRO_API_KEY',
+    required: false,
+    description: 'NitroSwaps API key',
+  },
   
   // Rate Providers
   {
@@ -238,6 +255,7 @@ export function getEnvironmentSummary(): Record<string, boolean> {
     tonWallet: !!process.env.TON_WALLET_MNEMONIC,
     dedust: !!process.env.DEDUST_API_URL,
     stonfi: !!process.env.STONFI_API_URL,
+    nitro: !!process.env.NITRO_API_URL,
     coingecko: !!process.env.COINGECKO_API_KEY,
     coinmarketcap: !!process.env.COINMARKETCAP_API_KEY,
     stripeFiat: process.env.FIAT_GATEWAY_PROVIDER?.toLowerCase() === 'stripe',

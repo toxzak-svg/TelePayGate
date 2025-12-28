@@ -8,6 +8,7 @@ const navigation = [
   { name: 'Transactions', to: '/app/transactions', icon: ArrowLeftRight },
   { name: 'P2P Orders', to: '/app/p2p-orders', icon: Zap },
   { name: 'DEX Analytics', to: '/app/dex-analytics', icon: TrendingUp },
+  { name: 'NitroSwaps', to: '/app/nitro-swaps', icon: Zap },
   { name: 'Webhooks', to: '/app/webhooks', icon: Bell },
   { name: 'Settings', to: '/app/settings', icon: Settings },
 ];

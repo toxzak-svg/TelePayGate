@@ -10,6 +10,7 @@ import { authenticate } from "../middleware/auth.middleware";
 import webhookRoutes from "./webhooks.routes";
 import AuthController from "../controllers/auth.controller";
 import csrfProtect from "../middleware/csrf.middleware";
+import nitroRoutes from "./nitro.routes";
 
 const router = Router();
 const conversionController = new ConversionController();
@@ -61,6 +62,9 @@ router.get(
   authenticate,
   conversionController.getConversionHistory.bind(conversionController),
 );
+
+// NitroSwaps routes
+router.use("/nitro", nitroRoutes);
 
 // User routes
 router.post("/users/register", UserController.register);
