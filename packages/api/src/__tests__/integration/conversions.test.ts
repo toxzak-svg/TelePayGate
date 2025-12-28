@@ -27,7 +27,14 @@ describe("Conversions API", () => {
   }, 30000);
 
   afterAll(async () => {
-    await disconnectDatabase();
+    // Ensure DB closed even if db-test-utils disconnect is missing
+    try {
+      const core: any = await import("telepaygate-core");
+      if (typeof core.closeDatabase === "function") await core.closeDatabase();
+      else if (core.default && typeof core.default.closeDatabase === "function") await core.default.closeDatabase();
+    } catch (e) {
+      // ignore
+    }
     if (fixture) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { stopPostgresFixture } = require("../fixtures/postgresFixture");
