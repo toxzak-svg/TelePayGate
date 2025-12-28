@@ -32,12 +32,6 @@
     "NODE_ENV": "production",
     "VITE_API_URL": "/api/v1"
   },
-  "functions": {
-    "packages/api/vercel.ts": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "git": {
     "deploymentEnabled": {
       "preview": true,
