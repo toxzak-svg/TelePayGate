@@ -1,5 +1,8 @@
 # TelePayGate
 
+![CI](https://github.com/toxzak-svg/TelePayGate/actions/workflows/ci-coverage.yml/badge.svg)
+![Codecov](https://codecov.io/gh/toxzak-svg/TelePayGate/branch/main/graph/badge.svg)
+
 > **Decentralized P2P Payment Processing Gateway** — TelePayGate accepts Telegram Stars and converts them into TON (and optionally fiat) using decentralized P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
