@@ -277,6 +277,7 @@ export class NitroSwapsService {
 
   async verifySwap(txHash: string): Promise<boolean> {
     try {
+      await this.tonService.initializeWallet();
       const client = this.tonService.getClient();
       const { wallet } = this.tonService.getWallet();
       const txs = await client.getTransactions(wallet.address, { limit: 5 });
