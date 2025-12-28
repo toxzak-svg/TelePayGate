@@ -64,12 +64,32 @@ jobs:
         run: |
           mkdir -p coverage || true
           npx lcov-result-merger './packages/**/coverage/lcov.info' > coverage/lcov.info || true
+      - name: Install lcov for HTML report
+        run: sudo apt-get update && sudo apt-get install -y lcov
 
-      - name: Upload coverage artifact
+      - name: Generate coverage HTML
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            genhtml coverage/lcov.info --output-directory coverage/report || true
+          else
+            echo 'No lcov.info to generate HTML from.'
+          fi
+
+      - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-lcov
-          path: coverage/lcov.info
+          name: coverage-report
+          path: |
+            coverage/lcov.info
+            coverage/report
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Output coverage hint
-        run: echo 'Merged coverage available in artifact `coverage-lcov`.'
+        run: echo 'Merged coverage and HTML report uploaded as `coverage-report` artifact.'
