@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import api from '../services/api';
 
 export default function NitroSwaps() {
   const { token } = useAuth();
