@@ -16,8 +16,8 @@ COPY packages/core/package*.json ./packages/core/
 COPY packages/api/package*.json ./packages/api/
 COPY packages/sdk/package*.json ./packages/sdk/
 
-# Install dependencies (with cache mount for faster builds)
-RUN --mount=type=cache,target=/root/.npm \
+# Install dependencies
+RUN --mount=type=cache,target=/root/.npm,id=npm-cache \
     npm install --workspaces --ignore-scripts --no-audit --no-fund
 
 # Copy source code and database migrations
