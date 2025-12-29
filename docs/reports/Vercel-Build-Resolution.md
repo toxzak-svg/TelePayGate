@@ -68,3 +68,15 @@
 - Updated Vercel config: [vercel.json](file:///c:/dev/projects/TelePayGate/vercel.json)
 - Fixed NitroSwaps import: [NitroSwaps.tsx](file:///c:/dev/projects/TelePayGate/packages/dashboard/src/pages/NitroSwaps.tsx)
 
+## CLI Steps Used
+- Pull project settings and env:
+  - `npx vercel pull` (interactive)
+- Local build with Build Output API:
+  - `npx vercel build`
+  - Results placed in `.vercel/output`
+- Preview deploy using prebuilt artifacts:
+  - `npx vercel deploy --prebuilt`
+- Inspect deployment logs:
+  - `npx vercel inspect <preview-url> --logs`
+- Promote to production:
+  - `npx vercel deploy --prod` (optional after validation)
