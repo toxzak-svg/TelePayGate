@@ -8,8 +8,8 @@ export default function NitroSwaps() {
   const [toToken, setToToken] = useState('USDT');
   const [amount, setAmount] = useState(1);
   const [minReceive, setMinReceive] = useState(0.95);
-  const [quote, setQuote] = useState<any>(null);
-  const [result, setResult] = useState<any>(null);
+  const [quote, setQuote] = useState<unknown>(null);
+  const [result, setResult] = useState<unknown>(null);
   const headers = token ? { 'X-API-Key': token } : {};
 
   async function fetchQuote() {

@@ -32,8 +32,12 @@ export default function Webhooks() {
       toast.success('Webhook URL updated successfully');
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to update webhook URL');
+    onError: (error: unknown) => {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to update webhook URL');
+      }
     },
   });
 
@@ -44,8 +48,12 @@ export default function Webhooks() {
       // Refetch events after a short delay to show the test event
       setTimeout(() => refetchEvents(), 1000);
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to send test webhook');
+    onError: (error: unknown) => {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to send test webhook');
+      }
     },
   });
 
