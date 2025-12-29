@@ -16,9 +16,8 @@ COPY packages/core/package*.json ./packages/core/
 COPY packages/api/package*.json ./packages/api/
 COPY packages/sdk/package*.json ./packages/sdk/
 
-# Install dependencies
-RUN --mount=type=cache,target=/root/.npm,id=npm-cache \
-    npm install --workspaces --ignore-scripts --no-audit --no-fund
+# Install dependencies (no cache mount for Railway compatibility)
+RUN npm install --workspaces --ignore-scripts --no-audit --no-fund
 
 # Copy source code and database migrations
 COPY packages ./packages
