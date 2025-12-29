@@ -15,6 +15,7 @@ COPY tsconfig.json ./
 COPY packages/core/package*.json ./packages/core/
 COPY packages/api/package*.json ./packages/api/
 COPY packages/sdk/package*.json ./packages/sdk/
+COPY packages/dashboard/package*.json ./packages/dashboard/
 
 # Install dependencies (no cache mount for Railway compatibility)
 RUN npm install --workspaces --ignore-scripts --no-audit --no-fund
