@@ -24,15 +24,31 @@ RUN npm install --workspaces --ignore-scripts --no-audit --no-fund
 COPY packages ./packages
 COPY database ./database
 
-# Build all workspace packages (core, api, sdk, dashboard)
+# Build all workspace packages (core, api, sdk are required; dashboard is optional)
 # Use explicit workspace build commands to match monorepo scripts
 RUN npm run -w telepaygate-core build && \
     npm run -w telepaygate-api build && \
-    npm run -w telepaygate-sdk build && \
-    npm run -w "@tg-payment/dashboard" build || true
+    npm run -w telepaygate-sdk build
+
+# Dashboard is optional - build if possible but don't fail if it errors
+RUN npm run -w "@tg-payment/dashboard" build || echo "Dashboard build skipped or failed"
 
 # Prune dev dependencies to keep runtime image small
-RUN npm prune --production || true
+RUN npm prune --production
+
+# =============================================================================
+# Dashboard builder stage (optional) - Separate to allow failure
+# =============================================================================
+FROM builder AS dashboard-builder
+
+# Try to copy dashboard files if they exist
+RUN if [ -d "/app/packages/dashboard/dist" ]; then \
+      echo "Dashboard build succeeded"; \
+    else \
+      echo "Dashboard build failed or not found"; \
+      mkdir -p /app/packages/dashboard/dist; \
+      echo '<!DOCTYPE html><html><body><h1>Dashboard not available</h1></body></html>' > /app/packages/dashboard/dist/index.html; \
+    fi
 
 # =============================================================================
 # Runtime stage - Minimal production image
@@ -41,7 +57,6 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install only required system dependencies
 # Install only required system dependencies
 RUN apk add --no-cache postgresql-client tini
 
@@ -59,7 +74,7 @@ COPY --from=builder /app/packages/api/dist ./packages/api/dist
 COPY --from=builder /app/packages/api/package.json ./packages/api/
 COPY --from=builder /app/packages/sdk/dist ./packages/sdk/dist
 COPY --from=builder /app/packages/sdk/package.json ./packages/sdk/
-COPY --from=builder /app/packages/dashboard/dist ./packages/dashboard/dist
+COPY --from=dashboard-builder /app/packages/dashboard/dist ./packages/dashboard/dist
 COPY --from=builder /app/packages/dashboard/package.json ./packages/dashboard/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/database ./database
