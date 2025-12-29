@@ -14,7 +14,7 @@
     ]
   },
   "deploy": {
-    "preDeployCommand": ["node", "database/migrate.js", "up"],
+    "preDeployCommand": ["node database/migrate.js up"],
     "healthcheckPath": "/health",
     "healthcheckTimeout": 90,
     "restartPolicyType": "always"

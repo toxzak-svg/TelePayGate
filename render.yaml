@@ -114,7 +114,8 @@ services:
     plan: starter
     buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
     startCommand: node packages/api/dist/server.js
-    preDeployCommand: npm run migrate
+    deploy:
+      preDeployCommand: ["npm run migrate"]
     healthCheckPath: /health
     envVarGroups:
       - shared-runtime
