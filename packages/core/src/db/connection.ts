@@ -13,11 +13,15 @@ export function initDatabase(connectionString: string): Database {
     return db;
   }
 
+  const maxConns = parseInt(process.env.DATABASE_POOL_MAX || "10", 10);
+  const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
+  const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
+
   db = pgp({
     connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: maxConns,
+    idleTimeoutMillis: idleMs,
+    connectionTimeoutMillis: connTimeoutMs,
   });
 
   // FIXED: Non-null assertion since we just assigned it
@@ -29,11 +33,15 @@ export function initPool(connectionString: string): Pool {
     return pool;
   }
 
+  const maxConns = parseInt(process.env.DATABASE_POOL_MAX || "10", 10);
+  const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
+  const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
+
   pool = new Pool({
     connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: maxConns,
+    idleTimeoutMillis: idleMs,
+    connectionTimeoutMillis: connTimeoutMs,
   });
 
   return pool;

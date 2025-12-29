@@ -48,6 +48,9 @@ RUN apk add --no-cache postgresql-client tini
 # Install a small static file server for serving the dashboard build
 RUN npm i -g serve@14.2.0 || true
 
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
 # Copy production dependencies and built code
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
