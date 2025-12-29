@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import * as services from '../api/services';
 import P2POrders from '../pages/P2POrders';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { ApiResponse, P2POrder } from '../types';
 
 vi.mock('react-hot-toast', () => ({
   toast: {
@@ -15,7 +16,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 // Provide a mutable mocked return for useQuery so we don't need a QueryClientProvider in tests
-let mockedQueryReturn: any = { data: null, isLoading: false };
+let mockedQueryReturn: { data: unknown; isLoading: boolean } = { data: null, isLoading: false };
 vi.mock('@tanstack/react-query', () => ({
   useQuery: () => mockedQueryReturn,
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
@@ -43,11 +44,11 @@ describe('P2POrders confirm/cancel flow', () => {
       success: true,
       data: [mockOrder],
       meta: { total: 1 },
-    } as any);
+    } as ApiResponse<P2POrder[]>);
 
     // feed the mockedQueryReturn so the component receives data without react-query provider
     mockedQueryReturn = { data: { success: true, data: [mockOrder], meta: { total: 1 } }, isLoading: false };
-    const cancelSpy = vi.spyOn(services.p2pService, 'cancelOrder').mockResolvedValue(undefined as any);
+    const cancelSpy = vi.spyOn(services.p2pService, 'cancelOrder').mockResolvedValue(undefined);
 
     render(
       <BrowserRouter>
