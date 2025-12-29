@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY packages/dashboard/package*.json ./packages/dashboard/
-RUN npm ci --workspaces --only=production=false --ignore-scripts --no-audit --no-fund || true
+RUN npm install --workspaces --ignore-scripts --no-audit --no-fund || true
 COPY packages/dashboard ./packages/dashboard
 RUN npm run -w "@tg-payment/dashboard" build || true
 
