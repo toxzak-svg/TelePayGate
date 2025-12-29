@@ -16,7 +16,7 @@
     "removeComments": true,
     "incremental": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "vercel.ts"],
   "exclude": [
     "src/**/__tests__/**",
     "src/**/*.test.ts",

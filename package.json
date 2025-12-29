@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "npm run build -w telepaygate-core",
     "test:ci": "npm run -w telepaygate-core test -- --detectOpenHandles && npm run -w telepaygate-api test -- --detectOpenHandles && npm run -w telepaygate-sdk test -- --detectOpenHandles && npm run -w @tg-payment/dashboard test",
     "coverage:telepaygate-sdk": "npm run -w telepaygate-sdk test:coverage",
     "coverage:dashboard": "npm run -w @tg-payment/dashboard test -- --coverage",

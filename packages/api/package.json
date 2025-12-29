@@ -75,7 +75,11 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "telepaygate-core": "^0.1.2",
+    "@dedust/sdk": "^0.8.7",
+    "@ston-fi/sdk": "^2.7.0",
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.1.0",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -83,9 +87,16 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
+    "ioredis": "^5.8.2",
     "module-alias": "^2.2.3",
-    "uuid": "^9.0.1",
-    "serverless-http": "^2.0.2"
+    "nodemailer": "^6.10.1",
+    "pg-promise": "^12.3.0",
+    "serverless-http": "^2.0.2",
+    "speakeasy": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "telepaygate-core": "^0.1.2",
+    "tonweb": "^0.0.66",
+    "uuid": "^9.0.1"
   },
   "peerDependencies": {
     "pg": "^8.0.0"

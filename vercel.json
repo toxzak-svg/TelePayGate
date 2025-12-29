@@ -5,7 +5,7 @@
       "src": "packages/dashboard/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm ci && npm run build -w @tg-payment/dashboard",
+        "buildCommand": "npm run build -w @tg-payment/dashboard",
         "outputDirectory": "packages/dashboard/dist"
       }
     },
