@@ -73,133 +73,207 @@ export class NitroSwapsService {
     this.quoteCache = new TtlCache<NitroQuote>(30_000);
   }
 
-  async getQuote(
+  private isEnabled(): boolean {
+    return this.enabled === true;
+  }
+
+  private quoteKey(fromToken: string, toToken: string, amount: number): CacheKey {
+    return `${fromToken}:${toToken}:${amount}`;
+  }
+
+  private buildMockQuote(fromToken: string, toToken: string, amount: number): NitroQuote {
+    const rate = 1;
+    const expectedOutput = amount * rate * 0.99;
+    return {
+      fromToken,
+      toToken,
+      amount,
+      expectedOutput,
+      rate,
+      feePercent: 0.003,
+      estimatedGas: 0.05,
+      route: [fromToken, toToken],
+      provider: "nitro",
+    };
+  }
+
+  private buildFallbackQuote(fromToken: string, toToken: string, amount: number): NitroQuote {
+    return {
+      fromToken,
+      toToken,
+      amount,
+      expectedOutput: amount * 0.99,
+      rate: 1,
+      feePercent: 0.003,
+      estimatedGas: 0.05,
+      route: [fromToken, toToken],
+      provider: "nitro",
+    };
+  }
+
+  private parseQuoteResponse(
+    fromToken: string,
+    toToken: string,
+    amount: number,
+    resData: any,
+  ): NitroQuote {
+    return {
+      fromToken,
+      toToken,
+      amount,
+      expectedOutput: parseFloat(resData?.expectedOutput ?? "0"),
+      rate: parseFloat(resData?.rate ?? "0"),
+      feePercent: parseFloat(resData?.feePercent ?? "0.003"),
+      estimatedGas: parseFloat(resData?.estimatedGas ?? "0.05"),
+      route: resData?.route ?? [fromToken, toToken],
+      provider: "nitro",
+    };
+  }
+
+  private async fetchNitroQuote(
     fromToken: string,
     toToken: string,
     amount: number,
   ): Promise<NitroQuote> {
-    const cacheKey = `${fromToken}:${toToken}:${amount}`;
-    const cached = this.quoteCache.get(cacheKey);
-    if (cached) return cached;
-
-    if (!this.enabled) {
-      const rate = 1;
-      const expectedOutput = amount * rate * 0.99;
-      const mock: NitroQuote = {
-        fromToken,
-        toToken,
-        amount,
-        expectedOutput,
-        rate,
-        feePercent: 0.003,
-        estimatedGas: 0.05,
-        route: [fromToken, toToken],
-        provider: "nitro",
-      };
-      this.quoteCache.set(cacheKey, mock);
-      return mock;
-    }
-
-    if (!this.apiUrl) {
-      const fallback: NitroQuote = {
-        fromToken,
-        toToken,
-        amount,
-        expectedOutput: amount * 0.99,
-        rate: 1,
-        feePercent: 0.003,
-        estimatedGas: 0.05,
-        route: [fromToken, toToken],
-        provider: "nitro",
-      };
-      this.quoteCache.set(cacheKey, fallback);
-      return fallback;
-    }
-
+    if (!this.apiUrl) return this.buildFallbackQuote(fromToken, toToken, amount);
     const res = await axios.get(`${this.apiUrl}/quote`, {
       params: { fromToken, toToken, amount },
       headers: this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {},
       timeout: 5000,
     });
+    return this.parseQuoteResponse(fromToken, toToken, amount, res.data);
+  }
 
-    const q: NitroQuote = {
-      fromToken,
-      toToken,
-      amount,
-      expectedOutput: parseFloat(res.data?.expectedOutput ?? "0"),
-      rate: parseFloat(res.data?.rate ?? "0"),
-      feePercent: parseFloat(res.data?.feePercent ?? "0.003"),
-      estimatedGas: parseFloat(res.data?.estimatedGas ?? "0.05"),
-      route: res.data?.route ?? [fromToken, toToken],
-      provider: "nitro",
+  async getQuote(
+    fromToken: string,
+    toToken: string,
+    amount: number,
+  ): Promise<NitroQuote> {
+    const cacheKey = this.quoteKey(fromToken, toToken, amount);
+    const cached = this.quoteCache.get(cacheKey);
+    if (cached) return cached;
+
+    const quote = this.isEnabled()
+      ? await this.fetchNitroQuote(fromToken, toToken, amount)
+      : this.buildMockQuote(fromToken, toToken, amount);
+
+    this.quoteCache.set(cacheKey, quote);
+    return quote;
+  }
+
+  private validateSwapParams(params: NitroSwapParams): string | null {
+    if (params.amount <= 0 || params.minReceive <= 0) return "INVALID_AMOUNT";
+    if (!params.fromToken || !params.toToken) return "INVALID_TOKENS";
+    return null;
+  }
+
+  private async recordSwapLog(
+    referenceId: string | undefined,
+    amountIn: number,
+    amountOut: number,
+    txHash: string | null,
+    gasUsed: number,
+    status: string,
+  ): Promise<void> {
+    const db = getDatabase();
+    await db.none(
+      "INSERT INTO swap_logs (conversion_id, provider, amount_in, amount_out, tx_hash, gas_used, status) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+      [referenceId || null, "nitro", amountIn, amountOut, txHash, gasUsed, status],
+    );
+  }
+
+  private async insertNitroSwapRecord(
+    userId: string | undefined,
+    referenceId: string | undefined,
+    fromToken: string,
+    toToken: string,
+    amountIn: number,
+    minReceive: number,
+    status: string,
+    txHash: string | null,
+  ): Promise<void> {
+    const db = getDatabase();
+    await db.none(
+      "INSERT INTO nitro_swaps (user_id, reference_id, from_token, to_token, amount_in, min_receive, provider, status, tx_hash) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+      [
+        userId || null,
+        referenceId || null,
+        fromToken,
+        toToken,
+        amountIn,
+        minReceive,
+        "nitro",
+        status,
+        txHash,
+      ],
+    );
+  }
+
+  private async updateNitroSwapStatus(txHash: string, status: "pending" | "completed"): Promise<void> {
+    const db = getDatabase();
+    await db.none("UPDATE nitro_swaps SET status = $1 WHERE tx_hash = $2", [status, txHash]);
+  }
+
+  private computeSimulatedOutput(amount: number): number {
+    return amount * 0.98;
+  }
+
+  private async requestNitroSwap(params: {
+    fromToken: string;
+    toToken: string;
+    amount: number;
+    minReceive: number;
+    chain: "TON";
+    referenceId?: string;
+  }): Promise<{ txHash: string; outputAmount: number; gasUsed: number }> {
+    if (!this.apiUrl) {
+      throw new Error("Nitro API URL not configured");
+    }
+    const res = await axios.post(
+      `${this.apiUrl}/swap`,
+      params,
+      {
+        headers: this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {},
+        timeout: 10000,
+      },
+    );
+    return {
+      txHash: res.data?.txHash,
+      outputAmount: parseFloat(res.data?.outputAmount ?? "0"),
+      gasUsed: parseFloat(res.data?.gasUsed ?? "0"),
     };
-
-    this.quoteCache.set(cacheKey, q);
-    return q;
   }
 
   async executeSwap(params: NitroSwapParams): Promise<NitroSwapResult> {
     const { amount, minReceive, fromToken, toToken } = params;
-    if (amount <= 0 || minReceive <= 0) {
-      return { success: false, error: "INVALID_AMOUNT" };
-    }
-    if (!fromToken || !toToken) {
-      return { success: false, error: "INVALID_TOKENS" };
-    }
-
-    const db = getDatabase();
+    const validationError = this.validateSwapParams(params);
+    if (validationError) return { success: false, error: validationError };
 
     const fraud = await this.detectFraud(params);
     if (fraud) {
-      await db.none(
-        "INSERT INTO swap_logs (conversion_id, provider, amount_in, amount_out, tx_hash, gas_used, status) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-        [
-          params.referenceId || null,
-          "nitro",
-          amount,
-          0,
-          null,
-          0,
-          "fraud_suspected",
-        ],
-      );
+      await this.recordSwapLog(params.referenceId, amount, 0, null, 0, "fraud_suspected");
       return { success: false, error: "FRAUD_SUSPECTED" };
     }
 
-    if (!this.enabled || !this.apiUrl) {
+    if (!this.isEnabled() || !this.apiUrl) {
       const txHash = `nitro_sim_${Date.now()}`;
-      const outputAmount = amount * 0.98;
+      const outputAmount = this.computeSimulatedOutput(amount);
       if (outputAmount < minReceive) {
         return { success: false, error: "SLIPPAGE_EXCEEDED" };
       }
 
-      await db.none(
-        "INSERT INTO nitro_swaps (user_id, reference_id, from_token, to_token, amount_in, min_receive, provider, status, tx_hash) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
-        [
-          params.userId || null,
-          params.referenceId || null,
-          fromToken,
-          toToken,
-          amount,
-          minReceive,
-          "nitro",
-          "completed",
-          txHash,
-        ],
+      await this.insertNitroSwapRecord(
+        params.userId,
+        params.referenceId,
+        fromToken,
+        toToken,
+        amount,
+        minReceive,
+        "completed",
+        txHash,
       );
 
-      await db.none(
-        "INSERT INTO swap_logs (conversion_id, provider, amount_in, amount_out, tx_hash, gas_used, status) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-        [
-          params.referenceId || null,
-          "nitro",
-          amount,
-          outputAmount,
-          txHash,
-          0.05,
-          "success",
-        ],
-      );
+      await this.recordSwapLog(params.referenceId, amount, outputAmount, txHash, 0.05, "success");
 
       return {
         success: true,
@@ -210,67 +284,45 @@ export class NitroSwapsService {
       };
     }
 
-    const res = await axios.post(
-      `${this.apiUrl}/swap`,
-      {
-        fromToken,
-        toToken,
-        amount,
-        minReceive,
-        chain: params.chain || "TON",
-        referenceId: params.referenceId,
-      },
-      {
-        headers: this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {},
-        timeout: 10000,
-      },
+    const swap = await this.requestNitroSwap({
+      fromToken,
+      toToken,
+      amount,
+      minReceive,
+      chain: params.chain || "TON",
+      referenceId: params.referenceId,
+    });
+
+    await this.insertNitroSwapRecord(
+      params.userId,
+      params.referenceId,
+      fromToken,
+      toToken,
+      amount,
+      minReceive,
+      "executing",
+      swap.txHash,
     );
 
-    const txHash: string = res.data?.txHash;
-    const outputAmount = parseFloat(res.data?.outputAmount ?? "0");
-    const gasUsed = parseFloat(res.data?.gasUsed ?? "0");
-
-    await db.none(
-      "INSERT INTO nitro_swaps (user_id, reference_id, from_token, to_token, amount_in, min_receive, provider, status, tx_hash) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
-      [
-        params.userId || null,
-        params.referenceId || null,
-        fromToken,
-        toToken,
-        amount,
-        minReceive,
-        "nitro",
-        "executing",
-        txHash,
-      ],
-    );
-
-    const verified = await this.verifySwap(txHash);
+    const verified = await this.verifySwap(swap.txHash);
     const finalStatus = verified ? "completed" : "pending";
 
-    await db.none("UPDATE nitro_swaps SET status = $1 WHERE tx_hash = $2", [
-      finalStatus,
-      txHash,
-    ]);
+    await this.updateNitroSwapStatus(swap.txHash, finalStatus as "completed" | "pending");
 
-    await db.none(
-      "INSERT INTO swap_logs (conversion_id, provider, amount_in, amount_out, tx_hash, gas_used, status) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-      [
-        params.referenceId || null,
-        "nitro",
-        amount,
-        outputAmount,
-        txHash,
-        gasUsed,
-        finalStatus === "completed" ? "success" : "pending",
-      ],
+    await this.recordSwapLog(
+      params.referenceId,
+      amount,
+      swap.outputAmount,
+      swap.txHash,
+      swap.gasUsed,
+      finalStatus === "completed" ? "success" : "pending",
     );
 
     return {
       success: finalStatus === "completed",
-      txHash,
-      outputAmount,
-      gasUsed,
+      txHash: swap.txHash,
+      outputAmount: swap.outputAmount,
+      gasUsed: swap.gasUsed,
       provider: "nitro",
     };
   }
