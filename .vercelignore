@@ -15,6 +15,5 @@ scripts/
 tmp/
 packages/**/__tests__/
 packages/**/jest.config.*
-packages/**/tsconfig.*.json
 packages/**/tsconfig.tsbuildinfo
 packages/**/dist/__tests__/

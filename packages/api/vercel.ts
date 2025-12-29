@@ -8,10 +8,18 @@ let initialized = false;
 
 async function getHandler() {
   if (!initialized) {
-    const DATABASE_URL =
-      process.env.DATABASE_URL ||
-      "postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev";
-    await initDatabase(DATABASE_URL);
+    const DATABASE_URL = process.env.DATABASE_URL;
+    if (DATABASE_URL) {
+      try {
+        await initDatabase(DATABASE_URL);
+        console.log("[vercel] Database initialized");
+      } catch (err) {
+        console.warn("[vercel] Database initialization failed:", (err as Error)?.message);
+        // Proceed without DB so non-DB routes like /health still work
+      }
+    } else {
+      console.warn("[vercel] DATABASE_URL not set; starting API without a database connection");
+    }
     const app = createServer();
     cachedHandler = serverless(app);
     initialized = true;

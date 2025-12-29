@@ -7,7 +7,7 @@ export function useTheme() {
     try {
       const stored = localStorage.getItem(THEME_KEY);
       if (stored === 'dark' || stored === 'light') return stored;
-    } catch (e) {}
+    } catch {}
     // default to system preference
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
@@ -19,7 +19,7 @@ export function useTheme() {
     const root = document.documentElement;
     if (theme === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
-    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    try { localStorage.setItem(THEME_KEY, theme); } catch {}
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));

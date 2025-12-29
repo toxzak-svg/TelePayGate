@@ -18,7 +18,7 @@ export default function PasswordlessLogin() {
     try {
       await fetch('/api/v1/auth/magic-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
       setSent(true);
-    } catch (err) {
+    } catch {
       setError('Failed to send magic link');
     }
   }
