@@ -78,7 +78,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force && rm -rf dist/__tests__",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force",
     "dev": "tsx watch src/index.ts",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
