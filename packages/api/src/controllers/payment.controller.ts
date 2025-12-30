@@ -153,6 +153,7 @@ export class PaymentController {
         payment: {
           id: payment.id,
           userId: payment.userId,
+          telegramInvoiceId: payment.telegramInvoiceId,
           starsAmount: payment.starsAmount,
           status: payment.status,
           telegramPaymentId: payment.telegramPaymentId,
@@ -199,10 +200,13 @@ export class PaymentController {
         success: true,
         data: payments.map((p) => ({
           id: p.id,
+          userId: p.userId,
+          telegramInvoiceId: p.telegramInvoiceId,
           starsAmount: p.starsAmount,
           status: p.status,
           telegramPaymentId: p.telegramPaymentId,
           createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
         })),
         meta: buildPaginationMeta(total, page, limit),
       });

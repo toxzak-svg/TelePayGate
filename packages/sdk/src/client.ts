@@ -59,13 +59,15 @@ export class TelePayGate {
   async estimateConversion(
     params: EstimationParams,
   ): Promise<EstimationResult> {
-    const response = await this.client.post("/conversions/estimate", {
-      sourceAmount: params.starsAmount,
-      sourceCurrency: "STARS",
-      targetCurrency: params.targetCurrency,
+    const response = await this.client.get("/conversions/rate", {
+      params: {
+        amount: params.starsAmount,
+        sourceCurrency: "STARS",
+        targetCurrency: params.targetCurrency,
+      },
     });
 
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -81,13 +83,13 @@ export class TelePayGate {
    */
   async lockRate(params: RateLockParams): Promise<RateLock> {
     const response = await this.client.post("/conversions/lock-rate", {
-      sourceAmount: params.starsAmount,
+      amount: params.starsAmount,
       sourceCurrency: "STARS",
       targetCurrency: params.targetCurrency,
       durationSeconds: params.durationSeconds || 300,
     });
 
-    return response.data;
+    return response.data.data;
   }
 
   /**
@@ -97,7 +99,7 @@ export class TelePayGate {
    * const conversion = await gateway.createConversion({
    *   paymentIds: ['payment-uuid-1', 'payment-uuid-2'],
    *   targetCurrency: 'TON',
-   *   rateLockId: 'lock-uuid' // optional
+   *   destinationAddress: 'UQ...' // optional
    * });
    * ```
    */
@@ -105,20 +107,18 @@ export class TelePayGate {
     const response = await this.client.post("/conversions/create", {
       paymentIds: params.paymentIds,
       targetCurrency: params.targetCurrency,
-      rateLockId: params.rateLockId,
+      destinationAddress: params.destinationAddress,
     });
 
-    return response.data.conversion;
+    return response.data.data;
   }
 
   /**
    * Get conversion status
    */
   async getConversionStatus(conversionId: string): Promise<ConversionStatus> {
-    const response = await this.client.get(
-      `/conversions/${conversionId}/status`,
-    );
-    return response.data;
+    const response = await this.client.get(`/conversions/${conversionId}`);
+    return response.data.data;
   }
 
   /**
@@ -137,7 +137,12 @@ export class TelePayGate {
       },
     });
 
-    return response.data;
+    const { conversions, pagination } = response.data.data;
+    return {
+      conversions,
+      total: pagination.total,
+      page: pagination.page,
+    };
   }
 
   // ==================== PAYMENT METHODS ====================
@@ -166,7 +171,12 @@ export class TelePayGate {
       },
     });
 
-    return response.data;
+    const { data: payments, meta } = response.data;
+    return {
+      payments,
+      total: meta.total,
+      page: meta.page,
+    };
   }
 
   /**

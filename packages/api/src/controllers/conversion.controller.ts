@@ -54,10 +54,10 @@ export class ConversionController {
   }
 
   /**
-   * Create a new conversion request (locks rate)
-   * POST /api/v1/conversions
+   * Lock conversion rate
+   * POST /api/v1/conversions/lock-rate
    */
-  async createConversion(
+  async lockRate(
     req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
@@ -65,15 +65,18 @@ export class ConversionController {
     try {
       const {
         amount,
+        sourceAmount,
         sourceCurrency = "STARS",
         targetCurrency = "TON",
         durationSeconds = 300,
       } = req.body;
 
-      if (!amount) {
+      const amountToLock = amount || sourceAmount;
+
+      if (!amountToLock) {
         res.status(400).json({
           success: false,
-          error: "amount is required",
+          error: "amount or sourceAmount is required",
         });
         return;
       }
@@ -88,10 +91,62 @@ export class ConversionController {
       const conversionService = this.getConversionService();
       const conversion = await conversionService.lockRate(
         userId,
-        parseFloat(amount),
+        parseFloat(amountToLock.toString()),
         sourceCurrency,
         targetCurrency,
         durationSeconds,
+      );
+
+      res.status(201).json({
+        success: true,
+        data: {
+          ...conversion,
+          id: conversion.conversionId, // For dashboard compatibility
+          status: "rate_locked",
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Create and execute conversion
+   * POST /api/v1/conversions/create
+   */
+  async createConversion(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const {
+        paymentIds,
+        targetCurrency = "TON",
+        destinationAddress,
+      } = req.body;
+
+      if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
+        res.status(400).json({
+          success: false,
+          error: "paymentIds array is required",
+        });
+        return;
+      }
+
+      const userId = requireUserId(req, res, {
+        errorCode: "UNAUTHORIZED",
+        errorMessage: "Authentication required",
+        statusCode: 401,
+      });
+      if (!userId) return;
+
+      const conversionService = this.getConversionService();
+      const conversion = await conversionService.createConversion(
+        userId,
+        paymentIds,
+        targetCurrency,
+        destinationAddress,
       );
 
       res.status(201).json({
@@ -183,6 +238,7 @@ export class ConversionController {
 const controller = new ConversionController();
 
 export const getRate = controller.getRate.bind(controller);
+export const lockRate = controller.lockRate.bind(controller);
 export const createConversion = controller.createConversion.bind(controller);
 export const getConversion = controller.getConversion.bind(controller);
 export const getConversionHistory =

@@ -21,7 +21,7 @@ describe("ConversionService", () => {
   let conversionId: string;
 
   beforeEach(() => {
-    db = initDatabase(process.env.DATABASE_URL!);
+    db = initDatabase(process.env.DATABASE_URL || "postgres://localhost:5432/test");
     conversionService = new ConversionService(db);
     conversionId = uuidv4();
   });

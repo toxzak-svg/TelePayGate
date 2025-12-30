@@ -5,20 +5,31 @@ interface SignupRequest {
   password: string;
 }
 
-interface SignupResponse {
+interface AuthResponse {
   success: boolean;
-  user: {
-    id: string;
-    email: string;
-    apiKey: string;
+  data: {
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      apiKey?: string;
+    };
   };
-  message: string;
+  message?: string;
 }
 
 export const authService = {
-  async signup(data: SignupRequest): Promise<SignupResponse> {
-    const { data: response } = await apiClient.post<SignupResponse>(
-      "/auth/signup",
+  async login(data: SignupRequest): Promise<AuthResponse> {
+    const { data: response } = await apiClient.post<AuthResponse>(
+      "/auth/login",
+      data
+    );
+    return response;
+  },
+
+  async signup(data: SignupRequest): Promise<AuthResponse> {
+    const { data: response } = await apiClient.post<AuthResponse>(
+      "/auth/register",
       data
     );
     return response;

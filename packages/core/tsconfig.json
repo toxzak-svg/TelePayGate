@@ -5,7 +5,8 @@
     "rootDir": "./src",
     // enable jest + node types for tests run by ts-jest
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
     "composite": true
   },

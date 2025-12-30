@@ -280,7 +280,10 @@ export default class AuthController {
       if (new Date(session.expires_at) < new Date())
         return respondError(res, "EXPIRED", "Session expired", 401);
       const user = await db.oneOrNone(
-        "SELECT id, email, role, is_active FROM dashboard_users WHERE id = $1",
+        `SELECT du.id, du.email, du.role, du.is_active, u.api_key as "apiKey"
+         FROM dashboard_users du
+         LEFT JOIN users u ON du.merchant_id = u.id
+         WHERE du.id = $1`,
         [session.user_id],
       );
       if (!user) return respondError(res, "NO_USER", "User not found", 404);

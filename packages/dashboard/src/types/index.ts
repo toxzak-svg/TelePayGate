@@ -126,6 +126,11 @@ export interface WebhookEvent {
   deliveredAt?: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 export interface ChartData {
   date: string;
   value: number;

@@ -96,7 +96,7 @@ export default function Signup() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">Account Created!</h1>
           <p className="text-gray-400 mb-5 sm:mb-6 text-sm sm:text-base">
-            Check your email for your API key.
+            Your merchant account has been created.
           </p>
           <p className="text-gray-500 text-xs sm:text-sm">
             Redirecting to login...

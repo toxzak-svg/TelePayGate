@@ -272,9 +272,20 @@ export class AuthService {
       [email],
     );
     if (!user) {
+      // Create a merchant user for this dashboard user
+      const apiKey = `pk_${crypto.randomBytes(16).toString("hex")}`;
+      const apiSecret = `sk_${crypto.randomBytes(24).toString("hex")}`;
+      const appName = `${email.split("@")[0]}'s App`;
+
+      const merchant = await db.one(
+        `INSERT INTO users (api_key, api_secret, app_name, kyc_status, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, 'pending', true, NOW(), NOW()) RETURNING id`,
+        [apiKey, apiSecret, appName],
+      );
+
       user = await db.one(
-        "INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at, password_hash, password_updated_at) VALUES ($1, $2, true, now(), now(), $3, now()) RETURNING *",
-        [email, "developer", hash],
+        "INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at, password_hash, password_updated_at, merchant_id) VALUES ($1, $2, true, now(), now(), $3, now(), $4) RETURNING *",
+        [email, "developer", hash, merchant.id],
       );
     } else {
       // update existing user
@@ -282,7 +293,9 @@ export class AuthService {
         "UPDATE dashboard_users SET password_hash = $1, password_updated_at = now() WHERE id = $2",
         [hash, user.id],
       );
-      user = await db.one("SELECT * FROM dashboard_users WHERE id = $1", [user.id]);
+      user = await db.one("SELECT * FROM dashboard_users WHERE id = $1", [
+        user.id,
+      ]);
     }
 
     return user;
@@ -292,7 +305,10 @@ export class AuthService {
   static async loginWithPassword(email: string, password: string) {
     const db = getDatabase();
     const user = await db.oneOrNone(
-      "SELECT * FROM dashboard_users WHERE email = $1",
+      `SELECT du.*, u.api_key 
+       FROM dashboard_users du 
+       LEFT JOIN users u ON du.merchant_id = u.id 
+       WHERE du.email = $1`,
       [email],
     );
     if (!user) return { ok: false, reason: "not_found" };
@@ -306,7 +322,12 @@ export class AuthService {
     const session = await AuthService.createSessionForUser(user.id);
     return {
       ok: true,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        apiKey: user.api_key,
+      },
       ...session,
     };
   }

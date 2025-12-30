@@ -78,25 +78,29 @@ describe('TelePayGate SDK', () => {
     it('should estimate conversion successfully', async () => {
       const mockResponse = {
         data: {
-          estimatedAmount: 100.5,
-          rate: 0.0201,
-          fee: 2.5,
-          targetCurrency: 'TON',
+          data: {
+            sourceAmount: 5000,
+            targetAmount: 100.5,
+            exchangeRate: 0.0201,
+            targetCurrency: 'TON',
+          },
         },
       };
-      mockAxiosInstance.post.mockResolvedValueOnce(mockResponse);
+      mockAxiosInstance.get.mockResolvedValueOnce(mockResponse);
 
       const result = await client.estimateConversion({
         starsAmount: 5000,
         targetCurrency: 'TON',
       });
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/conversions/estimate', {
-        sourceAmount: 5000,
-        sourceCurrency: 'STARS',
-        targetCurrency: 'TON',
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/conversions/rate', {
+        params: {
+          amount: 5000,
+          sourceCurrency: 'STARS',
+          targetCurrency: 'TON',
+        },
       });
-      expect(result).toEqual(mockResponse.data);
+      expect(result).toEqual(mockResponse.data.data);
     });
   });
 
@@ -104,9 +108,11 @@ describe('TelePayGate SDK', () => {
     it('should lock rate successfully', async () => {
       const mockResponse = {
         data: {
-          lockId: 'lock_123',
-          rate: 0.0201,
-          expiresAt: '2024-12-01T12:00:00Z',
+          data: {
+            conversionId: 'conv_123',
+            rate: 0.0201,
+            lockedUntil: '2024-12-01T12:00:00Z',
+          },
         },
       };
       mockAxiosInstance.post.mockResolvedValueOnce(mockResponse);
@@ -118,16 +124,16 @@ describe('TelePayGate SDK', () => {
       });
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/conversions/lock-rate', {
-        sourceAmount: 5000,
+        amount: 5000,
         sourceCurrency: 'STARS',
         targetCurrency: 'TON',
         durationSeconds: 600,
       });
-      expect(result).toEqual(mockResponse.data);
+      expect(result).toEqual(mockResponse.data.data);
     });
 
     it('should use default duration when not specified', async () => {
-      mockAxiosInstance.post.mockResolvedValueOnce({ data: {} });
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: { data: {} } });
 
       await client.lockRate({
         starsAmount: 1000,
@@ -135,7 +141,7 @@ describe('TelePayGate SDK', () => {
       });
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/conversions/lock-rate', {
-        sourceAmount: 1000,
+        amount: 1000,
         sourceCurrency: 'STARS',
         targetCurrency: 'USD',
         durationSeconds: 300,
@@ -147,7 +153,7 @@ describe('TelePayGate SDK', () => {
     it('should create conversion successfully', async () => {
       const mockResponse = {
         data: {
-          conversion: {
+          data: {
             id: 'conv_123',
             status: 'pending',
             sourceAmount: 5000,
@@ -165,15 +171,15 @@ describe('TelePayGate SDK', () => {
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/conversions/create', {
         paymentIds: ['pay_1', 'pay_2'],
         targetCurrency: 'TON',
-        rateLockId: undefined,
+        destinationAddress: undefined,
       });
-      expect(result).toEqual(mockResponse.data.conversion);
+      expect(result).toEqual(mockResponse.data.data);
     });
 
-    it('should create conversion with rate lock', async () => {
+    it('should create conversion with destination address', async () => {
       const mockResponse = {
         data: {
-          conversion: { id: 'conv_456' },
+          data: { id: 'conv_456' },
         },
       };
       mockAxiosInstance.post.mockResolvedValueOnce(mockResponse);
@@ -181,13 +187,13 @@ describe('TelePayGate SDK', () => {
       await client.createConversion({
         paymentIds: ['pay_1'],
         targetCurrency: 'TON',
-        rateLockId: 'lock_789',
+        destinationAddress: 'UQ_DEST',
       });
 
       expect(mockAxiosInstance.post).toHaveBeenCalledWith('/conversions/create', {
         paymentIds: ['pay_1'],
         targetCurrency: 'TON',
-        rateLockId: 'lock_789',
+        destinationAddress: 'UQ_DEST',
       });
     });
   });
@@ -196,16 +202,18 @@ describe('TelePayGate SDK', () => {
     it('should get conversion status', async () => {
       const mockResponse = {
         data: {
-          status: 'completed',
-          completedAt: '2024-12-01T12:00:00Z',
+          data: {
+            status: 'completed',
+            completedAt: '2024-12-01T12:00:00Z',
+          },
         },
       };
       mockAxiosInstance.get.mockResolvedValueOnce(mockResponse);
 
       const result = await client.getConversionStatus('conv_123');
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/conversions/conv_123/status');
-      expect(result).toEqual(mockResponse.data);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/conversions/conv_123');
+      expect(result).toEqual(mockResponse.data.data);
     });
   });
 
@@ -213,9 +221,14 @@ describe('TelePayGate SDK', () => {
     it('should list conversions with default pagination', async () => {
       const mockResponse = {
         data: {
-          conversions: [{ id: 'conv_1' }, { id: 'conv_2' }],
-          total: 2,
-          page: 1,
+          data: {
+            conversions: [{ id: 'conv_1' }, { id: 'conv_2' }],
+            pagination: {
+              total: 2,
+              page: 1,
+              limit: 20,
+            },
+          },
         },
       };
       mockAxiosInstance.get.mockResolvedValueOnce(mockResponse);
@@ -225,11 +238,22 @@ describe('TelePayGate SDK', () => {
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/conversions', {
         params: { page: 1, limit: 20, status: undefined },
       });
-      expect(result).toEqual(mockResponse.data);
+      expect(result).toEqual({
+        conversions: mockResponse.data.data.conversions,
+        total: 2,
+        page: 1,
+      });
     });
 
     it('should list conversions with custom options', async () => {
-      mockAxiosInstance.get.mockResolvedValueOnce({ data: { conversions: [] } });
+      mockAxiosInstance.get.mockResolvedValueOnce({
+        data: {
+          data: {
+            conversions: [],
+            pagination: { total: 0, page: 2, limit: 50 },
+          },
+        },
+      });
 
       await client.listConversions({
         page: 2,
@@ -263,7 +287,10 @@ describe('TelePayGate SDK', () => {
   describe('listPayments', () => {
     it('should list payments with default pagination', async () => {
       mockAxiosInstance.get.mockResolvedValueOnce({
-        data: { payments: [], total: 0, page: 1 },
+        data: {
+          data: [],
+          meta: { total: 0, page: 1, limit: 20 },
+        },
       });
 
       await client.listPayments();

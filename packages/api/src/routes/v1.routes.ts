@@ -3,6 +3,7 @@ import PaymentController from "../controllers/payment.controller";
 import { ConversionController } from "../controllers/conversion.controller";
 import UserController from "../controllers/user.controller";
 import AdminController from "../controllers/admin.controller";
+import RateController from "../controllers/rate.controller";
 import { requireDashboardRole } from "../middleware/role.middleware";
 import FeeCollectionController from "../controllers/fee-collection.controller";
 import { authenticate } from "../middleware/auth.middleware";
@@ -11,9 +12,20 @@ import webhookRoutes from "./webhooks.routes";
 import AuthController from "../controllers/auth.controller";
 import csrfProtect from "../middleware/csrf.middleware";
 import nitroRoutes from "./nitro.routes";
+import { getMetrics, getContentType } from "../utils/metrics";
 
 const router = Router();
 const conversionController = new ConversionController();
+
+// Metrics endpoint
+router.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", getContentType());
+    res.end(await getMetrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
 
 // Health check
 router.get("/health", (req, res) => {
@@ -47,10 +59,22 @@ router.get(
   "/conversions/rate",
   conversionController.getRate.bind(conversionController),
 );
+router.get("/rates/current", RateController.getCurrentRates);
+router.post(
+  "/conversions/lock-rate",
+  authenticate,
+  conversionController.lockRate.bind(conversionController),
+);
+router.post(
+  "/conversions/create",
+  authenticate,
+  conversionController.createConversion.bind(conversionController),
+);
+// Legacy compatibility
 router.post(
   "/conversions",
   authenticate,
-  conversionController.createConversion.bind(conversionController),
+  conversionController.lockRate.bind(conversionController),
 );
 router.get(
   "/conversions/:id",
