@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { v4 as uuid } from "uuid";
-import { getDatabase, FeeService } from "@tg-payment/core";
+import { getDatabase, FeeService } from "telepaygate-core";
 
 export class AdminController {
   private static getServices() {

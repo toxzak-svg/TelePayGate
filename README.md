@@ -1,35 +1,7 @@
 # TelePayGate
 
-Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
-
-Quick links
-
-- Docs: `docs/`
-- Developer process: `docs/process/CONTRIBUTING.md`
-- Response helpers: `docs/process/response-helpers.md`
-
-Quick start (local dev)
-
-```bash
-npm install
-docker-compose up -d
-npm run migrate
-npm run dev
-```
-
-Testing
-
-```bash
-npm run test --workspace packages/api
-```
-
-Contributing
-
-- See `docs/process/CONTRIBUTING.md` for test and runner guidance.
-
-This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
-
-# TelePayGate
+![CI](https://github.com/toxzak-svg/TelePayGate/actions/workflows/ci-coverage.yml/badge.svg)
+![Codecov](https://codecov.io/gh/toxzak-svg/TelePayGate/branch/main/graph/badge.svg)
 
 > **Decentralized P2P Payment Processing Gateway** — TelePayGate accepts Telegram Stars and converts them into TON (and optionally fiat) using decentralized P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
@@ -696,7 +668,21 @@ npm run migrate:status
 
 ## 🚀 Deployment
 
-### Docker Deployment
+### Production Platforms
+
+**TelePayGate supports multiple deployment platforms with comprehensive guides:**
+
+- **🚂 Railway** — Recommended for quick deployment ([Deployment Guide](./docs/DEPLOYMENT_RAILWAY.md))
+  - Automated migrations via `railway.json`
+  - Managed PostgreSQL with automatic `DATABASE_URL`
+  - SSL support built-in
+  - One-click GitHub integration
+
+- **🎨 Render** — Great for static sites + API ([Deployment Guide](./docs/DEPLOYMENT_RENDER.md))
+
+- **🐳 Docker** — For custom infrastructure ([Docker Guide](./docs/DOCKER.md))
+
+### Docker Deployment (Local/Self-Hosted)
 
 ```bash
 # Build images
@@ -712,24 +698,45 @@ docker-compose logs -f api
 docker-compose down
 ```
 
-### Production Environment
+### Railway Deployment (Recommended)
 
-**Recommended Hosting:**
+**Quick Start:**
 
-- **API**: Railway, Render, or AWS ECS
-- **Database**: Managed PostgreSQL (AWS RDS, Railway, Supabase)
-- **Redis**: Upstash or AWS ElastiCache (for job queues)
+1. Connect GitHub repository to Railway
+2. Add PostgreSQL database (auto-configures `DATABASE_URL`)
+3. Set environment variables (see [Railway Guide](./docs/DEPLOYMENT_RAILWAY.md))
+4. Deploy automatically on push
+
+```bash
+# Or use Railway CLI
+railway login
+railway link
+railway up
+```
+
+**Database Migrations:** Automatically run via `preDeployCommand` in `railway.json`
+
+### Production Environment Setup
+
+**Database Configuration:**
+
+- `DATABASE_URL` — Primary connection string (auto-set by Railway/Render)
+- `DATABASE_POOL_MAX=10` — Connection pool size
+- `DATABASE_POOL_MIN=2` — Minimum connections
+- SSL enabled automatically for Railway/Render PostgreSQL
 
 **Environment Checklist:**
 
 - [ ] Set `NODE_ENV=production`
+- [ ] Configure `DATABASE_URL` (or use platform-provided)
 - [ ] Use strong `WALLET_ENCRYPTION_KEY` (32+ bytes)
-- [ ] Enable database SSL (`DATABASE_SSL=true`)
-- [ ] Configure webhook URL for Telegram
+- [ ] Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET`
+- [ ] Configure `TON_WALLET_MNEMONIC` for blockchain operations
+- [ ] Set webhook URL for Telegram bot
 - [ ] Set up monitoring (Sentry, Datadog)
 - [ ] Enable rate limiting on reverse proxy
 - [ ] Configure CORS for allowed origins
-- [ ] Set up automated backups for PostgreSQL
+- [ ] Set up automated database backups
 
 ### Health Checks
 
@@ -740,6 +747,17 @@ curl https://your-domain.com/health
 # Database connectivity
 curl https://your-domain.com/api/v1/health
 ```
+
+### Troubleshooting
+
+**Database Connection Issues:**
+- Verify `DATABASE_URL` is set correctly
+- Check SSL configuration (auto-enabled for production)
+- Ensure migrations ran successfully: `railway run node database/migrate.cjs status`
+
+**See platform-specific guides for detailed troubleshooting:**
+- [Railway Troubleshooting](./docs/DEPLOYMENT_RAILWAY.md#troubleshooting)
+- [Render Troubleshooting](./docs/DEPLOYMENT_RENDER.md#troubleshooting)
 
 ---
 
@@ -770,6 +788,17 @@ curl https://your-domain.com/api/v1/health
 - Retry failed webhooks with exponential backoff
 
 ---
+
+## Documentation site
+
+Built with MkDocs. To preview locally and verify `PRIVACY`/`TERMS` pages before publishing run:
+
+```bash
+pip install mkdocs mkdocs-material
+./scripts/deploy-mkdocs.sh serve
+```
+
+Ensure `docs/PRIVACY.md` and `docs/TERMS.md` contain production contact info and publicly-accessible HTTPS URLs before submission to Telegram Apps Center.
 
 ## 📊 Monitoring & Observability
 

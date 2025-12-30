@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { DirectConversionService } from "@tg-payment/core";
+import { DirectConversionService } from "telepaygate-core";
+import {
+  requireUserId,
+  parsePagination,
+  buildPaginationMeta,
+} from "../utils/controller-helpers";
 
 // Interface for authenticated requests
 interface AuthenticatedRequest extends Request {
@@ -73,14 +78,12 @@ export class ConversionController {
         return;
       }
 
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
-      }
+      const userId = requireUserId(req, res, {
+        errorCode: "UNAUTHORIZED",
+        errorMessage: "Authentication required",
+        statusCode: 401,
+      });
+      if (!userId) return;
 
       const conversionService = this.getConversionService();
       const conversion = await conversionService.lockRate(
@@ -142,16 +145,15 @@ export class ConversionController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const { page = 1, limit = 20, status } = req.query;
+      const { status } = req.query;
+      const { page, limit, offset } = parsePagination(req);
 
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
-      }
+      const userId = requireUserId(req, res, {
+        errorCode: "UNAUTHORIZED",
+        errorMessage: "Authentication required",
+        statusCode: 401,
+      });
+      if (!userId) return;
 
       const conversionService = this.getConversionService();
       const conversions = await conversionService.getUserConversions(userId);
@@ -162,19 +164,13 @@ export class ConversionController {
         : conversions;
 
       // Simple pagination
-      const offset = (Number(page) - 1) * Number(limit);
-      const paginated = filtered.slice(offset, offset + Number(limit));
+      const paginated = filtered.slice(offset, offset + limit);
 
       res.json({
         success: true,
         data: {
           conversions: paginated,
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: filtered.length,
-            totalPages: Math.ceil(filtered.length / Number(limit)),
-          },
+          pagination: buildPaginationMeta(filtered.length, page, limit),
         },
       });
     } catch (error) {

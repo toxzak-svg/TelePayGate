@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { p2pService } from '../api/services';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Pagination from '../components/common/Pagination';
@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { P2POrder as P2POrderType, ApiResponse } from '../types';
 
-type LocalOrder = P2POrderType;
+ 
 
 const statusColors: Record<string, string> = {
   open: 'bg-green-100 text-green-800',
@@ -30,9 +30,8 @@ export default function P2POrders() {
     queryFn: () => p2pService.getOrders({ limit: pageSize, offset: (page - 1) * pageSize }),
   });
 
-  // ordersResp may be an ApiResponse<{ data, meta }> or a plain array fallback
-  const items: P2POrderType[] = ordersResp && 'data' in (ordersResp as any) ? (ordersResp as any).data : Array.isArray(ordersResp) ? (ordersResp as any) : [];
-  const total = ordersResp && 'meta' in (ordersResp as any) ? (ordersResp as any).meta?.total ?? items.length : items.length;
+  const items: P2POrderType[] = ordersResp?.data ?? [];
+  const total = ordersResp?.meta?.total ?? items.length;
 
   const filteredOrders = filter === 'all' ? items : items.filter((o) => o.status === filter);
 
@@ -40,11 +39,11 @@ export default function P2POrders() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">P2P Orders</h1>
       <div className="mb-4 flex gap-2">
-        {['all', 'active', 'completed', 'cancelled'].map((f) => (
+        {['all', 'open', 'completed', 'cancelled'].map((f) => (
           <button
             key={f}
             className={`px-3 py-1 rounded ${filter === f ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-            onClick={() => setFilter(f as any)}
+            onClick={() => setFilter(f as 'all' | keyof typeof statusColors)}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -57,7 +56,7 @@ export default function P2POrders() {
             <div className="flex items-center justify-between mb-3">
           <div className="flex gap-2">
             <button
-              onClick={() => exportToCsv('p2p_orders.csv', items as any)}
+              onClick={() => exportToCsv('p2p_orders.csv', items as unknown as Record<string, unknown>[])}
               className="px-3 py-1 bg-white border rounded text-sm"
             >Export CSV</button>
           </div>
@@ -113,8 +112,12 @@ export default function P2POrders() {
             await p2pService.cancelOrder(selectedOrder.id);
             toast.success('Order cancelled');
             queryClient.invalidateQueries({ queryKey: ['p2p-orders'] });
-          } catch (err: any) {
-            toast.error(err?.message || 'Failed to cancel order');
+          } catch (error: unknown) {
+            if (error instanceof Error) {
+              toast.error(error.message);
+            } else {
+              toast.error('Failed to cancel order');
+            }
           } finally {
             setConfirmOpen(false);
             setSelectedOrder(null);

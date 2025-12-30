@@ -3,42 +3,50 @@ process.env.JWT_SECRET = "dev-secret";
 // Allow tests to receive raw magic link token from controller responses
 process.env.EXPOSE_TEST_TOKENS = "true";
 
+import request from "supertest";
+import type { Application } from "express";
+import type { SuperAgentTest } from "supertest";
+
 // Optionally run this test against a disposable Postgres container when
 // USE_TESTCONTAINERS=true. This is off by default to keep CI/environment
 // simple. When enabled, we start a container, run migrations, and set
 // DATABASE_URL accordingly.
 let containerFixture: any = null;
-if (process.env.USE_TESTCONTAINERS === "true") {
-  // Lazy import to avoid pulling testcontainers when not used
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { startPostgresFixture } = require("./fixtures/postgresFixture");
+
+describe("Magic Link Authentication", () => {
+  let app: Application;
+  let agent: SuperAgentTest;
+  const testEmail = "test-magic@example.com";
+
   beforeAll(async () => {
-    containerFixture = await startPostgresFixture();
-    process.env.DATABASE_URL = containerFixture.databaseUrl;
-  });
+    if (process.env.USE_TESTCONTAINERS === "true") {
+      // Lazy import to avoid pulling testcontainers when not used
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { startPostgresFixture } = require("./fixtures/postgresFixture");
+      containerFixture = await startPostgresFixture();
+      process.env.DATABASE_URL = containerFixture.databaseUrl;
+    }
+    
+    const { buildTestApp } = await import("./integration/app.test-setup");
+    const { getDatabase } = await import("telepaygate-core");
+    
+    app = buildTestApp();
+    agent = request.agent(app);
+    
+    const db = getDatabase();
+    await db.none("DELETE FROM magic_links WHERE email = $1", [testEmail]);
+  }, 30000);
+  
   afterAll(async () => {
     if (containerFixture) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { stopPostgresFixture } = require("./fixtures/postgresFixture");
       await stopPostgresFixture(containerFixture);
     }
-  });
-}
-import request from "supertest";
-import { buildTestApp } from "./integration/app.test-setup";
-import { getDatabase } from "@tg-payment/core";
-
-describe("Magic Link Authentication", () => {
-  const app = buildTestApp();
-  const agent = request.agent(app);
-  const testEmail = "test-magic@example.com";
-
-  beforeAll(async () => {
-    const db = getDatabase();
-    await db.none("DELETE FROM magic_links WHERE email = $1", [testEmail]);
-  });
+  }, 15000);
 
   test("should issue a magic link and persist token", async () => {
+    const { getDatabase } = await import("telepaygate-core");
     const res = await request(app)
       .post("/api/v1/auth/magic-link")
       .send({ email: testEmail });
@@ -55,7 +63,7 @@ describe("Magic Link Authentication", () => {
     );
     expect(row).not.toBeNull();
     expect(row.token_jti).toBe(res.body.data.token_jti);
-  });
+  }, 15000);
 
   test("should verify a valid magic link token and return user from /auth/me", async () => {
     // Issue a magic link
@@ -95,5 +103,5 @@ describe("Magic Link Authentication", () => {
     expect(meRes.status).toBe(200);
     expect(meRes.body.success).toBe(true);
     expect(meRes.body.data.user).toBeDefined();
-  });
+  }, 15000);
 });

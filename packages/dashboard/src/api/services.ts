@@ -22,7 +22,7 @@ export const paymentService = {
     const { data } = await apiClient.get<ApiResponse<Payment[]>>("/payments", {
       params,
     });
-    return data as any;
+    return data;
   },
 
   async getPayment(id: string): Promise<Payment> {
@@ -43,7 +43,7 @@ export const conversionService = {
       "/conversions",
       { params },
     );
-    return (data as any).data;
+    return data.data;
   },
 
   async getConversion(id: string): Promise<Conversion> {
@@ -140,7 +140,7 @@ export const p2pService = {
       "/p2p/orders",
       { params },
     );
-    return data as any;
+    return data;
   },
 
   async createOrder(order: {
@@ -207,7 +207,7 @@ export const webhookService = {
     limit?: number;
     offset?: number;
     status?: string;
-  }): Promise<ApiResponse<WebhookEvent[]>> {
+  }): Promise<WebhookEvent[]> {
     const { data } = await apiClient.get<ApiResponse<WebhookEvent[]>>(
       "/webhooks/events",
       { params },

@@ -4,11 +4,13 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "baseUrl": ".",
     "module": "commonjs",
     "moduleResolution": "node",
     "paths": {
-      "@tg-payment/core": ["../core/src"]
+      "telepaygate-core": ["../core/src"]
     },
     "sourceMap": false,
     "removeComments": true,

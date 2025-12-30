@@ -287,6 +287,40 @@ export class ConversionService {
           route,
         );
 
+        const userRow = await this.db.oneOrNone(
+          "SELECT u.webhook_url FROM conversions c JOIN users u ON c.user_id = u.id WHERE c.id = $1",
+          [conversionId],
+        );
+        if (userRow?.webhook_url) {
+          await this.db.none(
+            `INSERT INTO webhook_events (
+              id, user_id, webhook_url, event, payload, signature,
+              status, attempts, max_attempts, created_at
+            ) VALUES (
+              gen_random_uuid(),
+              (SELECT user_id FROM conversions WHERE id = $1),
+              $2,
+              'conversion.executed',
+              $3,
+              '',
+              'pending',
+              0,
+              5,
+              NOW()
+            )`,
+            [
+              conversionId,
+              userRow.webhook_url,
+              JSON.stringify({
+                conversionId,
+                provider: execResult.dexProvider || route.sources[0].provider,
+                poolId: execResult.dexPoolId,
+                txHash: execResult.txHash,
+              }),
+            ],
+          );
+        }
+
         // If we obtained a tx hash, record it and start polling
         if (execResult && execResult.txHash) {
           await this.db.none(
@@ -309,7 +343,16 @@ export class ConversionService {
         console.error("executeP2PConversion failed:", err);
         await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed");
       }
+    } catch (err: any) {
+      // If an error happens at top level we log and try to mark conversion as failed
+      console.error("executeP2PConversion failed (top-level):", err);
+      try {
+        await this.updateConversionStatus(conversionId, "failed", err?.message || "execution failed (top-level)");
+      } catch (e) {
+        console.error("Failed to update conversion status after top-level error:", e);
+      }
     }
+  }
 
   /**
    * Poll blockchain for conversion status
@@ -322,7 +365,7 @@ export class ConversionService {
     const maxPolls = 60; // 5 minutes (5s intervals)
     let polls = 0;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const intervalId = setInterval(async () => {
         if (polls >= maxPolls) {
           clearInterval(intervalId);
@@ -347,6 +390,39 @@ export class ConversionService {
               await this.feeService.markFeeCollected(feeResult.id, state.hash || txHash);
             }
 
+            const userRow2 = await this.db.oneOrNone(
+              "SELECT u.webhook_url, c.user_id FROM conversions c JOIN users u ON c.user_id = u.id WHERE c.id = $1",
+              [conversionId],
+            );
+            if (userRow2?.webhook_url) {
+              await this.db.none(
+                `INSERT INTO webhook_events (
+                  id, user_id, webhook_url, event, payload, signature,
+                  status, attempts, max_attempts, created_at
+                ) VALUES (
+                  gen_random_uuid(),
+                  $1,
+                  $2,
+                  'conversion.completed',
+                  $3,
+                  '',
+                  'pending',
+                  0,
+                  5,
+                  NOW()
+                )`,
+                [
+                  userRow2.user_id,
+                  userRow2.webhook_url,
+                  JSON.stringify({
+                    conversionId,
+                    txHash,
+                    status: "completed",
+                  }),
+                ],
+              );
+            }
+
             console.log("✅ Conversion completed:", { conversionId, txHash });
             return resolve();
           }
@@ -364,6 +440,33 @@ export class ConversionService {
         }
       }, 5000);
     });
+  }
+
+  /**
+   * Update conversion status in database
+   */
+  private async updateConversionStatus(
+    conversionId: string,
+    status: string,
+    errorMessage?: string,
+  ): Promise<void> {
+    const updateFields = errorMessage
+      ? { status, error_message: errorMessage, updated_at: new Date() }
+      : { status, updated_at: new Date() };
+
+    if (status === "completed") {
+      Object.assign(updateFields, { completed_at: new Date() });
+    }
+
+    const columns = Object.keys(updateFields)
+      .map((k, i) => `${k} = $${i + 2}`)
+      .join(", ");
+    const values = Object.values(updateFields);
+
+    await this.db.none(
+      `UPDATE conversions SET ${columns} WHERE id = $1`,
+      [conversionId, ...values],
+    );
   }
 
   /**
@@ -398,6 +501,12 @@ export class ConversionService {
     const rateKey = `${sourceCurrency}-${targetCurrency}`;
     return rates[rateKey] || 0.001;
   }
+
+  /*
+   * NOTE: updateConversionStatus implemented below (keeps columns dynamic)
+   * The older, simpler helper was removed during the merge to avoid duplicate
+   * definitions.
+   */
 }
 
 export default ConversionService;

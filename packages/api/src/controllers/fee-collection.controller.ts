@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getDatabase, FeeCollectionService } from "@tg-payment/core";
+import { getDatabase, FeeCollectionService } from "telepaygate-core";
 import {
   sendSuccess,
   sendCreated,

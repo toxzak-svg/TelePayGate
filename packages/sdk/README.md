@@ -1,271 +1,218 @@
 # TelePayGate SDK
 
-TypeScript/JavaScript SDK for integrating with the TelePayGate API.
+TypeScript/JavaScript SDK for integrating with the TelePayGate payment gateway API.
+
+[![npm version](https://img.shields.io/npm/v/telepaygate-sdk.svg)](https://www.npmjs.com/package/telepaygate-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
-npm install @tg-payment/sdk
-
-text
+```bash
+npm install telepaygate-sdk
+```
 
 ## Quick Start
 
-import TelePayGate from '@tg-payment/sdk';
+```typescript
+import TelePayGate from 'telepaygate-sdk';
 
 // Initialize client
 const gateway = new TelePayGate({
-apiKey: 'pk_your_api_key',
-apiSecret: 'sk_your_api_secret',
-apiUrl: '<https://api.yourgateway.com/v1>', // optional
-});// Estimate conversion
+  apiKey: 'pk_your_api_key',
+  apiSecret: 'sk_your_api_secret',
+  apiUrl: 'https://api.telepaygate.com/v1', // optional
+});
+
+// Estimate conversion
 const estimate = await gateway.estimateConversion({
-starsAmount: 5000,
-targetCurrency: 'TON',
+  starsAmount: 5000,
+  targetCurrency: 'TON',
 });
 
 console.log('Estimated TON:', estimate.tonEquivalent);
 console.log('Fees:', estimate.fees.total);
-
-text
+```
 
 ## Features
 
-✅ **Full TypeScript support** - Complete type definitions for all methods  
-✅ **Rate locking** - Lock exchange rates for time-sensitive conversions  
-✅ **Payment tracking** - Monitor payment status in real-time  
-✅ **Conversion management** - Create and track Stars → TON conversions  
-✅ **Error handling** - Comprehensive error types and messages
+- ✅ **Full TypeScript support** - Complete type definitions for all methods
+- ✅ **Rate locking** - Lock exchange rates for time-sensitive conversions
+- ✅ **Payment tracking** - Monitor payment status in real-time
+- ✅ **Conversion management** - Create and track Stars → TON conversions
+- ✅ **Error handling** - Comprehensive error types and messages
 
 ## API Reference
 
 ### Initialize Client
 
+```typescript
 const gateway = new TelePayGate({
-apiKey: 'pk_xxx', // Required: Your public API key
-apiSecret: 'sk_xxx', // Optional: Your secret API key
-apiUrl: 'https://...', // Optional: Custom API URL
-timeout: 30000, // Optional: Request timeout (default: 30s)
+  apiKey: 'pk_xxx',      // Required: Your public API key
+  apiSecret: 'sk_xxx',   // Optional: Your secret API key
+  apiUrl: 'https://...', // Optional: Custom API URL
+  timeout: 30000,        // Optional: Request timeout (default: 30s)
 });
-
-text
+```
 
 ### Conversion Methods
 
 #### Estimate Conversion
 
+```typescript
 const estimate = await gateway.estimateConversion({
-starsAmount: 5000,
-targetCurrency: 'TON',
+  starsAmount: 5000,
+  targetCurrency: 'TON',
 });
-
-text
+```
 
 **Response:**
+```json
 {
-starsAmount: 5000,
-tonEquivalent: 4.95,
-exchangeRate: 0.00099,
-fees: {
-telegram: 50,
-dex: 25,
-total: 75
+  "starsAmount": 5000,
+  "tonEquivalent": 4.95,
+  "exchangeRate": 0.00099,
+  "fees": {
+    "telegram": 50,
+    "dex": 25,
+    "total": 75
+  }
 }
-}
-
-text
+```
 
 #### Lock Conversion Rate
 
+```typescript
 const rateLock = await gateway.lockRate({
-starsAmount: 5000,
-targetCurrency: 'TON',
-durationSeconds: 300, // 5 minutes
+  starsAmount: 5000,
+  targetCurrency: 'TON',
+  durationSeconds: 300, // 5 minutes
 });
-
-text
-
-**Response:**
-{
-id: 'lock-uuid',
-exchangeRate: 0.00099,
-lockedUntil: 1699564800000,
-starsAmount: 5000,
-targetCurrency: 'TON'
-}
-
-text
+```
 
 #### Create Conversion
 
+```typescript
 const conversion = await gateway.createConversion({
-paymentIds: ['payment-uuid-1', 'payment-uuid-2'],
-targetCurrency: 'TON',
-rateLockId: 'lock-uuid', // optional
+  paymentIds: ['payment-uuid-1', 'payment-uuid-2'],
+  targetCurrency: 'TON',
+  rateLockId: 'lock-uuid', // optional
 });
-
-text
-
-**Response:**
-{
-id: 'conversion-uuid',
-status: 'pending',
-sourceAmount: 5000,
-targetAmount: 4.95,
-exchangeRate: 0.00099,
-createdAt: '2025-11-12T18:00:00Z'
-}
-
-text
+```
 
 #### Get Conversion Status
 
+```typescript
 const status = await gateway.getConversionStatus('conversion-uuid');
-
-text
-
-**Response:**
-{
-status: 'completed',
-conversion: { /_ conversion object _/ },
-progress: {
-phase: 'phase3_confirmed',
-percentage: 100,
-estimatedCompletion: null
-}
-}
-
-text
+```
 
 #### List Conversions
 
+```typescript
 const result = await gateway.listConversions({
-page: 1,
-limit: 20,
-status: 'completed', // optional filter
+  page: 1,
+  limit: 20,
+  status: 'completed', // optional filter
 });
-
-text
+```
 
 ### Payment Methods
 
 #### Get Payment
 
+```typescript
 const payment = await gateway.getPayment('payment-uuid');
-
-text
+```
 
 #### List Payments
 
+```typescript
 const result = await gateway.listPayments({
-page: 1,
-limit: 20,
-status: 'received', // optional filter
+  page: 1,
+  limit: 20,
+  status: 'received', // optional filter
 });
-
-text
+```
 
 #### Get Payment Statistics
 
+```typescript
 const stats = await gateway.getPaymentStats();
-
-text
-
-**Response:**
-{
-totalPayments: 150,
-totalStars: 750000,
-byStatus: {
-pending: 5,
-received: 120,
-converting: 10,
-completed: 15
-}
-}
-
-text
+```
 
 ### User Methods
 
 #### Get User Profile
 
+```typescript
 const profile = await gateway.getProfile();
-
-text
+```
 
 #### Regenerate API Keys
 
+```typescript
 const newKeys = await gateway.regenerateApiKeys();
 console.log('New API Key:', newKeys.apiKey);
 console.log('New Secret:', newKeys.apiSecret);
-
-text
+```
 
 ### Rate Methods
 
 #### Get Exchange Rates
 
+```typescript
 const rates = await gateway.getExchangeRates();
-
-text
-
-**Response:**
-{
-STARS: {
-TON: 0.00099,
-USD: 2.50,
-EUR: 2.35
-},
-TON: {
-import TelePayGate from '@tg-payment/sdk';
-
-const gateway = new TelePayGate({
-EUR: 2375.50
-}
-}
-
-text
+```
 
 ## Error Handling
 
 All methods throw `APIError` on failure:
 
-import { APIError } from '@tg-payment/sdk';
+```typescript
+import TelePayGate, { APIError } from 'telepaygate-sdk';
 
 try {
-const estimate = await gateway.estimateConversion({
-starsAmount: 500, // Below minimum
-targetCurrency: 'TON',
-});
+  const estimate = await gateway.estimateConversion({
+    starsAmount: 500, // Below minimum
+    targetCurrency: 'TON',
+  });
 } catch (error) {
-if ((error as APIError).code === 'MINIMUM_AMOUNT_NOT_MET') {
-console.error('Amount too small:', error.message);
+  const apiError = error as APIError;
+  if (apiError.code === 'MINIMUM_AMOUNT_NOT_MET') {
+    console.error('Amount too small:', apiError.message);
+  }
 }
-}
-console.log('Estimated TON:', estimate.tonEquivalent);
-text
+```
 
 **Error Structure:**
+```typescript
 interface APIError {
-message: string; // Human-readable error message
-code: string; // Machine-readable error code
-status: number; // HTTP status code
-details?: any; // Additional error details
+  message: string;   // Human-readable error message
+  code: string;      // Machine-readable error code
+  status: number;    // HTTP status code
+  details?: any;     // Additional error details
 }
-
-text
+```
 
 ## TypeScript Support
 
 All types are exported for your convenience:
 
-import {
-Conversion,
-Payment,
-ConversionStatusType,
-Currency
-} from '@tg-payment/sdk';
+```typescript
+import type {
+  Conversion,
+  Payment,
+  ConversionStatusType,
+  Currency,
+  PaymentGatewayConfig,
+  EstimationParams,
+  EstimationResult,
+} from 'telepaygate-sdk';
+```
 
-text
+## Related Packages
+
+- [`telepaygate-core`](https://www.npmjs.com/package/telepaygate-core) - Core business logic
+- [`telepaygate-api`](https://www.npmjs.com/package/telepaygate-api) - REST API server
 
 ## License
 

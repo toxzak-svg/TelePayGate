@@ -5,8 +5,14 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
+// Prioritize DATABASE_URL for Railway/production, fallback to individual vars for local dev
 const DB_URL = process.env.DATABASE_URL || 
   `postgresql://${process.env.DB_USER || 'tg_user'}:${process.env.DB_PASSWORD || 'tg_pass'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'telepaygate_dev'}`;
+
+// SSL configuration for production databases (Railway, Render, etc.)
+const SSL_CONFIG = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('railway.app') || process.env.DATABASE_URL?.includes('render.com')
+  ? { rejectUnauthorized: false } // Allow self-signed certs in production
+  : false;
 
 // Colors
 const colors = {
@@ -22,7 +28,10 @@ function log(color, message) {
 }
 
 async function createClient() {
-  const client = new Client({ connectionString: DB_URL });
+  const client = new Client({ 
+    connectionString: DB_URL,
+    ssl: SSL_CONFIG
+  });
   await client.connect();
   return client;
 }

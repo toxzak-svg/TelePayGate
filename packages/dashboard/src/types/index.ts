@@ -1,3 +1,6 @@
+// Import shared types from core
+export type { DashboardStats } from "@tg-payment/core";
+
 export interface Payment {
   id: string;
   userId: string;
@@ -52,13 +55,16 @@ export interface User {
 export interface DashboardStats {
   totalRevenueTon: number;
   totalRevenueStars: number;
+  totalRevenue: number;
   totalTransactions: number;
   totalPayments: number;
   totalUsers: number;
+  activeUsers: number;
   activeMerchants: number;
   successRate: number;
   revenueChange: number;
   transactionChange: number;
+  userChange: number;
   activeMerchantsChange: number;
   successRateChange: number;
 }
@@ -130,7 +136,7 @@ export interface ApiResponse<T> {
   data: T;
   meta?: {
     total?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   error?: {
     code: string;

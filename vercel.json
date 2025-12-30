@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "packages/dashboard/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm run build -w telepaygate-core && npm run build -w @tg-payment/dashboard",
+        "outputDirectory": "dist"
+      }
+    },
+    {
+      "src": "packages/api/vercel.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/v1/(.*)",
+      "destination": "/packages/api/vercel.ts"
+    },
+    {
+      "source": "/health",
+      "destination": "/packages/api/vercel.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/packages/dashboard/dist/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "VITE_API_URL": "/api/v1"
+  },
+  "git": {
+    "deploymentEnabled": {
+      "preview": true,
+      "production": true
+    }
+  }
+}

@@ -39,25 +39,43 @@ export async function startPostgresFixture(): Promise<Fixture> {
   try {
     let migrateScript: string | null = null;
     const dir = __dirname;
+    // Prefer CommonJS migrate.cjs to avoid ESM require issues
     for (let i = 0; i < 8; i++) {
-      const candidate = path.resolve(
+      const candidateCjs = path.resolve(
+        dir,
+        ...Array(i).fill(".."),
+        "database",
+        "migrate.cjs",
+      );
+      if (fs.existsSync(candidateCjs)) {
+        migrateScript = candidateCjs;
+        break;
+      }
+      const candidateJs = path.resolve(
         dir,
         ...Array(i).fill(".."),
         "database",
         "migrate.js",
       );
-      if (fs.existsSync(candidate)) {
-        migrateScript = candidate;
+      if (fs.existsSync(candidateJs)) {
+        migrateScript = candidateJs;
         break;
       }
     }
     if (!migrateScript) {
-      // as a fallback, try the repo-root relative path
-      const fallback = path.resolve(
+      // as a fallback, try the repo-root relative paths
+      const fallbackCjs = path.resolve(
         __dirname,
-        "../../../../../../database/migrate.js",
+        "../../../../../../database/migrate.cjs",
       );
-      if (fs.existsSync(fallback)) migrateScript = fallback;
+      if (fs.existsSync(fallbackCjs)) migrateScript = fallbackCjs;
+      else {
+        const fallbackJs = path.resolve(
+          __dirname,
+          "../../../../../../database/migrate.js",
+        );
+        if (fs.existsSync(fallbackJs)) migrateScript = fallbackJs;
+      }
     }
     if (!migrateScript) {
       await container.stop();

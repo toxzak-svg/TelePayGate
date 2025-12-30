@@ -1,7 +1,7 @@
 import { Response, Request } from "express";
 import { v4 as uuid } from "uuid";
 import crypto from "crypto";
-import { getDatabase, PaymentModel } from "@tg-payment/core";
+import { getDatabase, PaymentModel } from "telepaygate-core";
 
 export class UserController {
   private static getServices() {

@@ -42,7 +42,7 @@ export class TonBlockchainService {
   private client: TonClient;
   private wallet: WalletContractV4 | null = null;
   private walletAddress: Address | null = null;
-  private keyPair: any = null;
+  private keyPair: { publicKey: Buffer; secretKey: Buffer } | null = null;
 
   constructor(
     private endpoint: string,
@@ -96,7 +96,7 @@ export class TonBlockchainService {
   /**
    * Get the initialized wallet contract and key pair
    */
-  getWallet(): { wallet: WalletContractV4; keyPair: any } {
+  getWallet(): { wallet: WalletContractV4; keyPair: { publicKey: Buffer; secretKey: Buffer } } {
     if (!this.wallet || !this.keyPair) {
       throw new Error("Wallet not initialized. Call initializeWallet() first.");
     }
