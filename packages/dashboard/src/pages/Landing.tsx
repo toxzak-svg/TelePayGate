@@ -63,7 +63,10 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6" style={{ paddingTop: '10rem' }}>
+      <section className="relative pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden" style={{ paddingTop: '10rem' }}>
+        {/* Gradient Mesh Background */}
+        <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.1),transparent_50%)] pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 sm:px-4 py-1.5 mb-6 sm:mb-8">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>

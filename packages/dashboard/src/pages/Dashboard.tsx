@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Suspense, lazy } from 'react';
 import RecentTransactionsTable from '../components/analytics/RecentTransactionsTable';
 import { statsService } from '../api/services';
+import StatCard from '../components/common/StatCard';
 
 const AnalyticsCharts = lazy(() => import('../components/analytics/AnalyticsCharts'));
 
@@ -38,33 +39,33 @@ export default function Dashboard() {
   };
 
   const stats = useMemo(() => [
-    { 
-      name: 'Total Revenue', 
-      value: formatCurrency(dashboardStats?.totalRevenue), 
-      change: dashboardStats?.revenueChange ? `${dashboardStats.revenueChange > 0 ? '+' : ''}${dashboardStats.revenueChange.toFixed(1)}%` : 'N/A', 
-      icon: DollarSign, 
-      trend: (dashboardStats?.revenueChange ?? 0) >= 0 ? 'up' : 'down' 
+    {
+      name: 'Total Revenue',
+      value: formatCurrency(dashboardStats?.totalRevenue),
+      change: dashboardStats?.revenueChange ? `${dashboardStats.revenueChange > 0 ? '+' : ''}${dashboardStats.revenueChange.toFixed(1)}%` : 'N/A',
+      icon: DollarSign,
+      trend: (dashboardStats?.revenueChange ?? 0) >= 0 ? 'up' : 'down'
     },
-    { 
-      name: 'Transactions', 
-      value: formatNumber(dashboardStats?.totalTransactions), 
-      change: dashboardStats?.transactionChange ? `${dashboardStats.transactionChange > 0 ? '+' : ''}${dashboardStats.transactionChange.toFixed(1)}%` : 'N/A', 
-      icon: Activity, 
-      trend: (dashboardStats?.transactionChange ?? 0) >= 0 ? 'up' : 'down' 
+    {
+      name: 'Transactions',
+      value: formatNumber(dashboardStats?.totalTransactions),
+      change: dashboardStats?.transactionChange ? `${dashboardStats.transactionChange > 0 ? '+' : ''}${dashboardStats.transactionChange.toFixed(1)}%` : 'N/A',
+      icon: Activity,
+      trend: (dashboardStats?.transactionChange ?? 0) >= 0 ? 'up' : 'down'
     },
-    { 
-      name: 'Active Users', 
-      value: formatNumber(dashboardStats?.activeUsers), 
-      change: dashboardStats?.userChange ? `${dashboardStats.userChange > 0 ? '+' : ''}${dashboardStats.userChange.toFixed(1)}%` : 'N/A', 
-      icon: Users, 
-      trend: (dashboardStats?.userChange ?? 0) >= 0 ? 'up' : 'down' 
+    {
+      name: 'Active Users',
+      value: formatNumber(dashboardStats?.activeUsers),
+      change: dashboardStats?.userChange ? `${dashboardStats.userChange > 0 ? '+' : ''}${dashboardStats.userChange.toFixed(1)}%` : 'N/A',
+      icon: Users,
+      trend: (dashboardStats?.userChange ?? 0) >= 0 ? 'up' : 'down'
     },
-    { 
-      name: 'Success Rate', 
-      value: formatPercent(dashboardStats?.successRate), 
-      change: dashboardStats?.successRateChange ? `${dashboardStats.successRateChange > 0 ? '+' : ''}${dashboardStats.successRateChange.toFixed(1)}%` : 'N/A', 
-      icon: TrendingUp, 
-      trend: (dashboardStats?.successRateChange ?? 0) >= 0 ? 'up' : 'down' 
+    {
+      name: 'Success Rate',
+      value: formatPercent(dashboardStats?.successRate),
+      change: dashboardStats?.successRateChange ? `${dashboardStats.successRateChange > 0 ? '+' : ''}${dashboardStats.successRateChange.toFixed(1)}%` : 'N/A',
+      icon: TrendingUp,
+      trend: (dashboardStats?.successRateChange ?? 0) >= 0 ? 'up' : 'down'
     },
   ], [dashboardStats]);
 
@@ -86,26 +87,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div aria-labelledby="dashboard-title">
-      <h1 id="dashboard-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-        {stats.map((stat) => (
-          <section key={stat.name} className="bg-white dark:bg-gray-900 rounded-lg shadow p-6" aria-labelledby={`${stat.name}-label`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg" aria-hidden="true">
-                  <stat.icon className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-              <span className={`text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`} aria-live="polite">
-                {stat.change}
-              </span>
-            </div>
-            <div className="mt-4">
-              <h3 id={`${stat.name}-label`} className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.name}</h3>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stat.value}</p>
-            </div>
-          </section>
+    <div aria-labelledby="dashboard-title" className="animate-fade-in">
+      <div className="flex items-center justify-between mb-8">
+        <h1 id="dashboard-title" className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Last updated: {new Date().toLocaleTimeString()}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <div key={stat.name} style={{ animationDelay: `${index * 100}ms` }} className="animate-fade-in">
+            <StatCard
+              title={stat.name}
+              value={stat.value}
+              change={dashboardStats ? parseFloat(stat.change.replace(/[^0-9.-]+/g, '')) : undefined}
+              changeLabel="vs last month"
+              icon={stat.icon}
+              trend={stat.trend}
+              loading={isLoading}
+              gradient={index % 2 === 0}
+            />
+          </div>
         ))}
       </div>
 
