@@ -18,17 +18,16 @@ COPY packages/sdk/package*.json ./packages/sdk/
 COPY packages/dashboard/package*.json ./packages/dashboard/
 
 # Install dependencies (no cache mount for Railway compatibility)
-RUN npm install --workspaces --no-audit --no-fund
+RUN npm install --workspaces --ignore-scripts --no-audit --no-fund
 
 # Copy source code and database migrations
 COPY packages ./packages
 COPY database ./database
 
-# Build all workspace packages (core, api, sdk are required; dashboard is optional)
-# Use explicit workspace build commands to match monorepo scripts
-RUN npm run -w telepaygate-core build && \
-    npm run -w telepaygate-api build && \
-    npm run -w telepaygate-sdk build
+# Rebuild native dependencies (since we ignored scripts earlier)
+RUN npm rebuild && npm run -w telepaygate-core build && \
+  npm run -w telepaygate-api build && \
+  npm run -w telepaygate-sdk build
 
 # Dashboard is optional - build if possible but don't fail if it errors
 RUN npm run -w "@tg-payment/dashboard" build || echo "Dashboard build skipped or failed"
@@ -43,12 +42,12 @@ FROM builder AS dashboard-builder
 
 # Try to copy dashboard files if they exist
 RUN if [ -d "/app/packages/dashboard/dist" ]; then \
-      echo "Dashboard build succeeded"; \
-    else \
-      echo "Dashboard build failed or not found"; \
-      mkdir -p /app/packages/dashboard/dist; \
-      echo '<!DOCTYPE html><html><body><h1>Dashboard not available</h1></body></html>' > /app/packages/dashboard/dist/index.html; \
-    fi
+  echo "Dashboard build succeeded"; \
+  else \
+  echo "Dashboard build failed or not found"; \
+  mkdir -p /app/packages/dashboard/dist; \
+  echo '<!DOCTYPE html><html><body><h1>Dashboard not available</h1></body></html>' > /app/packages/dashboard/dist/index.html; \
+  fi
 
 # =============================================================================
 # Runtime stage - Minimal production image
@@ -81,8 +80,8 @@ COPY --from=builder /app/database ./database
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
+  adduser -S nodejs -u 1001 && \
+  chown -R nodejs:nodejs /app
 
 USER nodejs
 
