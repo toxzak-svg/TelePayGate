@@ -1,8 +1,9 @@
 {
-  "name": "telegram-payment-gateway",
+  "name": "telepaygate",
   "version": "0.1.0",
   "description": "Unified payment processing for Telegram Stars → TON → Fiat conversions",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -10,25 +11,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api && npm run build -w @tg-payment/dashboard && npm run build -w @tg-payment/sdk",
-    "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
-    "test": "npm run test --workspaces --if-present",
-    "dev": "npm run dev --workspaces --if-present",
-    "clean": "bash ./scripts/clean.sh",
-    "lint": "eslint . --ext .ts --fix",
-    "format": "prettier --write \"**/*.{ts,json,md}\"",
-    "worker:fees": "npm run worker:fees -w @tg-payment/core",
-    "wallet:update": "node packages/core/scripts/update-platform-wallet.js",
-    "migrate": "node database/migrate.js up",
-    "migrate:status": "node database/migrate.js status",
-    "migrate:reset": "node database/migrate.js reset",
-    "db:setup": "npm run migrate",
-    "docker:build": "docker build -t tg-payment-gateway .",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "trigger:dev": "npx trigger.dev@latest dev",
-    "trigger:deploy": "npx trigger.dev@latest deploy"
+    "test:ci": "npm run -w telepaygate-core test -- --detectOpenHandles && npm run -w telepaygate-api test -- --detectOpenHandles && npm run -w telepaygate-sdk test -- --detectOpenHandles && npm run -w @tg-payment/dashboard test",
+    "coverage:telepaygate-sdk": "npm run -w telepaygate-sdk test:coverage",
+    "coverage:dashboard": "npm run -w @tg-payment/dashboard test -- --coverage",
+    "coverage:core": "npm run -w telepaygate-core test:coverage",
+    "coverage:api": "npm run -w telepaygate-api test -- --coverage",
+    "coverage:all": "npm run coverage:telepaygate-sdk && npm run coverage:dashboard && npm run coverage:core && npm run coverage:api",
+    "coverage:merge": "npx lcov-result-merger './packages/**/coverage/lcov.info' > coverage/lcov.info || true"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
@@ -41,11 +30,16 @@
     "@typescript-eslint/parser": "^6.10.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8.53.0",
+    "lcov-result-merger": "^3.0.1",
+    "normalize-range": "^0.1.2",
     "postcss": "^8.5.6",
     "prettier": "^3.0.3",
+    "sharp": "^0.32.6",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
+    "testcontainers": "^9.1.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {
@@ -56,5 +50,8 @@
     "pg": "^8.11.3",
     "pg-promise": "^12.2.0",
     "tonweb": "^0.0.66"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-kms": "^3.382.0"
   }
 }

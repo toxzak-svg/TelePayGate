@@ -1,7 +1,7 @@
-import { Pool } from 'pg';
-import { TonPaymentService } from './ton-payment.service';
-import { FeeService } from './fee.service';
-import { RateAggregatorService } from './rate.aggregator';
+import { getDatabase, Database } from "../db/connection";
+import { TonPaymentService } from "./ton-payment.service";
+import { FeeService } from "./fee.service";
+import { RateAggregatorService } from "./rate-aggregator.service";
 
 export interface DirectConversionRecord {
   id: string;
@@ -44,7 +44,7 @@ export interface RateQuote {
 /**
  * Direct TON Conversion Service
  * Replaces Fragment API with direct blockchain operations
- * 
+ *
  * Features:
  * - No KYC requirements
  * - No 21-day holding period
@@ -53,25 +53,20 @@ export interface RateQuote {
  * - Real-time rate aggregation from multiple sources
  */
 export class DirectConversionService {
-  private pool: Pool;
-  private tonService: TonPaymentService;
+  private db: Database;
   private feeService: FeeService;
   private rateAggregator: RateAggregatorService;
-  private minConversionStars: number = 100; // Much lower than Fragment's 1000
+  private tonService: TonPaymentService;
+  private minConversionStars: number = 100;
 
-  constructor(
-    pool: Pool,
-    tonService: TonPaymentService,
-    minConversionStars?: number
-  ) {
-    this.pool = pool;
-    this.tonService = tonService;
-    this.feeService = new FeeService(pool);
+  constructor() {
+    this.db = getDatabase();
+    this.feeService = new FeeService(this.db);
     this.rateAggregator = new RateAggregatorService();
-    
-    if (minConversionStars) {
-      this.minConversionStars = minConversionStars;
-    }
+    this.tonService = new TonPaymentService({
+      endpoint: process.env.TON_API_URL!,
+      mnemonic: process.env.TON_WALLET_MNEMONIC!,
+    });
   }
 
   /**
@@ -80,21 +75,22 @@ export class DirectConversionService {
    */
   async getQuote(
     sourceAmount: number,
-    sourceCurrency: string = 'STARS',
-    targetCurrency: string = 'TON'
+    sourceCurrency: string = "STARS",
+    targetCurrency: string = "TON",
   ): Promise<RateQuote> {
     // Get real-time rate from aggregator
-    const rateData = await this.rateAggregator.getAggregatedRate('TON', 'USD');
-    
+    const rateData = await this.rateAggregator.getAggregatedRate("TON", "USD");
+
     // Calculate Stars to TON rate
     // Assuming 1 Star ≈ $0.015 USD (Telegram's internal rate)
     const starsUsdRate = 0.015;
     const tonUsdRate = rateData.averageRate;
     const starsToTonRate = starsUsdRate / tonUsdRate;
 
-    const feeBreakdown = await this.feeService.calculateFeeBreakdown(sourceAmount);
+    const feeBreakdown =
+      await this.feeService.calculateFeeBreakdown(sourceAmount);
     const platformWallet = await this.feeService.getPlatformWallet();
-    
+
     // Only network + platform fees (no Fragment fee)
     const totalFees = feeBreakdown.platform + feeBreakdown.network;
     const targetAmount = (sourceAmount - totalFees) * starsToTonRate;
@@ -112,7 +108,7 @@ export class DirectConversionService {
         platformPercentage: feeBreakdown.platformPercentage,
       },
       platformWallet,
-      estimatedArrival: '1-2 minutes', // Much faster than Fragment
+      estimatedArrival: "1-2 minutes", // Much faster than Fragment
       validUntil: new Date(Date.now() + 60000),
     };
   }
@@ -123,9 +119,9 @@ export class DirectConversionService {
   async lockRate(
     userId: string,
     sourceAmount: number,
-    sourceCurrency: string = 'STARS',
-    targetCurrency: string = 'TON',
-    durationSeconds: number = 300
+    sourceCurrency: string = "STARS",
+    targetCurrency: string = "TON",
+    durationSeconds: number = 300,
   ): Promise<{
     conversionId: string;
     rate: number;
@@ -133,10 +129,14 @@ export class DirectConversionService {
     targetAmount: number;
     platformFee: number;
   }> {
-    const quote = await this.getQuote(sourceAmount, sourceCurrency, targetCurrency);
-    const lockedUntil = Date.now() + durationSeconds * 1000;
+    const quote = await this.getQuote(
+      sourceAmount,
+      sourceCurrency,
+      targetCurrency,
+    );
+    const lockedUntil = new Date(Date.now() + durationSeconds * 1000);
 
-    const result = await this.pool.query(
+    const conversion = await this.db.one(
       `INSERT INTO conversions (
         user_id, source_currency, target_currency, source_amount,
         target_amount, exchange_rate, rate_locked_until, status,
@@ -154,22 +154,20 @@ export class DirectConversionService {
         JSON.stringify(quote.fees),
         quote.fees.platform,
         quote.fees.platformPercentage / 100,
-      ]
+      ],
     );
 
-    const conversion = result.rows[0];
-
-    console.log('🔒 Rate locked (direct TON):', {
+    console.log("🔒 Rate locked (direct TON):", {
       conversionId: conversion.id,
       rate: quote.exchangeRate,
       platformFee: quote.fees.platform,
-      lockedUntil: new Date(lockedUntil),
+      lockedUntil: lockedUntil,
     });
 
     return {
       conversionId: conversion.id,
       rate: quote.exchangeRate,
-      lockedUntil: new Date(lockedUntil),
+      lockedUntil: lockedUntil,
       targetAmount: conversion.target_amount,
       platformFee: conversion.platform_fee_amount,
     };
@@ -182,53 +180,48 @@ export class DirectConversionService {
   async createConversion(
     userId: string,
     paymentIds: string[],
-    targetCurrency: string = 'TON',
-    destinationAddress?: string
+    targetCurrency: string = "TON",
+    destinationAddress?: string,
   ): Promise<DirectConversionRecord> {
-    const client = await this.pool.connect();
-
-    try {
-      await client.query('BEGIN');
-
-      // Get total stars from payments
-      const paymentsResult = await client.query(
+    return this.db.tx(async (t) => {
+      const paymentsResult = await t.one(
         `SELECT SUM(stars_amount) as total_stars 
          FROM payments 
          WHERE id = ANY($1) AND user_id = $2 AND status = 'received'`,
-        [paymentIds, userId]
+        [paymentIds, userId],
       );
 
-      const totalStars = parseFloat(paymentsResult.rows[0]?.total_stars || 0);
+      const totalStars = parseFloat(paymentsResult.total_stars || 0);
 
       if (totalStars === 0) {
-        throw new Error('No valid payments found for conversion');
+        throw new Error("No valid payments found for conversion");
       }
 
       // Check minimum amount (much lower than Fragment)
       if (totalStars < this.minConversionStars) {
         throw new Error(
-          `Minimum ${this.minConversionStars} Stars required for conversion`
+          `Minimum ${this.minConversionStars} Stars required for conversion`,
         );
       }
 
       // Get quote with real-time rates
-      const quote = await this.getQuote(totalStars, 'STARS', targetCurrency);
+      const quote = await this.getQuote(totalStars, "STARS", targetCurrency);
 
       // Get user's TON address if not provided
       if (!destinationAddress) {
-        const userResult = await client.query(
-          'SELECT ton_wallet_address FROM users WHERE id = $1',
-          [userId]
+        const user = await t.oneOrNone(
+          "SELECT ton_wallet_address FROM users WHERE id = $1",
+          [userId],
         );
-        destinationAddress = userResult.rows[0]?.ton_wallet_address;
-        
+        destinationAddress = user?.ton_wallet_address;
+
         if (!destinationAddress) {
-          throw new Error('User has no TON wallet address configured');
+          throw new Error("User has no TON wallet address configured");
         }
       }
 
       // Create conversion record
-      const conversionResult = await client.query(
+      const conversion = await t.one(
         `INSERT INTO conversions (
           user_id, payment_ids, source_currency, target_currency,
           source_amount, target_amount, exchange_rate, status,
@@ -245,20 +238,15 @@ export class DirectConversionService {
           JSON.stringify(quote.fees),
           quote.fees.platform,
           quote.fees.platformPercentage / 100,
-        ]
+        ],
       );
 
-      const conversion = conversionResult.rows[0];
-
-      // Update payment statuses
-      await client.query(
+      await t.none(
         `UPDATE payments 
          SET status = 'converting', updated_at = NOW()
          WHERE id = ANY($1)`,
-        [paymentIds]
+        [paymentIds],
       );
-
-      await client.query('COMMIT');
 
       // Record platform fee
       const feeAmountTon = quote.fees.platform * quote.exchangeRate;
@@ -267,10 +255,10 @@ export class DirectConversionService {
         userId,
         quote.fees.platform,
         feeAmountTon,
-        await this.getCurrentTonUsdRate()
+        await this.getCurrentTonUsdRate(),
       );
 
-      console.log('✅ Conversion created (direct TON):', {
+      console.log("✅ Conversion created (direct TON):", {
         id: conversion.id,
         stars: totalStars,
         ton: quote.targetAmount,
@@ -281,17 +269,11 @@ export class DirectConversionService {
       this.executeDirectTonTransfer(
         conversion.id,
         destinationAddress,
-        quote.targetAmount
-      ).catch((err) => console.error('Direct TON transfer error:', err));
+        quote.targetAmount,
+      ).catch((err) => console.error("Direct TON transfer error:", err));
 
       return conversion;
-    } catch (error) {
-      await client.query('ROLLBACK');
-      console.error('❌ Conversion failed:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
   }
 
   /**
@@ -301,61 +283,59 @@ export class DirectConversionService {
   private async executeDirectTonTransfer(
     conversionId: string,
     destinationAddress: string,
-    amount: number
+    amount: number,
   ): Promise<void> {
     try {
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions SET status = 'sending_ton', updated_at = NOW() WHERE id = $1`,
-        [conversionId]
+        [conversionId],
       );
 
       // Send TON directly via blockchain
       const txHash = await this.tonService.sendTon(
         destinationAddress,
         amount,
-        `Conversion ${conversionId}`
+        `Conversion ${conversionId}`,
       );
 
-      await this.pool.query(
+      await this.db.none(
         `UPDATE conversions 
          SET ton_tx_hash = $1, status = 'completed', 
              completed_at = NOW(), updated_at = NOW()
          WHERE id = $2`,
-        [txHash, conversionId]
+        [txHash, conversionId],
       );
 
-      console.log('✅ Direct TON transfer completed:', {
+      console.log("✅ Direct TON transfer completed:", {
         conversionId,
         txHash,
         amount,
       });
 
-      // Mark fee as collected
-      const feeResult = await this.pool.query(
-        'SELECT id FROM platform_fees WHERE conversion_id = $1',
-        [conversionId]
+      const fee = await this.db.oneOrNone(
+        "SELECT id FROM platform_fees WHERE conversion_id = $1",
+        [conversionId],
       );
 
-      if (feeResult.rows.length > 0) {
-        await this.feeService.markFeeCollected(feeResult.rows[0].id, txHash);
+      if (fee) {
+        await this.feeService.markFeeCollected(fee.id, txHash);
       }
 
-      // Update payments to completed
-      await this.pool.query(
+      await this.db.none(
         `UPDATE payments 
          SET status = 'completed', updated_at = NOW()
          WHERE id = ANY(
            SELECT UNNEST(payment_ids) FROM conversions WHERE id = $1
          )`,
-        [conversionId]
+        [conversionId],
       );
     } catch (error) {
-      console.error('❌ Direct TON transfer failed:', error);
-      await this.pool.query(
+      console.error("❌ Direct TON transfer failed:", error);
+      await this.db.none(
         `UPDATE conversions 
          SET status = 'failed', error_message = $1, updated_at = NOW()
          WHERE id = $2`,
-        [(error as Error).message, conversionId]
+        [(error as Error).message, conversionId],
       );
       throw error;
     }
@@ -365,13 +345,11 @@ export class DirectConversionService {
    * Get conversion by ID
    */
   async getConversionById(
-    conversionId: string
+    conversionId: string,
   ): Promise<DirectConversionRecord | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM conversions WHERE id = $1',
-      [conversionId]
-    );
-    return result.rows[0] || null;
+    return this.db.oneOrNone("SELECT * FROM conversions WHERE id = $1", [
+      conversionId,
+    ]);
   }
 
   /**
@@ -380,23 +358,22 @@ export class DirectConversionService {
   async getUserConversions(
     userId: string,
     limit: number = 20,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<DirectConversionRecord[]> {
-    const result = await this.pool.query(
+    return this.db.any(
       `SELECT * FROM conversions 
        WHERE user_id = $1 
        ORDER BY created_at DESC 
        LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
+      [userId, limit, offset],
     );
-    return result.rows;
   }
 
   /**
    * Get current TON/USD rate
    */
   private async getCurrentTonUsdRate(): Promise<number> {
-    const rateData = await this.rateAggregator.getAggregatedRate('TON', 'USD');
+    const rateData = await this.rateAggregator.getAggregatedRate("TON", "USD");
     return rateData.averageRate;
   }
 

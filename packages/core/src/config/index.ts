@@ -1,56 +1,62 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
 export const config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-  apiUrl: process.env.API_URL || 'http://localhost:3000',
-  
+  nodeEnv: process.env.NODE_ENV || "development",
+  port: parseInt(process.env.PORT || "3000", 10),
+  apiUrl: process.env.API_URL || "http://localhost:3000",
+
   database: {
-    url: process.env.DATABASE_URL || '',
-    poolMin: parseInt(process.env.DATABASE_POOL_MIN || '2', 10),
-    poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
+    url: process.env.DATABASE_URL || "",
+    poolMin: parseInt(process.env.DATABASE_POOL_MIN || "2", 10),
+    poolMax: parseInt(process.env.DATABASE_POOL_MAX || "10", 10),
   },
-  
+
   telegram: {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-    webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || '',
+    botToken: process.env.TELEGRAM_BOT_TOKEN || "",
+    webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || "",
   },
-  
+
   ton: {
-    apiKey: process.env.TON_API_KEY || '',
+    apiKey: process.env.TON_API_KEY || "",
     // Prefer `TON_API_ENDPOINT` (used by docker-compose) but fall back to `TON_API_URL` if present
-    apiUrl: process.env.TON_API_ENDPOINT || process.env.TON_API_URL || 'https://tonx.space/api',
-    mainnet: process.env.TON_MAINNET === 'true',
+    apiUrl:
+      process.env.TON_API_ENDPOINT ||
+      process.env.TON_API_URL ||
+      "https://tonx.space/api",
+    mainnet: process.env.TON_MAINNET === "true",
   },
-  
+
   security: {
-    apiSecretKey: process.env.API_SECRET_KEY || '',
-    jwtSecret: process.env.JWT_SECRET || '',
-    webhookSecret: process.env.WEBHOOK_SECRET || '',
+    apiSecretKey: process.env.API_SECRET_KEY || "",
+    jwtSecret: process.env.JWT_SECRET || "",
+    webhookSecret: process.env.WEBHOOK_SECRET || "",
   },
 
   fiatConnectors: {
     kraken: {
-      apiKey: process.env.KRAKEN_API_KEY || '',
-      apiSecret: process.env.KRAKEN_API_SECRET || '',
+      apiKey: process.env.KRAKEN_API_KEY || "",
+      apiSecret: process.env.KRAKEN_API_SECRET || "",
     },
     coinlist: {
-      apiKey: process.env.COINLIST_API_KEY || '',
-      apiSecret: process.env.COINLIST_API_SECRET || '',
-      baseUrl: process.env.COINLIST_BASE_URL || 'https://trade-api.coinlist.co',
+      apiKey: process.env.COINLIST_API_KEY || "",
+      apiSecret: process.env.COINLIST_API_SECRET || "",
+      baseUrl: process.env.COINLIST_BASE_URL || "https://trade-api.coinlist.co",
     },
   },
-  
+
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || "info",
   },
-  
+
   features: {
-    enableRateLocking: process.env.ENABLE_RATE_LOCKING === 'true',
-    enableWebhooks: process.env.ENABLE_WEBHOOKS === 'true',
-    batchConversionMinStars: parseInt(process.env.BATCH_CONVERSION_MIN_STARS || '1000', 10),
+    enableRateLocking: process.env.ENABLE_RATE_LOCKING === "true",
+    enableWebhooks: process.env.ENABLE_WEBHOOKS === "true",
+    batchConversionMinStars: parseInt(
+      process.env.BATCH_CONVERSION_MIN_STARS || "1000",
+      10,
+    ),
   },
 };
 
