@@ -3,8 +3,8 @@ import { execSync } from "child_process";
 
 /**
  * Render Deployment Task
- * 
- * Deploys the Telegram Payment Gateway to Render.com
+ *
+ * Deploys the TelePayGate to Render.com
  * Triggers deployment via Render API or git push
  */
 export const deployToRender = task({
@@ -13,20 +13,26 @@ export const deployToRender = task({
   retry: {
     maxAttempts: 2,
   },
-  run: async (payload: { 
+  run: async (payload: {
     serviceId?: string;
     branch?: string;
     clearCache?: boolean;
   }) => {
     const { serviceId, branch = "main", clearCache = false } = payload;
 
-    logger.log("🚀 Starting Render deployment", { serviceId, branch, clearCache });
+    logger.log("🚀 Starting Render deployment", {
+      serviceId,
+      branch,
+      clearCache,
+    });
 
     try {
       // Step 1: Verify git status
       logger.log("📋 Checking git status...");
-      const gitStatus = execSync("git status --porcelain", { encoding: "utf-8" });
-      
+      const gitStatus = execSync("git status --porcelain", {
+        encoding: "utf-8",
+      });
+
       if (gitStatus.trim()) {
         logger.warn("⚠️ Uncommitted changes detected", { changes: gitStatus });
         throw new Error("Please commit all changes before deploying");
@@ -34,9 +40,9 @@ export const deployToRender = task({
 
       // Step 2: Run build locally to verify
       logger.log("🔨 Running local build verification...");
-      execSync("npm run build", { 
+      execSync("npm run build", {
         encoding: "utf-8",
-        stdio: "pipe" 
+        stdio: "pipe",
       });
       logger.log("✅ Local build successful");
 
@@ -44,18 +50,20 @@ export const deployToRender = task({
       logger.log(`📤 Pushing to GitHub (${branch})...`);
       execSync(`git push origin ${branch}`, {
         encoding: "utf-8",
-        stdio: "pipe"
+        stdio: "pipe",
       });
       logger.log("✅ Code pushed to GitHub");
 
       // Step 4: Trigger Render deploy via API if serviceId provided
       if (serviceId) {
         logger.log("🎯 Triggering Render deployment via API...");
-        
+
         const renderApiKey = process.env.RENDER_API_KEY;
         if (!renderApiKey) {
           logger.warn("⚠️ RENDER_API_KEY not set. Skipping API trigger.");
-          logger.info("💡 Deploy will happen automatically via GitHub hook if configured");
+          logger.info(
+            "💡 Deploy will happen automatically via GitHub hook if configured",
+          );
         } else {
           // Trigger Render deployment
           const response = await fetch(
@@ -63,13 +71,13 @@ export const deployToRender = task({
             {
               method: "POST",
               headers: {
-                "Authorization": `Bearer ${renderApiKey}`,
+                Authorization: `Bearer ${renderApiKey}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 clearCache: clearCache ? "clear" : "do_not_clear",
               }),
-            }
+            },
           );
 
           if (!response.ok) {
@@ -78,9 +86,9 @@ export const deployToRender = task({
           }
 
           const deployment = await response.json();
-          logger.log("✅ Render deployment triggered", { 
+          logger.log("✅ Render deployment triggered", {
             deployId: deployment.id,
-            status: deployment.status 
+            status: deployment.status,
           });
 
           return {
@@ -94,14 +102,14 @@ export const deployToRender = task({
 
       return {
         success: true,
-        message: "Code pushed to GitHub. Render will auto-deploy if configured.",
+        message:
+          "Code pushed to GitHub. Render will auto-deploy if configured.",
         branch,
       };
-
     } catch (error: any) {
-      logger.error("❌ Deployment failed", { 
+      logger.error("❌ Deployment failed", {
         error: error.message,
-        stack: error.stack 
+        stack: error.stack,
       });
       throw error;
     }
@@ -110,7 +118,7 @@ export const deployToRender = task({
 
 /**
  * Database Migration Task
- * 
+ *
  * Runs database migrations on Render after deployment
  */
 export const runMigrations = task({
@@ -133,14 +141,14 @@ export const runMigrations = task({
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${renderApiKey}`,
+            Authorization: `Bearer ${renderApiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             startCommand: "npm run migrate",
             planId: "starter", // or your plan
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -156,7 +164,6 @@ export const runMigrations = task({
         jobId: job.id,
         message: "Database migrations triggered successfully",
       };
-
     } catch (error: any) {
       logger.error("❌ Migration failed", { error: error.message });
       throw error;
@@ -166,7 +173,7 @@ export const runMigrations = task({
 
 /**
  * Full Deployment Pipeline
- * 
+ *
  * Orchestrates the complete deployment process:
  * 1. Deploy code to Render
  * 2. Wait for deployment to complete
@@ -216,8 +223,10 @@ export const fullDeploymentPipeline = task({
 
       // Step 2: Deploy worker services
       if (workerServiceIds.length > 0) {
-        logger.log(`📦 Deploying ${workerServiceIds.length} worker services...`);
-        
+        logger.log(
+          `📦 Deploying ${workerServiceIds.length} worker services...`,
+        );
+
         for (const workerId of workerServiceIds) {
           const workerDeploy = await deployToRender.trigger({
             serviceId: workerId,
@@ -242,7 +251,7 @@ export const fullDeploymentPipeline = task({
 
       // Step 4: Wait for deployment to be live (simple delay)
       logger.log("⏳ Waiting for services to be live...");
-      await new Promise(resolve => setTimeout(resolve, 30000)); // 30 seconds
+      await new Promise((resolve) => setTimeout(resolve, 30000)); // 30 seconds
 
       // Step 5: Health check
       if (healthCheckUrl) {
@@ -250,7 +259,7 @@ export const fullDeploymentPipeline = task({
         try {
           const healthResponse = await fetch(healthCheckUrl, {
             method: "GET",
-            headers: { "Accept": "application/json" },
+            headers: { Accept: "application/json" },
           });
 
           const healthData = await healthResponse.json();
@@ -280,7 +289,6 @@ export const fullDeploymentPipeline = task({
         success: true,
         ...results,
       };
-
     } catch (error: any) {
       logger.error("❌ Deployment pipeline failed", {
         error: error.message,

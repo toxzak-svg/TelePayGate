@@ -1,6 +1,10 @@
-import 'dotenv/config';
-import { Pool } from 'pg';
-import { WebhookService } from '../services/webhook.service';
+import "dotenv/config";
+import { Pool } from "pg";
+import { WebhookService } from "../services/webhook.service";
+import {
+  createPeriodicRunner,
+  installGracefulShutdown,
+} from "../lib/worker-utils";
 
 /**
  * Webhook Dispatcher Worker
@@ -9,9 +13,8 @@ import { WebhookService } from '../services/webhook.service';
 class WebhookDispatcherWorker {
   private pool: Pool;
   private webhookService: WebhookService;
-  private isRunning = false;
-  private intervalId?: NodeJS.Timeout;
-  
+  private runner = createPeriodicRunner(() => Promise.resolve(), 0);
+
   // Configuration
   private readonly CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
 
@@ -24,35 +27,27 @@ class WebhookDispatcherWorker {
    * Start the webhook dispatcher worker
    */
   async start(): Promise<void> {
-    if (this.isRunning) {
-      console.warn('⚠️ Webhook dispatcher worker already running');
+    if (this.runner.isRunning()) {
+      console.warn("⚠️ Webhook dispatcher worker already running");
       return;
     }
 
-    this.isRunning = true;
-    console.log('🚀 Webhook dispatcher worker started');
+    console.log("🚀 Webhook dispatcher worker started");
     console.log(`⏰ Check interval: ${this.CHECK_INTERVAL_MS / 1000}s`);
 
-    // Run immediately on start
-    await this.processRetries();
-
-    // Schedule periodic checks
-    this.intervalId = setInterval(
+    this.runner = createPeriodicRunner(
       () => this.processRetries(),
-      this.CHECK_INTERVAL_MS
+      this.CHECK_INTERVAL_MS,
     );
+    await this.runner.start();
   }
 
   /**
    * Stop the worker
    */
   async stop(): Promise<void> {
-    this.isRunning = false;
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = undefined;
-    }
-    console.log('🛑 Webhook dispatcher worker stopped');
+    await this.runner.stop();
+    console.log("🛑 Webhook dispatcher worker stopped");
   }
 
   /**
@@ -65,7 +60,7 @@ class WebhookDispatcherWorker {
         console.log(`🔄 Retried ${retriedCount} failed webhooks`);
       }
     } catch (error) {
-      console.error('❌ Webhook retry error:', error);
+      console.error("❌ Webhook retry error:", error);
     }
   }
 }
@@ -75,16 +70,16 @@ class WebhookDispatcherWorker {
  */
 async function bootstrap() {
   if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required');
+    throw new Error("DATABASE_URL is required");
   }
 
   if (!process.env.WEBHOOK_SECRET) {
-    throw new Error('WEBHOOK_SECRET is required');
+    throw new Error("WEBHOOK_SECRET is required");
   }
 
-  const pool = new Pool({ 
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 5
+    max: 5,
   });
 
   const webhookService = new WebhookService(pool, process.env.WEBHOOK_SECRET);
@@ -92,21 +87,17 @@ async function bootstrap() {
 
   await worker.start();
 
-  const shutdown = async () => {
-    console.log('\n🛑 Shutting down webhook dispatcher worker...');
+  installGracefulShutdown(async () => {
+    console.log("\n🛑 Shutting down webhook dispatcher worker...");
     await worker.stop();
     await pool.end();
-    process.exit(0);
-  };
-
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  });
 }
 
 // Only run if executed directly
 if (require.main === module) {
   bootstrap().catch((err) => {
-    console.error('Failed to start webhook dispatcher worker:', err);
+    console.error("Failed to start webhook dispatcher worker:", err);
     process.exit(1);
   });
 }

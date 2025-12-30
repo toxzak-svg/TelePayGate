@@ -1,6 +1,8 @@
-import { Database } from '../db/connection';
-import TonBlockchainService, { TransactionInfo } from './ton-blockchain.service';
-import { WebhookService } from './webhook.service';
+import { Database } from "../db/connection";
+import TonBlockchainService, {
+  TransactionInfo,
+} from "./ton-blockchain.service";
+import { WebhookService } from "./webhook.service";
 
 export interface DepositMonitorConfig {
   pollIntervalMs?: number;
@@ -27,19 +29,24 @@ export class DepositMonitorService {
     private db: Database,
     private tonService: TonBlockchainService,
     private webhookService?: WebhookService,
-    config: DepositMonitorConfig = {}
+    config: DepositMonitorConfig = {},
   ) {
-    this.pollIntervalMs = config.pollIntervalMs ?? Number(process.env.DEPOSIT_POLL_INTERVAL_MS || 30000);
-    this.minConfirmations = config.minConfirmations ?? Number(process.env.TON_MIN_CONFIRMATIONS || 1);
+    this.pollIntervalMs =
+      config.pollIntervalMs ??
+      Number(process.env.DEPOSIT_POLL_INTERVAL_MS || 30000);
+    this.minConfirmations =
+      config.minConfirmations ?? Number(process.env.TON_MIN_CONFIRMATIONS || 1);
   }
 
   async start(): Promise<void> {
     await this.tonService.initializeWallet();
     this.stopHandler = await this.tonService.monitorDeposits(
       async (tx) => this.handleTransaction(tx),
-      this.pollIntervalMs
+      this.pollIntervalMs,
     );
-    console.log(`🛰️ Deposit monitor running (interval=${this.pollIntervalMs}ms, confirmations=${this.minConfirmations})`);
+    console.log(
+      `🛰️ Deposit monitor running (interval=${this.pollIntervalMs}ms, confirmations=${this.minConfirmations})`,
+    );
   }
 
   async stop(): Promise<void> {
@@ -58,14 +65,15 @@ export class DepositMonitorService {
          AND md.status IN ('pending','awaiting_confirmation')
        ORDER BY md.created_at DESC
        LIMIT 1`,
-      [tx.to]
+      [tx.to],
     );
 
     if (!deposit) {
       return;
     }
 
-    const confirmationsNeeded = deposit.min_confirmations || this.minConfirmations;
+    const confirmationsNeeded =
+      deposit.min_confirmations || this.minConfirmations;
 
     await this.db.none(
       `UPDATE manual_deposits
@@ -75,7 +83,7 @@ export class DepositMonitorService {
              confirmations = $3,
              last_checked_at = NOW()
        WHERE id = $4`,
-      [tx.amount, tx.hash, tx.confirmations, deposit.id]
+      [tx.amount, tx.hash, tx.confirmations, deposit.id],
     );
 
     if (tx.confirmations >= confirmationsNeeded) {
@@ -83,14 +91,17 @@ export class DepositMonitorService {
     }
   }
 
-  private async confirmDeposit(deposit: ManualDepositRecord, tx: TransactionInfo): Promise<void> {
+  private async confirmDeposit(
+    deposit: ManualDepositRecord,
+    tx: TransactionInfo,
+  ): Promise<void> {
     await this.db.none(
       `UPDATE manual_deposits
          SET status = 'confirmed',
              confirmed_at = NOW(),
              confirmations = $1
        WHERE id = $2`,
-      [tx.confirmations, deposit.id]
+      [tx.confirmations, deposit.id],
     );
 
     if (deposit.payment_id) {
@@ -101,7 +112,7 @@ export class DepositMonitorService {
                 updated_at = NOW()
           WHERE id = $1
             AND status IN ('received','pending')`,
-        [deposit.payment_id]
+        [deposit.payment_id],
       );
     }
 
@@ -109,7 +120,7 @@ export class DepositMonitorService {
     if (!conversionId && deposit.payment_id) {
       const conversion = await this.db.oneOrNone<{ id: string }>(
         `SELECT id FROM conversions WHERE $1 = ANY(payment_ids) ORDER BY created_at DESC LIMIT 1`,
-        [deposit.payment_id]
+        [deposit.payment_id],
       );
       conversionId = conversion?.id;
       if (conversionId) {
@@ -117,7 +128,7 @@ export class DepositMonitorService {
           `UPDATE manual_deposits
               SET conversion_id = $1
             WHERE id = $2`,
-          [conversionId, deposit.id]
+          [conversionId, deposit.id],
         );
       }
     }
@@ -130,7 +141,7 @@ export class DepositMonitorService {
                 settlement_status = CASE WHEN settlement_status IS NULL OR settlement_status = 'pending' THEN 'ready' ELSE settlement_status END,
                 updated_at = NOW()
           WHERE id = $1`,
-        [conversionId, tx.hash]
+        [conversionId, tx.hash],
       );
     }
 
@@ -138,7 +149,7 @@ export class DepositMonitorService {
       await this.webhookService?.queueEvent(
         deposit.user_id,
         deposit.webhook_url,
-        'deposit.confirmed',
+        "deposit.confirmed",
         {
           depositId: deposit.id,
           paymentId: deposit.payment_id,
@@ -146,11 +157,11 @@ export class DepositMonitorService {
           txHash: tx.hash,
           amountTon: tx.amount,
           confirmations: tx.confirmations,
-        }
+        },
       );
     }
 
-    console.log('✅ Manual deposit confirmed', {
+    console.log("✅ Manual deposit confirmed", {
       depositId: deposit.id,
       paymentId: deposit.payment_id,
       conversionId,

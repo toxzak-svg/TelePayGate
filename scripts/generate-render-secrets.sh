@@ -10,7 +10,7 @@
 set -e
 
 echo "=================================================="
-echo "  Telegram Payment Gateway - Render Secrets"
+echo "  TelePayGate - Render Secrets"
 echo "=================================================="
 echo ""
 echo "Generating required environment variables..."

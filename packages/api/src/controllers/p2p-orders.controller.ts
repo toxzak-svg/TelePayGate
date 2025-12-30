@@ -1,26 +1,76 @@
-import { Request, Response, NextFunction } from 'express';
-import { getDatabase, StarsOrderModel, StarsP2PService } from '@tg-payment/core';
+import { Request, Response, NextFunction } from "express";
+import {
+  getDatabase,
+  StarsOrderModel,
+  StarsP2PService,
+} from "telepaygate-core";
+import {
+  parsePagination,
+  requireUserId,
+  buildPaginationMeta,
+} from "../utils/controller-helpers";
 
 export class P2POrdersController {
   static async createOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      if (!userId) return res.status(400).json({ success: false, error: { code: 'MISSING_USER_ID', message: 'X-User-Id header required' } });
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const { type, starsAmount, tonAmount, rate } = req.body;
-      if (!type || (type !== 'sell' && type !== 'buy')) return res.status(400).json({ success: false, error: { code: 'INVALID_TYPE', message: 'type must be "sell" or "buy"' } });
-      if (!rate) return res.status(400).json({ success: false, error: { code: 'MISSING_RATE', message: 'rate is required' } });
+      if (!type || (type !== "sell" && type !== "buy"))
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: {
+              code: "INVALID_TYPE",
+              message: 'type must be "sell" or "buy"',
+            },
+          });
+      if (!rate)
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: { code: "MISSING_RATE", message: "rate is required" },
+          });
 
       const db = getDatabase();
       const service = new StarsP2PService(db);
 
       let result: any;
-      if (type === 'sell') {
-        if (!starsAmount) return res.status(400).json({ success: false, error: { code: 'MISSING_STARS', message: 'starsAmount is required for sell orders' } });
-        result = await service.createSellOrder(userId, Number(starsAmount), String(rate));
+      if (type === "sell") {
+        if (!starsAmount)
+          return res
+            .status(400)
+            .json({
+              success: false,
+              error: {
+                code: "MISSING_STARS",
+                message: "starsAmount is required for sell orders",
+              },
+            });
+        result = await service.createSellOrder(
+          userId,
+          Number(starsAmount),
+          String(rate),
+        );
       } else {
-        if (!tonAmount) return res.status(400).json({ success: false, error: { code: 'MISSING_TON', message: 'tonAmount is required for buy orders' } });
-        result = await service.createBuyOrder(userId, String(tonAmount), String(rate));
+        if (!tonAmount)
+          return res
+            .status(400)
+            .json({
+              success: false,
+              error: {
+                code: "MISSING_TON",
+                message: "tonAmount is required for buy orders",
+              },
+            });
+        result = await service.createBuyOrder(
+          userId,
+          String(tonAmount),
+          String(rate),
+        );
       }
 
       res.status(201).json({ success: true, order: result });
@@ -31,11 +81,20 @@ export class P2POrdersController {
 
   static async listOpenOrders(req: Request, res: Response, next: NextFunction) {
     try {
-      const type = req.query.type as 'sell' | 'buy' | undefined;
+      const type = req.query.type as "sell" | "buy" | undefined;
+      const { page, limit, offset } = parsePagination(req);
+
       const db = getDatabase();
       const model = new StarsOrderModel(db);
-      const orders = await model.listOpenOrders(type, 100);
-      res.status(200).json({ success: true, orders });
+      const orders = await model.listOpenOrders(type, limit, offset);
+      const totalRow: { total: number } | null = await model.countOpenOrders(type);
+      const total = totalRow?.total ?? 0;
+
+      res.status(200).json({
+        success: true,
+        data: orders,
+        meta: buildPaginationMeta(total, page, limit),
+      });
     } catch (err) {
       next(err);
     }
@@ -47,7 +106,13 @@ export class P2POrdersController {
       const db = getDatabase();
       const model = new StarsOrderModel(db);
       const order = await model.getById(id);
-      if (!order) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
+      if (!order)
+        return res
+          .status(404)
+          .json({
+            success: false,
+            error: { code: "NOT_FOUND", message: "Order not found" },
+          });
       res.status(200).json({ success: true, order });
     } catch (err) {
       next(err);
@@ -56,16 +121,29 @@ export class P2POrdersController {
 
   static async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.headers['x-user-id'] as string;
-      if (!userId) return res.status(400).json({ success: false, error: { code: 'MISSING_USER_ID', message: 'X-User-Id header required' } });
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+
       const { id } = req.params;
       const db = getDatabase();
       const model = new StarsOrderModel(db);
       const order = await model.getById(id);
-      if (!order) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });
-      if (order.user_id !== userId) return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Not order owner' } });
+      if (!order)
+        return res
+          .status(404)
+          .json({
+            success: false,
+            error: { code: "NOT_FOUND", message: "Order not found" },
+          });
+      if (order.user_id !== userId)
+        return res
+          .status(403)
+          .json({
+            success: false,
+            error: { code: "FORBIDDEN", message: "Not order owner" },
+          });
       await model.cancelOrder(id);
-      res.status(200).json({ success: true, message: 'Order cancelled' });
+      res.status(200).json({ success: true, message: "Order cancelled" });
     } catch (err) {
       next(err);
     }

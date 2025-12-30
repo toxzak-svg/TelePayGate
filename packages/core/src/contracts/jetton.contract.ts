@@ -1,4 +1,12 @@
-import { Address, beginCell, Cell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
+import {
+  Address,
+  beginCell,
+  Cell,
+  Contract,
+  ContractProvider,
+  Sender,
+  SendMode,
+} from "@ton/core";
 
 // Jetton operation codes
 export const JETTON_TRANSFER_OP = 0x0f8a7ea5;
@@ -44,8 +52,8 @@ export class JettonMaster implements Contract {
    * Get Jetton master data including total supply and admin
    */
   async getJettonData(provider: ContractProvider): Promise<JettonMasterData> {
-    const result = await provider.get('get_jetton_data', []);
-    
+    const result = await provider.get("get_jetton_data", []);
+
     return {
       totalSupply: result.stack.readBigNumber(),
       mintable: result.stack.readBoolean(),
@@ -61,12 +69,12 @@ export class JettonMaster implements Contract {
    */
   async getWalletAddress(
     provider: ContractProvider,
-    ownerAddress: Address
+    ownerAddress: Address,
   ): Promise<Address> {
-    const result = await provider.get('get_wallet_address', [
-      { type: 'slice', cell: beginCell().storeAddress(ownerAddress).endCell() },
+    const result = await provider.get("get_wallet_address", [
+      { type: "slice", cell: beginCell().storeAddress(ownerAddress).endCell() },
     ]);
-    
+
     return result.stack.readAddress();
   }
 }
@@ -86,8 +94,8 @@ export class JettonWallet implements Contract {
    * Get wallet data including balance and owner
    */
   async getWalletData(provider: ContractProvider): Promise<JettonWalletData> {
-    const result = await provider.get('get_wallet_data', []);
-    
+    const result = await provider.get("get_wallet_data", []);
+
     return {
       balance: result.stack.readBigNumber(),
       ownerAddress: result.stack.readAddress(),
@@ -104,7 +112,7 @@ export class JettonWallet implements Contract {
     provider: ContractProvider,
     via: Sender,
     params: JettonTransferParams,
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(JETTON_TRANSFER_OP, 32) // transfer op code
@@ -136,7 +144,7 @@ export class JettonWallet implements Contract {
       amount: bigint;
       responseDestination: Address;
     },
-    value: bigint
+    value: bigint,
   ) {
     const messageBody = beginCell()
       .storeUint(JETTON_BURN_OP, 32) // burn op code
@@ -152,5 +160,3 @@ export class JettonWallet implements Contract {
     });
   }
 }
-
-
