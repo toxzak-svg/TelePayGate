@@ -1,4 +1,4 @@
-import { Payment } from './payment.model';
+import { Payment } from "./payment.model";
 
 /**
  * Lightweight in-memory PaymentRepository used by unit tests
@@ -28,11 +28,19 @@ export class PaymentRepository {
     return results;
   }
 
-  async getStats(userId: string): Promise<{ totalPayments: number; totalStars: number; receivedCount: number }> {
+  async getStats(
+    userId: string,
+  ): Promise<{
+    totalPayments: number;
+    totalStars: number;
+    receivedCount: number;
+  }> {
     const payments = await this.findByUserId(userId);
     const totalPayments = payments.length;
     const totalStars = payments.reduce((s, p) => s + (p.starsAmount || 0), 0);
-    const receivedCount = payments.filter(p => p.status === 'received').length;
+    const receivedCount = payments.filter(
+      (p) => p.status === "received",
+    ).length;
     return { totalPayments, totalStars, receivedCount };
   }
 }

@@ -1,13 +1,13 @@
 services:
   db:
     image: postgres:16
-    container_name: tg_payment_postgres
+    container_name: telepaygate_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tg_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tg_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-tg_payment_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-telepaygate_dev}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -16,7 +16,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: tg_payment_redis
+    container_name: telepaygate_redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -29,10 +29,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tg_payment_api
+    container_name: telepaygate_api
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-tg_payment_dev}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tg_user}:${POSTGRES_PASSWORD:-tg_pass}@db:5432/${POSTGRES_DB:-telepaygate_dev}
       REDIS_URL: redis://redis:6379
       PORT: 3000
       TON_API_KEY: ${TON_API_KEY:-}
@@ -40,6 +40,10 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       JWT_SECRET: ${JWT_SECRET:-dev_secret_key}
       API_SECRET_KEY: ${API_SECRET_KEY:-dev_api_key}
+      # MailHog (local dev / CI disposable SMTP)
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-mailhog}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-1025}
+      EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE:-false}
     ports:
       - "3000:3000"
     depends_on:
@@ -47,7 +51,56 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     command: node packages/api/dist/index.js
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telepaygate_dashboard
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: serve -s packages/dashboard/dist -l 5000
+
+  sdk_builder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telepaygate_sdk_builder
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    command: sh -c "npm run -w telepaygate-sdk build && sleep infinity"
+
+  dashboard_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: telepaygate_dashboard_prod
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: telepaygate_mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # HTTP
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8025/" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
@@ -56,5 +109,5 @@ volumes:
     driver: local
 
 networks:
-  tg_payment_network:
+  telepaygate_network:
     driver: bridge

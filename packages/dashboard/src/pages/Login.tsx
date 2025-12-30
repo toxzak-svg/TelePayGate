@@ -29,7 +29,7 @@ export default function Login() {
 
     try {
       await login(apiKey);
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: { message?: string } } } };
       setError(

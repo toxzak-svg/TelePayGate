@@ -1,5 +1,5 @@
-import { Database } from '../db/connection';
-import { PlatformConfig, FeeCalculationResult, FeeBreakdown } from '../types';
+import { Database } from "../db/connection";
+import { PlatformConfig, FeeCalculationResult, FeeBreakdown } from "../types";
 
 export class FeeService {
   private db: Database;
@@ -17,20 +17,20 @@ export class FeeService {
   }
 
   private async loadConfig(): Promise<PlatformConfig> {
-    const result = await this.db.oneOrNone('SELECT * FROM platform_config ORDER BY created_at DESC LIMIT 1');
+    const result = await this.db.oneOrNone(
+      "SELECT * FROM platform_config ORDER BY created_at DESC LIMIT 1",
+    );
     if (!result) {
-      throw new Error('Platform configuration not found.');
+      throw new Error("Platform configuration not found.");
     }
     this.config = result;
     return this.config as PlatformConfig;
   }
 
-  async calculateFeeBreakdown(
-    sourceAmount: number
-  ): Promise<FeeBreakdown> {
+  async calculateFeeBreakdown(sourceAmount: number): Promise<FeeBreakdown> {
     const config = await this.getConfig();
     const platformFee = sourceAmount * (config.platformFeePercentage / 100);
-    
+
     // Placeholder for network fee
     const networkFee = 0.1; // Example fixed fee in STARS
 
@@ -45,17 +45,20 @@ export class FeeService {
 
   async getPlatformWallet(): Promise<string> {
     // This should return the platform's master wallet for collecting fees
-    return process.env.TON_MASTER_WALLET_ADDRESS || 'YOUR_PLATFORM_WALLET_ADDRESS';
+    return (
+      process.env.TON_MASTER_WALLET_ADDRESS || "YOUR_PLATFORM_WALLET_ADDRESS"
+    );
   }
 
-
-  async calculateFeesForPayment(paymentId: string): Promise<FeeCalculationResult> {
+  async calculateFeesForPayment(
+    paymentId: string,
+  ): Promise<FeeCalculationResult> {
     const payment = await this.db.oneOrNone(
-      'SELECT * FROM payments WHERE id = $1',
-      [paymentId]
+      "SELECT * FROM payments WHERE id = $1",
+      [paymentId],
     );
     if (!payment) {
-      throw new Error('Payment not found');
+      throw new Error("Payment not found");
     }
 
     const config = await this.getConfig();
@@ -70,7 +73,15 @@ export class FeeService {
       `INSERT INTO fee_calculations (payment_id, stars_amount, fiat_amount, currency, platform_fee, telegram_fee, ton_fee, exchange_fee, total_fee, fee_config)
        VALUES ($1, $2, $3, 'USD', $4, $5, 0, 0, $6, $7)
        RETURNING *`,
-      [paymentId, starsAmount, fiatAmount, platformFee, telegramFee, totalFee, config]
+      [
+        paymentId,
+        starsAmount,
+        fiatAmount,
+        platformFee,
+        telegramFee,
+        totalFee,
+        config,
+      ],
     );
 
     return {
@@ -89,16 +100,16 @@ export class FeeService {
     userId: string,
     feeAmountStars: number,
     feeAmountTon: number,
-    tonUsdRate: number
+    tonUsdRate: number,
   ): Promise<void> {
     const result = await this.db.one(
       `INSERT INTO fee_collections (conversion_id, user_id, fee_amount_stars, fee_amount_ton, ton_usd_rate, status)
        VALUES ($1, $2, $3, $4, $5, 'collected')
        RETURNING id`,
-      [conversionId, userId, feeAmountStars, feeAmountTon, tonUsdRate]
+      [conversionId, userId, feeAmountStars, feeAmountTon, tonUsdRate],
     );
 
-    console.log('✅ Fee recorded:', {
+    console.log("✅ Fee recorded:", {
       feeCollectionId: result.id,
       conversionId,
       feeAmountStars,
@@ -109,14 +120,14 @@ export class FeeService {
   async markFeeCollected(feeId: string, txHash: string): Promise<void> {
     await this.db.none(
       `UPDATE platform_fees SET status = 'collected', ton_tx_hash = $1, updated_at = NOW() WHERE id = $2`,
-      [txHash, feeId]
+      [txHash, feeId],
     );
     console.log(`✅ Fee ${feeId} marked as collected.`);
   }
 
   async getFeeSummary(
     from: Date,
-    to: Date
+    to: Date,
   ): Promise<{ totalFeesStars: number; totalFeesTon: number }> {
     const result = await this.db.one(
       `SELECT 
@@ -124,7 +135,7 @@ export class FeeService {
          SUM(fee_amount_ton) as total_fees_ton
        FROM fee_collections
        WHERE collected_at BETWEEN $1 AND $2`,
-      [from, to]
+      [from, to],
     );
 
     return {
@@ -133,13 +144,16 @@ export class FeeService {
     };
   }
 
-  async getTotalRevenue(): Promise<{ totalRevenueStars: number; totalRevenueTon: number }> {
+  async getTotalRevenue(): Promise<{
+    totalRevenueStars: number;
+    totalRevenueTon: number;
+  }> {
     const result = await this.db.one(
       `SELECT 
          SUM(fee_amount_stars) as total_revenue_stars,
          SUM(fee_amount_ton) as total_revenue_ton
        FROM fee_collections
-       WHERE status = 'collected'`
+       WHERE status = 'collected'`,
     );
 
     return {
@@ -151,14 +165,14 @@ export class FeeService {
   async collectFeesToMasterWallet(): Promise<string> {
     const masterWalletAddress = process.env.TON_MASTER_WALLET_ADDRESS;
     if (!masterWalletAddress) {
-      throw new Error('TON_MASTER_WALLET_ADDRESS is not set');
+      throw new Error("TON_MASTER_WALLET_ADDRESS is not set");
     }
 
     await this.db.none(
       `UPDATE fee_collections 
        SET status = 'transferred', master_wallet_address = $1, transferred_at = NOW()
        WHERE status = 'collected'`,
-      [masterWalletAddress]
+      [masterWalletAddress],
     );
 
     return masterWalletAddress;

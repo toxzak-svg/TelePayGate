@@ -1,53 +1,26 @@
-import { DexAggregatorService } from '../../services/dex-aggregator.service';
-import { DexErrorCode } from '../../services/dex-error-handler';
+import { setupDexIntegrationTest } from "../../test-utils";
+import { DexAggregatorService } from "../../services/dex-aggregator.service";
 
-process.env.DEX_SIMULATION_MODE = process.env.DEX_SIMULATION_MODE || 'true';
-if (!process.env.RUN_DEX_INTEGRATION_TESTS && process.env.DEX_SIMULATION_MODE === 'true') {
-  process.env.RUN_DEX_INTEGRATION_TESTS = 'true';
-}
-process.env.TON_MAINNET = process.env.TON_MAINNET || 'false';
-
-const runDexIntegrationTests = process.env.RUN_DEX_INTEGRATION_TESTS === 'true';
+const { dexService: _dexService, runDexIntegrationTests } =
+  setupDexIntegrationTest();
 const describeIfEnabled = runDexIntegrationTests ? describe : describe.skip;
 
-if (!runDexIntegrationTests) {
-  console.warn('⚠️ Skipping DeDust integration tests (set RUN_DEX_INTEGRATION_TESTS=true to enable).');
-} else if (process.env.DEX_SIMULATION_MODE === 'true') {
-  console.log('🧪 DeDust integration tests running in simulation mode');
-}
+describeIfEnabled("DeDust Swap Integration Tests", () => {
+  // use the shared test util's instance
+  const dexService = _dexService;
 
-describeIfEnabled('DeDust Swap Integration Tests', () => {
-  let dexService: DexAggregatorService;
-
-  beforeAll(() => {
-    // Ensure we're on testnet
-    if (process.env.TON_MAINNET === 'true') {
-      throw new Error('These tests should only run on testnet!');
-    }
-
-    process.env.DEDUST_API_URL = 'https://api.dedust.io';
-    process.env.STONFI_API_URL = 'https://api.ston.fi';
-
-    dexService = new DexAggregatorService();
-    (dexService as any).tonService = {
-      getWalletAddress: () => 'EQC-test-wallet-address',
-      initializeWallet: jest.fn(),
-      getTransaction: jest.fn(),
-    };
-  });
-
-  describe('Wallet Initialization', () => {
-    it('should initialize wallet from mnemonic', async () => {
+  describe("Wallet Initialization", () => {
+    it("should initialize wallet from mnemonic", async () => {
       await expect(dexService.initializeWallet()).resolves.not.toThrow();
     });
 
-    it('should throw error if mnemonic not set', async () => {
+    it("should throw error if mnemonic not set", async () => {
       // This test only applies when NOT in simulation mode
-      if (process.env.DEX_SIMULATION_MODE === 'true') {
+      if (process.env.DEX_SIMULATION_MODE === "true") {
         // In simulation mode, a test mnemonic is used as fallback
         const service = new DexAggregatorService();
         (service as any).tonService = {
-          getWalletAddress: () => 'EQC-test-wallet-address',
+          getWalletAddress: () => "EQC-test-wallet-address",
           initializeWallet: jest.fn().mockResolvedValue(undefined),
           getTransaction: jest.fn(),
         };
@@ -57,16 +30,18 @@ describeIfEnabled('DeDust Swap Integration Tests', () => {
         delete process.env.TON_WALLET_MNEMONIC;
 
         const service = new DexAggregatorService();
-        await expect(service.initializeWallet()).rejects.toThrow('TON_WALLET_MNEMONIC');
+        await expect(service.initializeWallet()).rejects.toThrow(
+          "TON_WALLET_MNEMONIC",
+        );
 
         process.env.TON_WALLET_MNEMONIC = originalMnemonic;
       }
     });
   });
 
-  describe('Rate Fetching', () => {
-    it('should fetch best rate across DEXes', async () => {
-      const quote = await dexService.getBestRate('TON', 'USDT', 1);
+  describe("Rate Fetching", () => {
+    it("should fetch best rate across DEXes", async () => {
+      const quote = await dexService.getBestRate("TON", "USDT", 1);
 
       expect(quote).toBeDefined();
       expect(quote.inputAmount).toBe(1);
@@ -77,16 +52,16 @@ describeIfEnabled('DeDust Swap Integration Tests', () => {
     });
   });
 
-  describe('Small Swaps (< 1 TON)', () => {
-    it.skip('should swap 0.1 TON to USDT on testnet', async () => {
+  describe("Small Swaps (< 1 TON)", () => {
+    it.skip("should swap 0.1 TON to USDT on testnet", async () => {
       // MANUAL TEST ONLY - requires testnet TON
       const result = await dexService.executeSwap(
-        'dedust',
-        process.env.DEDUST_TEST_POOL_ID || 'EQD_test_pool',
-        'TON',
-        'USDT',
+        "dedust",
+        process.env.DEDUST_TEST_POOL_ID || "EQD_test_pool",
+        "TON",
+        "USDT",
         0.1,
-        0.09 // 10% slippage for testing
+        0.09, // 10% slippage for testing
       );
 
       expect(result.txHash).toBeDefined();
@@ -95,72 +70,78 @@ describeIfEnabled('DeDust Swap Integration Tests', () => {
       expect(result.gasUsed).toBeLessThan(0.1);
     }, 120000); // 2 minute timeout
 
-    it('should handle slippage protection', async () => {
+    it("should handle slippage protection", async () => {
       const service = new DexAggregatorService();
-      (service as any).simulateSwap = jest.fn().mockRejectedValue(new Error('SLIPPAGE_EXCEEDED'));
+      (service as any).simulateSwap = jest
+        .fn()
+        .mockRejectedValue(new Error("SLIPPAGE_EXCEEDED"));
       await expect(
         service.executeSwap(
-          'dedust',
-          'EQD_test_pool',
-          'TON',
-          'USDT',
+          "dedust",
+          "EQD_test_pool",
+          "TON",
+          "USDT",
           0.1,
-          999 // Unrealistic minimum
-        )
-      ).rejects.toThrow('SLIPPAGE_EXCEEDED');
+          999, // Unrealistic minimum
+        ),
+      ).rejects.toThrow("SLIPPAGE_EXCEEDED");
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle invalid pool address', async () => {
+  describe("Error Handling", () => {
+    it("should handle invalid pool address", async () => {
       const service = new DexAggregatorService();
-      (service as any).simulateSwap = jest.fn().mockRejectedValue(new Error('INVALID_POOL'));
+      (service as any).simulateSwap = jest
+        .fn()
+        .mockRejectedValue(new Error("INVALID_POOL"));
       await expect(
         service.executeSwap(
-          'dedust',
-          'INVALID_ADDRESS',
-          'TON',
-          'USDT',
+          "dedust",
+          "INVALID_ADDRESS",
+          "TON",
+          "USDT",
           0.1,
-          0.09
-        )
-      ).rejects.toThrow('INVALID_POOL');
+          0.09,
+        ),
+      ).rejects.toThrow("INVALID_POOL");
     });
 
-    it('should handle insufficient balance', async () => {
+    it("should handle insufficient balance", async () => {
       const service = new DexAggregatorService();
-      (service as any).simulateSwap = jest.fn().mockRejectedValue(new Error('INSUFFICIENT_FUNDS'));
+      (service as any).simulateSwap = jest
+        .fn()
+        .mockRejectedValue(new Error("INSUFFICIENT_FUNDS"));
       await expect(
         service.executeSwap(
-          'dedust',
-          'EQD_test_pool',
-          'TON',
-          'USDT',
+          "dedust",
+          "EQD_test_pool",
+          "TON",
+          "USDT",
           10000, // Huge amount
-          9000
-        )
-      ).rejects.toThrow('INSUFFICIENT_FUNDS');
+          9000,
+        ),
+      ).rejects.toThrow("INSUFFICIENT_FUNDS");
     });
   });
 
-  describe('Gas Estimation', () => {
-    it('should estimate reasonable gas fees', async () => {
+  describe("Gas Estimation", () => {
+    it("should estimate reasonable gas fees", async () => {
       // Gas should be between 0.01 and 0.2 TON
       const service = new DexAggregatorService();
       const tonServiceMock = {
-        getWalletAddress: () => 'EQC-test-wallet-address',
+        getWalletAddress: () => "EQC-test-wallet-address",
         initializeWallet: jest.fn().mockResolvedValue(undefined),
         getTransaction: jest.fn(),
         getClient: jest.fn().mockReturnValue({}),
       };
       (service as any).tonService = tonServiceMock;
       await service.initializeWallet();
-      
+
       // Access private method through any
       (service as any).estimateGasFee = jest.fn().mockResolvedValue(0.05 * 1e9);
-      const gasEstimate = await (service as any).estimateGasFee('swap');
+      const gasEstimate = await (service as any).estimateGasFee("swap");
       const gasInTon = Number(gasEstimate) / 1e9;
-      
+
       expect(gasInTon).toBeGreaterThan(0.01);
       expect(gasInTon).toBeLessThan(0.2);
     });
