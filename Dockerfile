@@ -18,7 +18,7 @@ COPY packages/sdk/package*.json ./packages/sdk/
 COPY packages/dashboard/package*.json ./packages/dashboard/
 
 # Install dependencies (no cache mount for Railway compatibility)
-RUN npm install --workspaces --ignore-scripts --no-audit --no-fund
+RUN npm install --workspaces --no-audit --no-fund
 
 # Copy source code and database migrations
 COPY packages ./packages

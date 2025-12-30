@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://github.com/toxzak-svg/TelePayGate/issues"
   },
+  "_moduleAliases": {
+    "telepaygate-core": "../core"
+  },
   "homepage": "https://github.com/toxzak-svg/TelePayGate/tree/main/packages/api#readme",
   "keywords": [
     "telegram",
