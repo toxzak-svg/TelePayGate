@@ -5,7 +5,7 @@ const path = require('path');
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'tg_payment_dev',
+  database: process.env.DB_NAME || 'telepaygate_dev',
   user: process.env.DB_USER || 'tg_user',
   password: process.env.DB_PASSWORD || 'tg_password',
 });

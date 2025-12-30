@@ -1,0 +1,11 @@
+[[rules]]
+id = "ignore-test-api-key"
+regex = '''pk_invalid_key_12345'''
+path = '''packages/api/scripts/test-auth.js'''
+
+[[rules]]
+id = "ignore-private-key-pattern"
+regex = '''-----BEGIN (PRIVATE|RSA PRIVATE) KEY-----'''
+path = '''scripts/pre-commit-secret-scan.sh'''
+
+# Add more ignore rules as needed for test keys or patterns

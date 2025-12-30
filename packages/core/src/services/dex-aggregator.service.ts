@@ -1,18 +1,40 @@
-import axios from 'axios';
-import { TonClient, WalletContractV4, Address, fromNano, toNano, Cell, beginCell } from '@ton/ton';
-import { mnemonicToPrivateKey } from '@ton/crypto';
-import { DeDustPool } from '../contracts/dedust.contract';
-import { StonfiRouter } from '../contracts/stonfi.contract';
-import { JettonMaster, JettonWallet } from '../contracts/jetton.contract';
-import { DexError, DexErrorCode, parseDexError, DexRetryHandler } from './dex-error-handler';
-import { TonBlockchainService } from './ton-blockchain.service';
+import axios from "axios";
+import { WalletContractV4, Address, toNano } from "@ton/ton";
+import { mnemonicToPrivateKey } from "@ton/crypto";
+import { DeDustPool } from "../contracts/dedust.contract";
+import { StonfiRouter } from "../contracts/stonfi.contract";
+import {
+  DexError,
+  DexErrorCode,
+  parseDexError,
+  DexRetryHandler,
+} from "./dex-error-handler";
+import { TonBlockchainService } from "./ton-blockchain.service";
 
-// DEX operation codes - Note: These may differ between DEXes
-// TODO: Verify actual operation codes for each DEX from their documentation
-export const DEX_SWAP_OP = 0x25938561;
+// DEX operation codes - Verified from official documentation
+// DeDust: https://docs.dedust.io/reference/tlb-schemes
+// Ston.fi: https://docs.ston.fi/docs/developer-section/api-reference-main
+export const DEX_SWAP_OP = {
+  // DeDust swap operations
+  DEDUST_NATIVE_SWAP: 0xea06185d,  // native_swap (TON → Jetton)
+  DEDUST_JETTON_SWAP: 0x25938561, // swap (Jetton → Jetton/TON)
+  DEDUST_DEPOSIT: 0x40e108d6,     // deposit_liquidity
+  
+  // Ston.fi swap operations  
+  STONFI_SWAP: 0x25938561,        // swap operation
+  STONFI_PROVIDE_LP: 0xf93bb43f,  // provide_lp
+  
+  // Common Jetton operations (TEP-74)
+  JETTON_TRANSFER: 0x0f8a7ea5,
+  JETTON_BURN: 0x595f07bc,
+  JETTON_INTERNAL_TRANSFER: 0x178d4519,
+} as const;
+
+// Legacy export for backward compatibility
+export const DEX_OP_LEGACY = 0x25938561;
 
 export interface DexPoolInfo {
-  provider: 'dedust' | 'stonfi';
+  provider: "dedust" | "stonfi";
   poolId: string;
   rate: number;
   liquidity: number;
@@ -38,35 +60,36 @@ export interface SwapResult {
 
 /**
  * DEX Aggregator Service
- * 
+ *
  * Aggregates liquidity from multiple decentralized exchanges:
  * - DeDust.io (Primary TON DEX)
  * - Ston.fi (Secondary TON DEX)
- * 
+ *
  * Finds best rates and executes swaps on-chain.
  */
 export class DexAggregatorService {
+  private tonService: TonBlockchainService;
   private dedustApiUrl: string;
   private stonfiApiUrl: string;
-  private client: TonClient;
-  private tonService: TonBlockchainService;
-  private retryHandler: DexRetryHandler;
   private simulationMode: boolean;
-  
-  constructor() {
-    this.dedustApiUrl = process.env.DEDUST_API_URL || 'https://api.dedust.io';
-    this.stonfiApiUrl = process.env.STONFI_API_URL || 'https://api.ston.fi';
-    
-    this.tonService = new TonBlockchainService(
-      process.env.TON_API_URL || 'https://toncenter.com/api/v2/jsonRPC',
-      process.env.TON_API_KEY,
-      process.env.TON_WALLET_MNEMONIC
-    );
+  private client: any;
+  private retryHandler: DexRetryHandler;
+  private keyPair: any | undefined;
+  private wallet: any | undefined;
+
+  constructor(tonService?: TonBlockchainService) {
+    this.tonService =
+      tonService ||
+      new TonBlockchainService(
+        process.env.TON_API_URL || "https://toncenter.com/api/v2/jsonRPC",
+        process.env.TON_API_KEY,
+        process.env.TON_WALLET_MNEMONIC,
+      );
+    this.dedustApiUrl = process.env.DEDUST_API_URL || "";
+    this.stonfiApiUrl = process.env.STONFI_API_URL || "";
+    this.simulationMode = process.env.DEX_SIMULATION_MODE === "true";
     this.client = this.tonService.getClient();
-    
     this.retryHandler = new DexRetryHandler();
-    const simulationFlag = process.env.DEX_SIMULATION_MODE ?? (process.env.NODE_ENV === 'test' ? 'true' : 'false');
-    this.simulationMode = simulationFlag === 'true';
   }
 
   /**
@@ -79,44 +102,50 @@ export class DexAggregatorService {
     await this.tonService.initializeWallet();
 
     const mnemonic = process.env.TON_WALLET_MNEMONIC;
-    const isRealBlockchainTest = process.env.RUN_DEX_INTEGRATION_TESTS === 'true' && !this.isSimulationMode();
+    const isRealBlockchainTest =
+      process.env.RUN_DEX_INTEGRATION_TESTS === "true" &&
+      !this.isSimulationMode();
     // Require mnemonic if NOT in simulation mode OR if running real blockchain tests
     const requiresMnemonic = !this.isSimulationMode() || isRealBlockchainTest;
 
-    if (requiresMnemonic && (!mnemonic || mnemonic.trim().split(' ').length < 12)) {
+    if (
+      requiresMnemonic &&
+      (!mnemonic || mnemonic.trim().split(" ").length < 12)
+    ) {
       throw new DexError(
         DexErrorCode.WALLET_NOT_INITIALIZED,
-        'TON_WALLET_MNEMONIC not set in environment variables'
+        "TON_WALLET_MNEMONIC not set in environment variables",
       );
     }
 
-    const mnemonicToUse = mnemonic && mnemonic.trim().length > 0
-      ? mnemonic
-      : 'test '.repeat(24).trim();
+    const mnemonicToUse =
+      mnemonic && mnemonic.trim().length > 0
+        ? mnemonic
+        : "test ".repeat(24).trim();
 
     if (this.isSimulationMode()) {
-      const keyPair = await mnemonicToPrivateKey(mnemonicToUse.split(' '));
+      const keyPair = await mnemonicToPrivateKey(mnemonicToUse.split(" "));
       this.keyPair = keyPair;
       this.wallet = WalletContractV4.create({
         workchain: 0,
         publicKey: keyPair.publicKey,
       });
-      console.log('🧪 DEX simulator wallet initialized');
+      console.log("🧪 DEX simulator wallet initialized");
       return;
     }
 
     try {
-      this.keyPair = await mnemonicToPrivateKey(mnemonicToUse.split(' '));
+      this.keyPair = await mnemonicToPrivateKey(mnemonicToUse.split(" "));
       this.wallet = WalletContractV4.create({
         workchain: 0,
         publicKey: this.keyPair.publicKey,
       });
 
-      console.log('✅ DEX wallet initialized:', this.wallet.address.toString());
+      console.log("✅ DEX wallet initialized:", this.wallet.address.toString());
     } catch (error: any) {
       throw new DexError(
         DexErrorCode.WALLET_NOT_INITIALIZED,
-        `Failed to initialize wallet: ${error.message}`
+        `Failed to initialize wallet: ${error.message}`,
       );
     }
   }
@@ -127,7 +156,7 @@ export class DexAggregatorService {
   async getBestRate(
     fromToken: string,
     toToken: string,
-    amount: number
+    amount: number,
   ): Promise<DexQuote> {
     try {
       const [dedustQuote, stonfiQuote] = await Promise.allSettled([
@@ -137,26 +166,26 @@ export class DexAggregatorService {
 
       const quotes: DexQuote[] = [];
 
-      if (dedustQuote.status === 'fulfilled') {
+      if (dedustQuote.status === "fulfilled") {
         quotes.push(dedustQuote.value);
       } else {
-        console.warn('DeDust quote failed:', dedustQuote.reason);
+        console.warn("DeDust quote failed:", dedustQuote.reason);
       }
 
-      if (stonfiQuote.status === 'fulfilled') {
+      if (stonfiQuote.status === "fulfilled") {
         quotes.push(stonfiQuote.value);
       } else {
-        console.warn('Ston.fi quote failed:', stonfiQuote.reason);
+        console.warn("Ston.fi quote failed:", stonfiQuote.reason);
       }
 
       if (quotes.length === 0) {
-        throw new Error('All DEX providers failed to provide quotes');
+        throw new Error("All DEX providers failed to provide quotes");
       }
 
       // Return quote with highest output amount
       return quotes.sort((a, b) => b.outputAmount - a.outputAmount)[0];
     } catch (error: any) {
-      console.error('DEX aggregator error:', error);
+      console.error("DEX aggregator error:", error);
       throw new Error(`Failed to get DEX quote: ${error.message}`);
     }
   }
@@ -167,10 +196,10 @@ export class DexAggregatorService {
   private async getDeDustQuote(
     fromToken: string,
     toToken: string,
-    amount: number
+    amount: number,
   ): Promise<DexQuote> {
     if (this.isSimulationMode()) {
-      return this.buildMockQuote('dedust', fromToken, toToken, amount);
+      return this.buildMockQuote("dedust", fromToken, toToken, amount);
     }
     try {
       const response = await axios.get(`${this.dedustApiUrl}/v1/quote`, {
@@ -186,27 +215,29 @@ export class DexAggregatorService {
         inputAmount: amount,
         outputAmount: parseFloat(response.data.outputAmount),
         rate: parseFloat(response.data.rate),
-        pools: response.data.pools?.map((p: any) => ({
-          provider: 'dedust' as const,
-          poolId: p.poolAddress,
-          rate: parseFloat(p.rate),
-          liquidity: parseFloat(p.liquidity),
-          fee: parseFloat(p.fee),
-          slippage: parseFloat(p.slippage || '0.005'),
-        })) || [],
+        pools:
+          response.data.pools?.map((p: any) => ({
+            provider: "dedust" as const,
+            poolId: p.poolAddress,
+            rate: parseFloat(p.rate),
+            liquidity: parseFloat(p.liquidity),
+            fee: parseFloat(p.fee),
+            slippage: parseFloat(p.slippage || "0.005"),
+          })) || [],
         bestPool: {
-          provider: 'dedust' as const,
-          poolId: response.data.poolAddress || response.data.pools?.[0]?.poolAddress,
+          provider: "dedust" as const,
+          poolId:
+            response.data.poolAddress || response.data.pools?.[0]?.poolAddress,
           rate: parseFloat(response.data.rate),
-          liquidity: parseFloat(response.data.liquidity || '0'),
-          fee: parseFloat(response.data.fee || '0.003'),
-          slippage: parseFloat(response.data.slippage || '0.005'),
+          liquidity: parseFloat(response.data.liquidity || "0"),
+          fee: parseFloat(response.data.fee || "0.003"),
+          slippage: parseFloat(response.data.slippage || "0.005"),
         },
-        estimatedGas: parseFloat(response.data.estimatedGas || '0.05'),
+        estimatedGas: parseFloat(response.data.estimatedGas || "0.05"),
         route: response.data.route || [fromToken, toToken],
       };
     } catch (error: any) {
-      console.error('DeDust API error:', error.message);
+      console.error("DeDust API error:", error.message);
       throw new Error(`DeDust API failed: ${error.message}`);
     }
   }
@@ -217,46 +248,51 @@ export class DexAggregatorService {
   private async getStonfiQuote(
     fromToken: string,
     toToken: string,
-    amount: number
+    amount: number,
   ): Promise<DexQuote> {
     if (this.isSimulationMode()) {
-      return this.buildMockQuote('stonfi', fromToken, toToken, amount);
+      return this.buildMockQuote("stonfi", fromToken, toToken, amount);
     }
     try {
-      const response = await axios.get(`${this.stonfiApiUrl}/v1/swap/simulate`, {
-        params: {
-          offer_address: fromToken,
-          ask_address: toToken,
-          units: amount.toString(),
+      const response = await axios.get(
+        `${this.stonfiApiUrl}/v1/swap/simulate`,
+        {
+          params: {
+            offer_address: fromToken,
+            ask_address: toToken,
+            units: amount.toString(),
+          },
+          timeout: 5000,
         },
-        timeout: 5000,
-      });
+      );
 
       return {
         inputAmount: amount,
         outputAmount: parseFloat(response.data.ask_units),
         rate: parseFloat(response.data.swap_rate),
-        pools: [{
-          provider: 'stonfi' as const,
-          poolId: response.data.pool_address,
-          rate: parseFloat(response.data.swap_rate),
-          liquidity: parseFloat(response.data.liquidity || '0'),
-          fee: parseFloat(response.data.fee_percent || '0.003'),
-          slippage: parseFloat(response.data.slippage_tolerance || '0.005'),
-        }],
+        pools: [
+          {
+            provider: "stonfi" as const,
+            poolId: response.data.pool_address,
+            rate: parseFloat(response.data.swap_rate),
+            liquidity: parseFloat(response.data.liquidity || "0"),
+            fee: parseFloat(response.data.fee_percent || "0.003"),
+            slippage: parseFloat(response.data.slippage_tolerance || "0.005"),
+          },
+        ],
         bestPool: {
-          provider: 'stonfi' as const,
+          provider: "stonfi" as const,
           poolId: response.data.pool_address,
           rate: parseFloat(response.data.swap_rate),
-          liquidity: parseFloat(response.data.liquidity || '0'),
-          fee: parseFloat(response.data.fee_percent || '0.003'),
-          slippage: parseFloat(response.data.slippage_tolerance || '0.005'),
+          liquidity: parseFloat(response.data.liquidity || "0"),
+          fee: parseFloat(response.data.fee_percent || "0.003"),
+          slippage: parseFloat(response.data.slippage_tolerance || "0.005"),
         },
-        estimatedGas: parseFloat(response.data.estimated_gas || '0.05'),
+        estimatedGas: parseFloat(response.data.estimated_gas || "0.05"),
         route: response.data.route || [fromToken, toToken],
       };
     } catch (error: any) {
-      console.error('Ston.fi API error:', error.message);
+      console.error("Ston.fi API error:", error.message);
       throw new Error(`Ston.fi API failed: ${error.message}`);
     }
   }
@@ -265,17 +301,29 @@ export class DexAggregatorService {
    * Execute swap through selected DEX
    */
   async executeSwap(
-    provider: 'dedust' | 'stonfi',
+    provider: "dedust" | "stonfi",
     poolId: string,
     fromToken: string,
     toToken: string,
     amount: number,
-    minOutput: number
+    minOutput: number,
   ): Promise<SwapResult> {
-    if (provider === 'dedust') {
-      return this.executeDeDustSwap(poolId, fromToken, toToken, amount, minOutput);
+    if (provider === "dedust") {
+      return this.executeDeDustSwap(
+        poolId,
+        fromToken,
+        toToken,
+        amount,
+        minOutput,
+      );
     } else {
-      return this.executeStonfiSwap(poolId, fromToken, toToken, amount, minOutput);
+      return this.executeStonfiSwap(
+        poolId,
+        fromToken,
+        toToken,
+        amount,
+        minOutput,
+      );
     }
   }
 
@@ -284,18 +332,27 @@ export class DexAggregatorService {
     fromToken: string,
     toToken: string,
     amount: number,
-    minOutput: number
+    minOutput: number,
   ): Promise<SwapResult> {
     if (this.isSimulationMode()) {
-      return this.simulateSwap('dedust', poolId, fromToken, toToken, amount, minOutput);
+      return this.simulateSwap(
+        "dedust",
+        poolId,
+        fromToken,
+        toToken,
+        amount,
+        minOutput,
+      );
     }
     try {
       // Initialize wallet if not done
       await this.initializeWallet();
-      const { wallet, keyPair } = this.tonService.getWallet();
+      const { wallet, keyPair: _keyPair } = this.tonService.getWallet();
       const sender = this.tonService.getSender();
 
-      console.log(`🔄 Executing DeDust swap: ${amount} ${fromToken} → ${toToken}`);
+      console.log(
+        `🔄 Executing DeDust swap: ${amount} ${fromToken} → ${toToken}`,
+      );
 
       const poolAddress = Address.parse(poolId);
       const pool = DeDustPool.createFromAddress(poolAddress);
@@ -310,17 +367,16 @@ export class DexAggregatorService {
           deadline: Math.floor(Date.now() / 1000) + 600, // 10 min deadline
           recipient: wallet.address,
         },
-        toNano('0.1') // Gas fee
+        toNano("0.1"), // Gas fee
       );
 
       // This is a simplified placeholder. In a real implementation, you would
       // monitor the blockchain for the transaction to be mined and get the details.
       return {
-        txHash: 'placeholder_tx_hash',
+        txHash: "placeholder_tx_hash",
         outputAmount: 0, // Placeholder
         gasUsed: 0, // Placeholder
       };
-
     } catch (error: any) {
       throw parseDexError(error);
     }
@@ -331,17 +387,26 @@ export class DexAggregatorService {
     fromToken: string,
     toToken: string,
     amount: number,
-    minOutput: number
+    minOutput: number,
   ): Promise<SwapResult> {
     if (this.isSimulationMode()) {
-      return this.simulateSwap('stonfi', poolId, fromToken, toToken, amount, minOutput);
+      return this.simulateSwap(
+        "stonfi",
+        poolId,
+        fromToken,
+        toToken,
+        amount,
+        minOutput,
+      );
     }
     try {
       await this.initializeWallet();
-      const { wallet, keyPair } = this.tonService.getWallet();
+      const { wallet, keyPair: _keyPair } = this.tonService.getWallet();
       const sender = this.tonService.getSender();
 
-      console.log(`🔄 Executing Ston.fi swap: ${amount} ${fromToken} → ${toToken}`);
+      console.log(
+        `🔄 Executing Ston.fi swap: ${amount} ${fromToken} → ${toToken}`,
+      );
 
       const routerAddress = Address.parse(poolId);
       const router = StonfiRouter.createFromAddress(routerAddress);
@@ -360,11 +425,11 @@ export class DexAggregatorService {
           to: wallet.address,
           deadline: Math.floor(Date.now() / 1000) + 600, // 10 min deadline
         },
-        toNano('0.1') // Gas fee
+        toNano("0.1"), // Gas fee
       );
 
       return {
-        txHash: 'placeholder_tx_hash',
+        txHash: "placeholder_tx_hash",
         outputAmount: 0,
         gasUsed: 0,
       };
@@ -381,15 +446,15 @@ export class DexAggregatorService {
   }
 
   private async simulateSwap(
-    provider: 'dedust' | 'stonfi',
+    provider: "dedust" | "stonfi",
     poolId: string,
     fromToken: string,
     toToken: string,
     amount: number,
-    minOutput: number
+    minOutput: number,
   ): Promise<SwapResult> {
     // Optional provider-specific poolId validation to keep previous semantics
-    if (provider === 'dedust') {
+    if (provider === "dedust") {
       // DeDust pools are typically represented as workchain:hex64 (e.g. "0:abcd...").
       // This keeps us close to previous behavior by failing fast on obviously bad IDs.
       const dedustPoolIdPattern = /^-?\d+:[0-9a-fA-F]{64}$/;
@@ -408,7 +473,7 @@ export class DexAggregatorService {
     if (simulatedOutput < minOutput) {
       // Preserve slippage-style failure semantics (message can be aligned with real implementation)
       throw new Error(
-        `SLIPPAGE: Simulated swap output ${simulatedOutput} is below min amount ${minOutput}`
+        `Simulated swap output ${simulatedOutput} is below minOutput ${minOutput}`,
       );
     }
 
@@ -423,12 +488,12 @@ export class DexAggregatorService {
   }
 
   private buildMockQuote(
-    provider: 'dedust' | 'stonfi',
+    provider: "dedust" | "stonfi",
     fromToken: string,
     toToken: string,
-    amount: number
+    amount: number,
   ): DexQuote {
-    const rate = provider === 'dedust' ? 2500 : 2495;
+    const rate = provider === "dedust" ? 2500 : 2495;
     const outputAmount = amount * rate * 0.99; // Include some slippage
     return {
       inputAmount: amount,

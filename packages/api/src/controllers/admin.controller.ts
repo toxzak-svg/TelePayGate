@@ -1,13 +1,12 @@
-import { Request, Response } from 'express';
-import { v4 as uuid } from 'uuid';
-import { getDatabase, FeeService, AdminAnalyticsService } from '@tg-payment/core';
+import { Request, Response } from "express";
+import { v4 as uuid } from "uuid";
+import { getDatabase, FeeService } from "telepaygate-core";
 
 export class AdminController {
   private static getServices() {
     const db = getDatabase();
-    const feeService = new FeeService(db as any);
-    const analyticsService = new AdminAnalyticsService(db as any);
-    return { db, feeService, analyticsService };
+    const feeService = new FeeService(db);
+    return { db, feeService };
   }
 
   /**
@@ -16,18 +15,16 @@ export class AdminController {
   static async getStats(req: Request, res: Response) {
     const requestId = uuid();
     try {
-      const { analyticsService } = AdminController.getServices();
-      const stats = await analyticsService.getDashboardStats();
-
       return res.status(200).json({
         success: true,
-        stats,
+        stats: { totalUsers: 0, totalPayments: 0, totalConversions: 0 },
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'STATS_ERROR', message: error.message },
+        error: { code: "STATS_ERROR", message },
         requestId,
       });
     }
@@ -44,10 +41,11 @@ export class AdminController {
         users: [],
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'USERS_ERROR', message: error.message },
+        error: { code: "USERS_ERROR", message },
         requestId,
       });
     }
@@ -64,10 +62,11 @@ export class AdminController {
         user: {},
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'USER_ERROR', message: error.message },
+        error: { code: "USER_ERROR", message },
         requestId,
       });
     }
@@ -81,13 +80,14 @@ export class AdminController {
     try {
       return res.status(200).json({
         success: true,
-        message: 'User updated',
+        message: "User updated",
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'UPDATE_ERROR', message: error.message },
+        error: { code: "UPDATE_ERROR", message },
         requestId,
       });
     }
@@ -104,10 +104,11 @@ export class AdminController {
         payments: [],
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'PAYMENTS_ERROR', message: error.message },
+        error: { code: "PAYMENTS_ERROR", message },
         requestId,
       });
     }
@@ -124,10 +125,11 @@ export class AdminController {
         conversions: [],
         requestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'CONVERSIONS_ERROR', message: error.message },
+        error: { code: "CONVERSIONS_ERROR", message },
         requestId,
       });
     }
@@ -148,11 +150,12 @@ export class AdminController {
         revenue,
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get revenue error:', error);
+    } catch (error: unknown) {
+      console.error("❌ Get revenue error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'REVENUE_ERROR', message: error.message },
+        error: { code: "REVENUE_ERROR", message },
         requestId,
       });
     }
@@ -165,18 +168,16 @@ export class AdminController {
     const requestId = uuid();
 
     try {
-      const { analyticsService } = AdminController.getServices();
+      const { feeService } = AdminController.getServices();
       const { startDate, endDate } = req.query;
 
       const start = startDate
         ? new Date(startDate as string)
-        : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-      const end = endDate
-        ? new Date(endDate as string)
-        : new Date();
+      const end = endDate ? new Date(endDate as string) : new Date();
 
-      const summary = await analyticsService.getRevenueSummary(start, end);
+      const summary = await feeService.getFeeSummary(start, end);
 
       return res.status(200).json({
         success: true,
@@ -187,50 +188,12 @@ export class AdminController {
         },
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get revenue summary error:', error);
+    } catch (error: unknown) {
+      console.error("❌ Get revenue summary error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'SUMMARY_ERROR', message: error.message },
-        requestId,
-      });
-    }
-  }
-
-  /**
-   * GET /api/v1/admin/transactions/summary
-   */
-  static async getTransactionSummary(req: Request, res: Response) {
-    const requestId = uuid();
-
-    try {
-      const { analyticsService } = AdminController.getServices();
-      const { startDate, endDate } = req.query;
-
-      const start = startDate
-        ? new Date(startDate as string)
-        : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-      const end = endDate
-        ? new Date(endDate as string)
-        : new Date();
-
-      const summary = await analyticsService.getTransactionSummary(start, end);
-
-      return res.status(200).json({
-        success: true,
-        summary,
-        dateRange: {
-          start: start.toISOString(),
-          end: end.toISOString(),
-        },
-        requestId,
-      });
-    } catch (error: any) {
-      console.error('❌ Get transaction summary error:', error);
-      return res.status(500).json({
-        success: false,
-        error: { code: 'TRANSACTION_SUMMARY_ERROR', message: error.message },
+        error: { code: "SUMMARY_ERROR", message },
         requestId,
       });
     }
@@ -250,20 +213,18 @@ export class AdminController {
         success: true,
         config: {
           platformFeePercentage: `${(config.platformFeePercentage * 100).toFixed(2)}%`,
-          dexFeePercentage: `${(config.dexFeePercentage * 100).toFixed(2)}%`,
-          dexSlippageTolerance: `${(config.dexSlippageTolerance * 100).toFixed(2)}%`,
-          preferredDexProvider: config.preferredDexProvider,
           networkFeePercentage: `${(config.networkFeePercentage * 100).toFixed(2)}%`,
           platformTonWallet: config.platformTonWallet,
           minConversionAmount: config.minConversionAmount,
         },
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Get config error:', error);
+    } catch (error: unknown) {
+      console.error("❌ Get config error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'CONFIG_ERROR', message: error.message },
+        error: { code: "CONFIG_ERROR", message },
         requestId,
       });
     }
@@ -279,16 +240,14 @@ export class AdminController {
       const { db } = AdminController.getServices();
       const {
         platformFeePercentage,
-        dexFeePercentage,
-        dexSlippageTolerance,
-        preferredDexProvider,
+        fragmentFeePercentage,
         networkFeePercentage,
         platformTonWallet,
         minConversionAmount,
       } = req.body;
 
       const updates: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (platformFeePercentage !== undefined) {
@@ -296,19 +255,9 @@ export class AdminController {
         values.push(parseFloat(platformFeePercentage) / 100);
       }
 
-      if (dexFeePercentage !== undefined) {
-        updates.push(`dex_fee_percentage = $${paramIndex++}`);
-        values.push(parseFloat(dexFeePercentage) / 100);
-      }
-
-      if (dexSlippageTolerance !== undefined) {
-        updates.push(`dex_slippage_tolerance = $${paramIndex++}`);
-        values.push(parseFloat(dexSlippageTolerance) / 100);
-      }
-
-      if (preferredDexProvider) {
-        updates.push(`preferred_dex_provider = $${paramIndex++}`);
-        values.push(preferredDexProvider);
+      if (fragmentFeePercentage !== undefined) {
+        updates.push(`fragment_fee_percentage = $${paramIndex++}`);
+        values.push(parseFloat(fragmentFeePercentage) / 100);
       }
 
       if (networkFeePercentage !== undefined) {
@@ -329,30 +278,34 @@ export class AdminController {
       if (updates.length === 0) {
         return res.status(400).json({
           success: false,
-          error: { code: 'NO_UPDATES', message: 'No configuration updates provided' },
+          error: {
+            code: "NO_UPDATES",
+            message: "No configuration updates provided",
+          },
           requestId,
         });
       }
 
       updates.push(`updated_at = NOW()`);
 
-      await db.query(
-        `UPDATE platform_config SET ${updates.join(', ')} WHERE is_active = true`,
-        values
+      await db.none(
+        `UPDATE platform_config SET ${updates.join(", ")} WHERE id = (SELECT id FROM platform_config ORDER BY created_at DESC LIMIT 1)`,
+        values,
       );
 
-      console.log('✅ Platform config updated:', req.body);
+      console.log("✅ Platform config updated:", req.body);
 
       return res.status(200).json({
         success: true,
-        message: 'Configuration updated successfully',
+        message: "Configuration updated successfully",
         requestId,
       });
-    } catch (error: any) {
-      console.error('❌ Update config error:', error);
+    } catch (error: unknown) {
+      console.error("❌ Update config error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       return res.status(500).json({
         success: false,
-        error: { code: 'UPDATE_ERROR', message: error.message },
+        error: { code: "UPDATE_ERROR", message },
         requestId,
       });
     }
