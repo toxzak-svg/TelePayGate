@@ -1,12 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppError, ErrorHandler } from '@tg-payment/core';
+import { Request, Response } from "express";
+import { AppError, ErrorHandler } from "telepaygate-core";
 
-export function errorHandler(
-  error: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function errorHandler(error: Error, req: Request, res: Response): void {
   // Log error
   ErrorHandler.logError(error);
 
@@ -19,7 +14,7 @@ export function errorHandler(
         message: error.message,
         details: error.details,
       },
-      requestId: req.headers['x-request-id'],
+      requestId: req.headers["x-request-id"],
       timestamp: new Date().toISOString(),
     };
 
@@ -33,7 +28,7 @@ export function errorHandler(
 
   res.status(statusCode).json({
     ...errorResponse,
-    requestId: req.headers['x-request-id'],
+    requestId: req.headers["x-request-id"],
     timestamp: new Date().toISOString(),
   });
 }

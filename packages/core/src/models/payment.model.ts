@@ -1,4 +1,4 @@
-import { Database } from '../db/connection';
+import { Database } from "../db/connection";
 
 export interface Payment {
   id: string;
@@ -7,18 +7,18 @@ export interface Payment {
   starsAmount: number;
   status: PaymentStatus;
   telegramPaymentId: string;
-  rawPayload?: any;
+  rawPayload?: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  RECEIVED = 'received',
-  CONVERTING = 'converting',
-  CONVERTED = 'converted',
-  SETTLED = 'settled',
-  FAILED = 'failed'
+  PENDING = "pending",
+  RECEIVED = "received",
+  CONVERTING = "converting",
+  CONVERTED = "converted",
+  SETTLED = "settled",
+  FAILED = "failed",
 }
 
 export class PaymentModel {
@@ -33,7 +33,7 @@ export class PaymentModel {
     starsAmount: number;
     telegramPaymentId: string;
     status?: PaymentStatus;
-    rawPayload?: any;
+    rawPayload?: unknown;
   }): Promise<Payment> {
     const result = await this.db.one(
       `INSERT INTO payments (
@@ -48,8 +48,8 @@ export class PaymentModel {
         data.starsAmount,
         data.status || PaymentStatus.PENDING,
         data.telegramPaymentId,
-        JSON.stringify(data.rawPayload || {})
-      ]
+        JSON.stringify(data.rawPayload || {}),
+      ],
     );
 
     return this.mapToPayment(result);
@@ -60,10 +60,9 @@ export class PaymentModel {
    */
   async findById(id: string): Promise<Payment | null> {
     try {
-      const result = await this.db.one(
-        'SELECT * FROM payments WHERE id = $1',
-        [id]
-      );
+      const result = await this.db.one("SELECT * FROM payments WHERE id = $1", [
+        id,
+      ]);
       return this.mapToPayment(result);
     } catch (error) {
       return null;
@@ -73,11 +72,13 @@ export class PaymentModel {
   /**
    * Find payment by Telegram payment ID
    */
-  async findByTelegramPaymentId(telegramPaymentId: string): Promise<Payment | null> {
+  async findByTelegramPaymentId(
+    telegramPaymentId: string,
+  ): Promise<Payment | null> {
     try {
       const result = await this.db.one(
-        'SELECT * FROM payments WHERE telegram_payment_id = $1',
-        [telegramPaymentId]
+        "SELECT * FROM payments WHERE telegram_payment_id = $1",
+        [telegramPaymentId],
       );
       return this.mapToPayment(result);
     } catch (error) {
@@ -92,11 +93,11 @@ export class PaymentModel {
     if (ids.length === 0) return [];
 
     const results = await this.db.any(
-      'SELECT * FROM payments WHERE id = ANY($1::uuid[])',
-      [ids]
+      "SELECT * FROM payments WHERE id = ANY($1::uuid[])",
+      [ids],
     );
 
-    return results.map(r => this.mapToPayment(r));
+    return results.map((r) => this.mapToPayment(r));
   }
 
   /**
@@ -108,15 +109,15 @@ export class PaymentModel {
       limit?: number;
       offset?: number;
       status?: PaymentStatus;
-    } = {}
+    } = {},
   ): Promise<{ payments: Payment[]; total: number }> {
     const { limit = 20, offset = 0, status } = options;
 
-    let whereClause = 'WHERE user_id = $1';
-    const params: any[] = [userId];
+    let whereClause = "WHERE user_id = $1";
+    const params: unknown[] = [userId];
 
     if (status) {
-      whereClause += ' AND status = $2';
+      whereClause += " AND status = $2";
       params.push(status);
     }
 
@@ -125,17 +126,17 @@ export class PaymentModel {
         `SELECT * FROM payments ${whereClause} 
          ORDER BY created_at DESC 
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, limit, offset]
+        [...params, limit, offset],
       ),
       this.db.one(
         `SELECT COUNT(*) as count FROM payments ${whereClause}`,
-        params
-      )
+        params,
+      ),
     ]);
 
     return {
-      payments: results.map(r => this.mapToPayment(r)),
-      total: parseInt(countResult.count)
+      payments: results.map((r) => this.mapToPayment(r)),
+      total: parseInt(countResult.count),
     };
   }
 
@@ -148,7 +149,7 @@ export class PaymentModel {
        SET status = $1, updated_at = NOW() 
        WHERE id = $2 
        RETURNING *`,
-      [status, id]
+      [status, id],
     );
 
     return this.mapToPayment(result);
@@ -159,14 +160,14 @@ export class PaymentModel {
    */
   async updateMany(
     criteria: { id?: { in: string[] } },
-    updates: { status: PaymentStatus }
+    updates: { status: PaymentStatus },
   ): Promise<number> {
     if (criteria.id?.in) {
       const result = await this.db.result(
         `UPDATE payments 
          SET status = $1, updated_at = NOW() 
          WHERE id = ANY($2::uuid[])`,
-        [updates.status, criteria.id.in]
+        [updates.status, criteria.id.in],
       );
 
       return result.rowCount;
@@ -184,48 +185,47 @@ export class PaymentModel {
     byStatus: Record<PaymentStatus, number>;
   }> {
     const [countResult, sumResult, statusResults] = await Promise.all([
+      this.db.one("SELECT COUNT(*) as count FROM payments WHERE user_id = $1", [
+        userId,
+      ]),
       this.db.one(
-        'SELECT COUNT(*) as count FROM payments WHERE user_id = $1',
-        [userId]
-      ),
-      this.db.one(
-        'SELECT COALESCE(SUM(stars_amount), 0) as total FROM payments WHERE user_id = $1',
-        [userId]
+        "SELECT COALESCE(SUM(stars_amount), 0) as total FROM payments WHERE user_id = $1",
+        [userId],
       ),
       this.db.any(
-        'SELECT status, COUNT(*) as count FROM payments WHERE user_id = $1 GROUP BY status',
-        [userId]
-      )
+        "SELECT status, COUNT(*) as count FROM payments WHERE user_id = $1 GROUP BY status",
+        [userId],
+      ),
     ]);
 
     const byStatus: Record<string, number> = {};
-    statusResults.forEach(r => {
+    statusResults.forEach((r) => {
       byStatus[r.status] = parseInt(r.count);
     });
 
     return {
       totalPayments: parseInt(countResult.count),
       totalStars: parseFloat(sumResult.total),
-      byStatus: byStatus as Record<PaymentStatus, number>
+      byStatus: byStatus as Record<PaymentStatus, number>,
     };
   }
 
   /**
    * Map database row to Payment object
    */
-  private mapToPayment(row: any): Payment {
+  private mapToPayment(row: Record<string, unknown>): Payment {
+    const r = row as Record<string, unknown>;
+    const raw = r["raw_payload"];
     return {
-      id: row.id,
-      userId: row.user_id,
-      telegramInvoiceId: row.telegram_invoice_id,
-      starsAmount: parseFloat(row.stars_amount),
-      status: row.status as PaymentStatus,
-      telegramPaymentId: row.telegram_payment_id,
-      rawPayload: typeof row.raw_payload === 'string' 
-        ? JSON.parse(row.raw_payload) 
-        : row.raw_payload,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at)
+      id: String(r["id"]),
+      userId: String(r["user_id"]),
+      telegramInvoiceId: String(r["telegram_invoice_id"]),
+      starsAmount: parseFloat(String(r["stars_amount"] || "0")),
+      status: String(r["status"]) as PaymentStatus,
+      telegramPaymentId: String(r["telegram_payment_id"]),
+      rawPayload: typeof raw === "string" ? JSON.parse(raw) : raw,
+      createdAt: new Date(String(r["created_at"])),
+      updatedAt: new Date(String(r["updated_at"])),
     };
   }
 }
