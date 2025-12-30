@@ -1,4 +1,4 @@
-import { IDatabase } from 'pg-promise';
+import { IDatabase } from "pg-promise";
 
 export interface DashboardStats {
   totalRevenueTon: number;
@@ -87,8 +87,10 @@ export class AdminAnalyticsService {
     const previousTransactions = parseInt(result.previous_conversions, 10) || 0;
 
     const totalPayments = parseInt(result.total_payments, 10) || 0;
-    const currentActiveMerchants = parseInt(result.current_active_merchants, 10) || 0;
-    const previousActiveMerchants = parseInt(result.previous_active_merchants, 10) || 0;
+    const currentActiveMerchants =
+      parseInt(result.current_active_merchants, 10) || 0;
+    const previousActiveMerchants =
+      parseInt(result.previous_active_merchants, 10) || 0;
     const totalUsers = parseInt(result.total_users, 10) || 0;
 
     const currentSuccess = parseInt(result.current_success, 10) || 0;
@@ -96,8 +98,10 @@ export class AdminAnalyticsService {
     const previousSuccess = parseInt(result.previous_success, 10) || 0;
     const previousTotal = parseInt(result.previous_total, 10) || 0;
 
-    const successRate = currentTotal > 0 ? (currentSuccess / currentTotal) * 100 : 0;
-    const previousSuccessRate = previousTotal > 0 ? (previousSuccess / previousTotal) * 100 : 0;
+    const successRate =
+      currentTotal > 0 ? (currentSuccess / currentTotal) * 100 : 0;
+    const previousSuccessRate =
+      previousTotal > 0 ? (previousSuccess / previousTotal) * 100 : 0;
 
     return {
       totalRevenueTon,
@@ -108,13 +112,22 @@ export class AdminAnalyticsService {
       activeMerchants: currentActiveMerchants,
       successRate,
       revenueChange: this.calculateChange(currentFeeTon, previousFeeTon),
-      transactionChange: this.calculateChange(currentTransactions, previousTransactions),
-      activeMerchantsChange: this.calculateChange(currentActiveMerchants, previousActiveMerchants),
+      transactionChange: this.calculateChange(
+        currentTransactions,
+        previousTransactions,
+      ),
+      activeMerchantsChange: this.calculateChange(
+        currentActiveMerchants,
+        previousActiveMerchants,
+      ),
       successRateChange: successRate - previousSuccessRate,
     };
   }
 
-  async getRevenueSummary(startDate: Date, endDate: Date): Promise<DailyMetric[]> {
+  async getRevenueSummary(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<DailyMetric[]> {
     const rows = await this.db.manyOrNone(
       `SELECT
         DATE(created_at) AS date,
@@ -125,7 +138,7 @@ export class AdminAnalyticsService {
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at)
       `,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
     return rows.map((row) => ({
@@ -136,7 +149,10 @@ export class AdminAnalyticsService {
     }));
   }
 
-  async getTransactionSummary(startDate: Date, endDate: Date): Promise<DailyMetric[]> {
+  async getTransactionSummary(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<DailyMetric[]> {
     const rows = await this.db.manyOrNone(
       `SELECT
         DATE(created_at) AS date,
@@ -147,7 +163,7 @@ export class AdminAnalyticsService {
       GROUP BY DATE(created_at)
       ORDER BY DATE(created_at)
       `,
-      [startDate, endDate]
+      [startDate, endDate],
     );
 
     return rows.map((row) => ({

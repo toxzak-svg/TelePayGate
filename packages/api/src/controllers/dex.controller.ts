@@ -1,9 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
-import { DexAggregatorService, P2PLiquidityService, getPool } from '@tg-payment/core';
+import { Request, Response } from "express";
+import {
+  getDatabase,
+  P2PLiquidityService,
+  DexAggregatorService,
+} from "telepaygate-core";
 
 /**
  * DEX Controller
- * 
+ *
  * Handles DEX aggregation and liquidity routing endpoints.
  */
 export class DexController {
@@ -11,16 +15,16 @@ export class DexController {
    * GET /api/v1/dex/quote
    * Get best rate quote from all DEX sources
    */
-  static async getQuote(req: Request, res: Response, next: NextFunction) {
+  static async getQuote(req: Request, res: Response) {
     try {
       const { fromToken, toToken, amount } = req.query;
-      
+
       if (!fromToken || !toToken || !amount) {
         return res.status(400).json({
           success: false,
-          error: { 
-            code: 'INVALID_PARAMS', 
-            message: 'Missing required parameters: fromToken, toToken, amount' 
+          error: {
+            code: "INVALID_PARAMS",
+            message: "Missing required parameters: fromToken, toToken, amount",
           },
         });
       }
@@ -29,24 +33,25 @@ export class DexController {
       const quote = await dexAggregator.getBestRate(
         fromToken as string,
         toToken as string,
-        parseFloat(amount as string)
+        parseFloat(amount as string),
       );
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         data: {
           ...quote,
           timestamp: Date.now(),
           validFor: 30, // seconds
-        }
+        },
       });
-    } catch (error: any) {
-      console.error('DEX quote error:', error);
+    } catch (error: unknown) {
+      console.error("DEX quote error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
-          code: 'QUOTE_FAILED',
-          message: error.message || 'Failed to get DEX quote',
+          code: "QUOTE_FAILED",
+          message: message || "Failed to get DEX quote",
         },
       });
     }
@@ -56,25 +61,27 @@ export class DexController {
    * POST /api/v1/dex/swap
    * Execute swap through selected DEX
    */
-  static async executeSwap(req: Request, res: Response, next: NextFunction) {
+  static async executeSwap(req: Request, res: Response) {
     try {
-      const { provider, poolId, fromToken, toToken, amount, minOutput } = req.body;
+      const { provider, poolId, fromToken, toToken, amount, minOutput } =
+        req.body;
 
       if (!provider || !poolId || !fromToken || !toToken || !amount) {
         return res.status(400).json({
           success: false,
-          error: { 
-            code: 'INVALID_PARAMS', 
-            message: 'Missing required parameters: provider, poolId, fromToken, toToken, amount' 
+          error: {
+            code: "INVALID_PARAMS",
+            message:
+              "Missing required parameters: provider, poolId, fromToken, toToken, amount",
           },
         });
       }
 
-      if (!['dedust', 'stonfi'].includes(provider)) {
+      if (!["dedust", "stonfi"].includes(provider)) {
         return res.status(400).json({
           success: false,
           error: {
-            code: 'INVALID_PROVIDER',
+            code: "INVALID_PROVIDER",
             message: 'Provider must be either "dedust" or "stonfi"',
           },
         });
@@ -87,25 +94,26 @@ export class DexController {
         fromToken,
         toToken,
         amount,
-        minOutput || amount * 0.95 // 5% slippage tolerance by default
+        minOutput || amount * 0.95, // 5% slippage tolerance by default
       );
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         data: {
           ...result,
           provider,
           poolId,
           timestamp: Date.now(),
-        }
+        },
       });
-    } catch (error: any) {
-      console.error('DEX swap error:', error);
+    } catch (error: unknown) {
+      console.error("DEX swap error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
-          code: 'SWAP_FAILED',
-          message: error.message || 'Failed to execute DEX swap',
+          code: "SWAP_FAILED",
+          message: message || "Failed to execute DEX swap",
         },
       });
     }
@@ -115,7 +123,7 @@ export class DexController {
    * GET /api/v1/dex/liquidity
    * Get all available liquidity sources for a conversion
    */
-  static async getLiquidity(req: Request, res: Response, next: NextFunction) {
+  static async getLiquidity(req: Request, res: Response) {
     try {
       const { fromCurrency, toCurrency, amount } = req.query;
 
@@ -123,19 +131,20 @@ export class DexController {
         return res.status(400).json({
           success: false,
           error: {
-            code: 'INVALID_PARAMS',
-            message: 'Missing required parameters: fromCurrency, toCurrency, amount',
+            code: "INVALID_PARAMS",
+            message:
+              "Missing required parameters: fromCurrency, toCurrency, amount",
           },
         });
       }
 
-      const pool = getPool();
-      const p2pLiquidityService = new P2PLiquidityService(pool);
-      
+      const db = getDatabase();
+      const p2pLiquidityService = new P2PLiquidityService(db);
+
       const sources = await p2pLiquidityService.getAllLiquiditySources(
         fromCurrency as string,
         toCurrency as string,
-        parseFloat(amount as string)
+        parseFloat(amount as string),
       );
 
       res.json({
@@ -145,13 +154,14 @@ export class DexController {
           timestamp: Date.now(),
         },
       });
-    } catch (error: any) {
-      console.error('Liquidity query error:', error);
+    } catch (error: unknown) {
+      console.error("Liquidity query error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
-          code: 'LIQUIDITY_QUERY_FAILED',
-          message: error.message || 'Failed to query liquidity sources',
+          code: "LIQUIDITY_QUERY_FAILED",
+          message: message || "Failed to query liquidity sources",
         },
       });
     }
@@ -161,7 +171,7 @@ export class DexController {
    * GET /api/v1/dex/route
    * Find best conversion route (P2P or DEX)
    */
-  static async getBestRoute(req: Request, res: Response, next: NextFunction) {
+  static async getBestRoute(req: Request, res: Response) {
     try {
       const { fromCurrency, toCurrency, amount } = req.query;
 
@@ -169,19 +179,20 @@ export class DexController {
         return res.status(400).json({
           success: false,
           error: {
-            code: 'INVALID_PARAMS',
-            message: 'Missing required parameters: fromCurrency, toCurrency, amount',
+            code: "INVALID_PARAMS",
+            message:
+              "Missing required parameters: fromCurrency, toCurrency, amount",
           },
         });
       }
 
-      const pool = getPool();
-      const p2pLiquidityService = new P2PLiquidityService(pool);
-      
+      const db = getDatabase();
+      const p2pLiquidityService = new P2PLiquidityService(db);
+
       const route = await p2pLiquidityService.findBestRoute(
         fromCurrency as string,
         toCurrency as string,
-        parseFloat(amount as string)
+        parseFloat(amount as string),
       );
 
       res.json({
@@ -191,13 +202,14 @@ export class DexController {
           timestamp: Date.now(),
         },
       });
-    } catch (error: any) {
-      console.error('Route finding error:', error);
+    } catch (error: unknown) {
+      console.error("Route finding error:", error);
+      const message = error instanceof Error ? error.message : String(error);
       res.status(500).json({
         success: false,
         error: {
-          code: 'ROUTE_FINDING_FAILED',
-          message: error.message || 'Failed to find best route',
+          code: "ROUTE_FINDING_FAILED",
+          message: message || "Failed to find best route",
         },
       });
     }
