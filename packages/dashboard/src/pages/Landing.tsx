@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { 
-  Zap, 
-  Shield, 
-  Sparkles, 
-  ArrowRight, 
+import {
+  Zap,
+  Shield,
+  Sparkles,
+  ArrowRight,
   Check
 } from 'lucide-react';
 
@@ -51,8 +51,8 @@ export default function Landing() {
               <Link to="/login" className="text-gray-400 hover:text-white transition text-xs sm:text-sm">
                 Login
               </Link>
-              <Link 
-                to="/signup" 
+              <Link
+                to="/signup"
                 className="bg-white text-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium hover:bg-gray-100 transition"
               >
                 Get Started
@@ -63,35 +63,35 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6">
+      <section className="pt-32 sm:pt-40 pb-16 sm:pb-24 px-4 sm:px-6" style={{ paddingTop: '10rem' }}>
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 sm:px-4 py-1.5 mb-6 sm:mb-8">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
             <span className="text-gray-400 text-xs sm:text-sm">Now supporting 50+ currencies</span>
           </div>
-          
+
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 tracking-tight leading-tight">
             Accept{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400">
               Telegram Stars
             </span>
           </h1>
-          
+
           <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
-            The decentralized payment gateway for converting Stars to TON and fiat. 
+            The decentralized payment gateway for converting Stars to TON and fiat.
             No KYC, instant settlements, best rates.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Link 
-              to="/signup" 
+            <Link
+              to="/signup"
               className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium hover:opacity-90 transition flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               Start for free
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link 
-              to="/onboarding" 
+            <Link
+              to="/onboarding"
               className="w-full sm:w-auto text-gray-300 hover:text-white px-6 sm:px-8 py-3 sm:py-4 transition font-medium text-sm sm:text-base"
             >
               View documentation →
@@ -121,8 +121,8 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto">
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature) => (
-              <div 
-                key={feature.title} 
+              <div
+                key={feature.title}
                 className="bg-white/[0.02] rounded-2xl p-6 sm:p-8 border border-white/5 hover:border-white/10 transition group"
               >
                 <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-xl flex items-center justify-center mb-4 sm:mb-5">
@@ -147,7 +147,7 @@ export default function Landing() {
               Simple integration, powerful results
             </p>
           </div>
-          
+
           <div className="grid sm:grid-cols-3 gap-6 sm:gap-8">
             {steps.map((item) => (
               <div key={item.step} className="text-center">
@@ -172,8 +172,8 @@ export default function Landing() {
             <p className="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base">
               Join developers building the future of Telegram payments.
             </p>
-            <Link 
-              to="/signup" 
+            <Link
+              to="/signup"
               className="inline-flex items-center gap-2 bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-medium hover:bg-gray-100 transition text-sm sm:text-base"
             >
               Create free account
