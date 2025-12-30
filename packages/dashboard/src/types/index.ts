@@ -136,7 +136,7 @@ export interface ApiResponse<T> {
   data: T;
   meta?: {
     total?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   error?: {
     code: string;

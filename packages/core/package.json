@@ -78,7 +78,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force && rm -rf dist/__tests__",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force",
     "dev": "tsx watch src/index.ts",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
@@ -90,26 +90,27 @@
     "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.3.1",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.4",
+    "pg": "^8.11.3",
+    "pg-promise": "^12.3.0",
+    "speakeasy": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "tonweb": "^0.0.66",
     "uuid": "^9.0.0",
     "winston": "^3.11.0"
   },
   "peerDependencies": {
     "@aws-sdk/client-kms": "^3.0.0",
     "@dedust/sdk": "^0.8.0",
-    "@ston-fi/sdk": "^2.0.0",
-    "@ton/core": "^0.60.0",
-    "@ton/crypto": "^3.0.0",
-    "@ton/ton": "^15.0.0",
-    "ioredis": "^5.0.0",
-    "nodemailer": "^6.9.0",
-    "pg-promise": "^11.0.0 || ^12.0.0",
-    "speakeasy": "^2.0.0",
-    "telegraf": "^4.0.0",
-    "tonweb": "^0.0.60"
+    "@ston-fi/sdk": "^2.0.0"
   },
   "peerDependenciesMeta": {
     "@aws-sdk/client-kms": {
@@ -119,15 +120,6 @@
       "optional": true
     },
     "@ston-fi/sdk": {
-      "optional": true
-    },
-    "ioredis": {
-      "optional": true
-    },
-    "nodemailer": {
-      "optional": true
-    },
-    "speakeasy": {
       "optional": true
     }
   },

@@ -19,7 +19,13 @@ describe("Unmatched Deposits", () => {
   }, 15000);
 
   afterAll(async () => {
-    await disconnectDatabase();
+    try {
+      const core: any = await import("telepaygate-core");
+      if (typeof core.closeDatabase === "function") await core.closeDatabase();
+      else if (core.default && typeof core.default.closeDatabase === "function") await core.default.closeDatabase();
+    } catch (e) {
+      // ignore
+    }
   }, 15000);
 
   test("it should handle an unexpected deposit", async () => {

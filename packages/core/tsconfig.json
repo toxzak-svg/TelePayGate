@@ -4,9 +4,18 @@
     "outDir": "./dist",
     "rootDir": "./src",
     // enable jest + node types for tests run by ts-jest
-    "types": ["node", "jest"],
+    "types": [
+      "node"
+    ],
     "composite": true
   },
-  "include": ["src/**/*"],
-  "exclude": []
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/test-utils.ts"
+  ]
 }

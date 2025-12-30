@@ -21,8 +21,12 @@ export default function Settings() {
       toast.success('API key regenerated successfully');
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to regenerate API key');
+    onError: (error: unknown) => {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to regenerate API key');
+      }
     },
   });
 

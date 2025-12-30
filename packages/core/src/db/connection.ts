@@ -3,7 +3,7 @@ import { Pool } from "pg";
 
 const pgp = pgPromise();
 
-export type Database = pgPromise.IDatabase<any>;
+export type Database = pgPromise.IDatabase<Record<string, unknown>>;
 
 let db: Database | null = null;
 let pool: Pool | null = null;
@@ -13,11 +13,23 @@ export function initDatabase(connectionString: string): Database {
     return db;
   }
 
+  const maxConns = parseInt(process.env.DATABASE_POOL_MAX || "10", 10);
+  const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
+  const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
+
+  // SSL configuration for production databases (Railway, Render, etc.)
+  const sslConfig = process.env.NODE_ENV === 'production' || 
+    connectionString.includes('railway.app') || 
+    connectionString.includes('render.com')
+    ? { rejectUnauthorized: false } // Allow self-signed certs in production
+    : false;
+
   db = pgp({
     connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: maxConns,
+    idleTimeoutMillis: idleMs,
+    connectionTimeoutMillis: connTimeoutMs,
+    ssl: sslConfig,
   });
 
   // FIXED: Non-null assertion since we just assigned it
@@ -29,11 +41,23 @@ export function initPool(connectionString: string): Pool {
     return pool;
   }
 
+  const maxConns = parseInt(process.env.DATABASE_POOL_MAX || "10", 10);
+  const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
+  const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
+
+  // SSL configuration for production databases (Railway, Render, etc.)
+  const sslConfig = process.env.NODE_ENV === 'production' || 
+    connectionString.includes('railway.app') || 
+    connectionString.includes('render.com')
+    ? { rejectUnauthorized: false } // Allow self-signed certs in production
+    : false;
+
   pool = new Pool({
     connectionString,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: maxConns,
+    idleTimeoutMillis: idleMs,
+    connectionTimeoutMillis: connTimeoutMs,
+    ssl: sslConfig,
   });
 
   return pool;

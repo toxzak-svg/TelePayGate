@@ -7,19 +7,19 @@ export function newRequestId() {
 
 export function sendSuccess(
   res: Response,
-  data: Record<string, any> = {},
+  data: Record<string, unknown> = {},
   status = 200,
   requestId?: string,
 ) {
-  const id = requestId || (res as any)?.locals?.requestId || newRequestId();
+  const id = requestId || (res as unknown as { locals?: { requestId?: string } })?.locals?.requestId || newRequestId();
   return res
     .status(status)
-    .json(Object.assign({ success: true, requestId: id }, data));
+    .json(Object.assign({ success: true, requestId: id }, data as Record<string, unknown>));
 }
 
 export function sendCreated(
   res: Response,
-  data: Record<string, any> = {},
+  data: Record<string, unknown> = {},
   requestId?: string,
 ) {
   return sendSuccess(res, data, 201, requestId);

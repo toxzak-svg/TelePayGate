@@ -1,4 +1,18 @@
-import { getDatabase, closeDatabase } from "telepaygate-core";
+import * as core from "telepaygate-core";
+
+// Normalize export shapes (CJS vs ESM default)
+const getDatabase = (core as any).getDatabase || (core as any).default?.getDatabase;
+const closeDatabase = (core as any).closeDatabase || (core as any).default?.closeDatabase;
+
+// Debugging: log export shape during tests
+try {
+  // eslint-disable-next-line no-console
+  console.log("[db-test-utils] telepaygate-core exports:", Object.keys(core));
+  // eslint-disable-next-line no-console
+  console.log("[db-test-utils] closeDatabase typeof:", typeof closeDatabase);
+} catch (e) {
+  // ignore in non-test environments
+}
 
 export async function cleanDatabase() {
   const db = getDatabase();
@@ -18,5 +32,15 @@ export async function cleanDatabase() {
 }
 
 export async function disconnectDatabase() {
-  closeDatabase();
+  if (typeof closeDatabase === "function") {
+    // closeDatabase may be sync; wrap in Promise for safety
+    return Promise.resolve(closeDatabase());
+  }
+  console.warn("closeDatabase not available on telepaygate-core exports");
 }
+
+// Provide a default export for interop with various import styles
+export default {
+  cleanDatabase,
+  disconnectDatabase,
+};
