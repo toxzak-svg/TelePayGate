@@ -1,11 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { userService } from '../api/services';
+import { userService, authService } from '../api/services';
+import { LoginRequest } from '../types';
 
 interface AuthContextType {
   user: User | null;
   apiKey: string | null;
+<<<<<<< HEAD
   login: (apiKey: string) => Promise<void>;
+  register: (
+    appName: string,
+    description?: string | null,
+    webhookUrl?: string | null,
+    captchaToken?: string | null
+  ) => Promise<{ apiKey: string; apiSecret?: string }>; 
+=======
+  login: (credentials: LoginRequest) => Promise<void>;
+>>>>>>> main
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -38,18 +49,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [apiKey]);
 
-  const login = async (key: string) => {
-    console.log('[AuthContext] Attempting login with key:', key);
-    localStorage.setItem('apiKey', key);
-    setApiKey(key);
+  const login = async (credentials: LoginRequest) => {
+    setIsLoading(true);
     try {
-      const profile = await userService.getProfile();
-      setUser(profile);
+      const response = await authService.login(credentials);
+      if (response.success && response.data.user.apiKey) {
+        localStorage.setItem('apiKey', response.data.user.apiKey);
+        setApiKey(response.data.user.apiKey);
+
+        // After login, fetch the full user profile
+        const profile = await userService.getProfile();
+        setUser(profile);
+      } else {
+        throw new Error(response.message || 'Login failed');
+      }
     } catch (error) {
-      localStorage.removeItem('apiKey');
-      setApiKey(null);
+      console.error('Login error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const register = async (
+    appName: string,
+    description?: string | null,
+    webhookUrl?: string | null,
+    captchaToken?: string | null
+  ) => {
+    // call backend register endpoint, auto-login with returned apiKey
+    const res = await userService.register(appName, description, webhookUrl, captchaToken);
+    // expected shape: { success: true, user: { apiKey, apiSecret, ... } }
+    const created = res.user;
+    if (!created || !created.apiKey) {
+      throw new Error('Registration failed: no apiKey returned');
+    }
+
+    // do not persist the apiSecret — only show it once
+    await login(created.apiKey);
+
+    return { apiKey: created.apiKey, apiSecret: created.apiSecret };
   };
 
   const logout = () => {
@@ -64,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         apiKey,
         login,
+        register,
         logout,
         isLoading,
         isAuthenticated: !!apiKey && !!user,

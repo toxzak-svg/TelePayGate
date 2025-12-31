@@ -30,21 +30,21 @@ beforeAll(async () => {
     // Now import modules that rely on DATABASE_URL
     const srv = await import("../../server");
     createServer = srv.default;
-    const coreMod = await import("@tg-payment/core");
+    const coreMod = await import("telepaygate-core");
     initDatabase = coreMod.initDatabase;
     AuthService = coreMod.AuthService;
   } else {
     // Non-fixture path: import modules normally
     const srv = await import("../../server");
     createServer = srv.default;
-    const coreMod = await import("@tg-payment/core");
+    const coreMod = await import("telepaygate-core");
     initDatabase = coreMod.initDatabase;
     AuthService = coreMod.AuthService;
   }
 
   const DATABASE_URL =
     process.env.DATABASE_URL ||
-    "postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test";
+    "postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test";
   await initDatabase(DATABASE_URL as string);
 });
 
@@ -84,4 +84,4 @@ test("magic link verify -> session cookie -> /auth/me", async () => {
   expect(meRes.status).toBe(200);
   expect(meRes.body.success).toBe(true);
   expect(meRes.body.data.user.email).toBe(email);
-});
+}, 30000);

@@ -60,3 +60,5 @@ temp/
 
 # Generated reports
 docs/reports/*.json
+.vercel
+.env*.local

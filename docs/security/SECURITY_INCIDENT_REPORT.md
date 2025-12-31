@@ -98,7 +98,7 @@ scripts/*.pem
 3. **Generate New TON Wallet**:
 
    ```bash
-   cd /workspaces/telegram-payment-gateway
+   cd /workspaces/telepaygate
    npm run generate:wallet
    # Save the NEW 24-word mnemonic securely
    ```
@@ -138,7 +138,7 @@ scripts/*.pem
 7. **Update Local .env File**:
 
    ```bash
-   # Update /workspaces/telegram-payment-gateway/.env with new keys
+   # Update /workspaces/telepaygate/.env with new keys
    # NEVER commit this file
    ```
 

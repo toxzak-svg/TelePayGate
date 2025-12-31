@@ -1,9 +1,2268 @@
 openapi: 3.0.3
 info:
+  title: TelePayGate API
+<<<<<<< HEAD
+  version: "2.2.0"
+  description: |
+<<<<<<< HEAD
+    Full OpenAPI 3.0 specification for the Telegram Payment Gateway.
+    This spec covers the API used by merchants, dashboard admins and
+    background workers. It is used for client SDK generation, docs and
+    CI validation.
+servers:
+  - url: https://api.yourgateway.com/v1
+    description: Production
+  - url: http://localhost:3000/api/v1
+    description: Local development
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        database:
+          type: string
+          example: connected
+        cache:
+          type: string
+          example: connected
+        uptime:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+
+    User:
+      type: object
+      required: [id, appName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        appName:
+          type: string
+        apiKey:
+          type: string
+        apiSecret:
+          type: string
+        webhookUrl:
+          type: string
+        kycStatus:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ApiCredentials:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        apiSecret:
+          type: string
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        telegramInvoiceId:
+          type: string
+        starsAmount:
+          type: integer
+        status:
+          type: string
+        telegramPaymentId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaymentsList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+        pagination:
+          type: object
+
+    ConversionQuote:
+      type: object
+      properties:
+        sourceAmount:
+          type: number
+        sourceCurrency:
+          type: string
+        targetCurrency:
+          type: string
+        estimatedAmount:
+          type: number
+        exchangeRate:
+          type: number
+        fees:
+          type: object
+        netAmount:
+          type: number
+        validUntil:
+          type: integer
+
+    RateLock:
+      type: object
+      properties:
+        id:
+          type: string
+        exchangeRate:
+          type: number
+        lockedUntil:
+          type: integer
+        sourceAmount:
+          type: number
+        targetCurrency:
+          type: string
+
+    Conversion:
+      type: object
+      properties:
+        id:
+          type: string
+        paymentIds:
+          type: array
+          items:
+            type: string
+        sourceCurrency:
+          type: string
+        targetCurrency:
+          type: string
+        sourceAmount:
+          type: number
+        targetAmount:
+          type: number
+        exchangeRate:
+          type: number
+        status:
+          type: string
+        fees:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    ConversionList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        conversions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversion'
+
+    DexRate:
+      type: object
+      properties:
+        provider:
+          type: string
+        rate:
+          type: number
+        poolId:
+          type: string
+        liquidity:
+          type: number
+        fee:
+          type: number
+        priceImpact:
+          type: number
+
+    DexRoute:
+      type: object
+      properties:
+        route:
+          type: array
+          items:
+            type: object
+        totalOutput:
+          type: number
+        totalFees:
+          type: number
+        priceImpact:
+          type: number
+
+    P2POrder:
+      type: object
+      properties:
+        orderId:
+          type: string
+        type:
+          type: string
+          enum: [buy, sell]
+        starsAmount:
+          type: number
+        tonAmount:
+          type: number
+        rate:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    P2POrderList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/P2POrder'
+
+    FeeCollection:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        collectedAt:
+          type: string
+          format: date-time
+
+    AdminStats:
+      type: object
+      properties:
+        revenue:
+          type: object
+        transactions:
+          type: object
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    AdminConfig:
+      type: object
+      properties:
+        fees:
+          type: object
+
+    AuthMagicLinkRequest:
+      type: object
+      properties:
+        email:
+          type: string
+
+    AuthMagicLinkVerify:
+      type: object
+      properties:
+        token:
+          type: string
+
+    AuthSession:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+
+    TOTPProvision:
+      type: object
+      properties:
+        secret:
+          type: string
+        otpauth:
+          type: string
+        qr_data:
+          type: string
+
+    WebhookEvent:
+      type: object
+      properties:
+        event:
+          type: string
+        timestamp:
+          type: integer
+        data:
+          type: object
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Check API health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  # Users
+  /users/register:
+    post:
+      tags: [users]
+      summary: Register a developer / application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appName]
+              properties:
+                appName:
+                  type: string
+                description:
+                  type: string
+                webhookUrl:
+                  type: string
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+                  credentials:
+                    $ref: '#/components/schemas/ApiCredentials'
+
+  /users/me:
+    get:
+      tags: [users]
+      summary: Get current user profile
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /users/api-keys/regenerate:
+    post:
+      tags: [users]
+      summary: Regenerate API keys
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: new keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  apiKey:
+                    type: string
+                  apiSecret:
+                    type: string
+
+  # Auth / passwordless / totp
+  /auth/magic-link:
+    post:
+      tags: [auth]
+      summary: Request magic link for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthMagicLinkRequest'
+      responses:
+        '202':
+          description: accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /auth/magic-link/verify:
+    post:
+      tags: [auth]
+      summary: Verify magic link token and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthMagicLinkVerify'
+      responses:
+        '200':
+          description: created session (sets secure cookie)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+        '206':
+          description: TOTP required
+
+  /auth/totp/enable:
+    post:
+      tags: [auth]
+      summary: Begin TOTP provisioning (returns otpauth + QR data)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: provisioning data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TOTPProvision'
+
+  /auth/totp/confirm:
+    post:
+      tags: [auth]
+      summary: Confirm TOTP provisioning by validating a code
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                secret_proof:
+                  type: string
+      responses:
+        '200':
+          description: confirmed
+
+  /auth/totp/verify:
+    post:
+      tags: [auth]
+      summary: Verify TOTP code during login flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: verified
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Revoke current session (logout)
+      responses:
+        '200':
+          description: logged out
+
+  /auth/session/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh session cookie / token
+      responses:
+        '200':
+          description: refreshed
+
+  /auth/backup-codes/generate:
+    post:
+      tags: [auth]
+      summary: Generate backup codes for account recovery
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '201':
+          description: created
+
+  # Payments and webhooks
+  /payments/webhook:
+    post:
+      tags: [payments,webhooks]
+      summary: Telegram webhook for successful payments
+      description: Receives `successful_payment` objects from Telegram. Should validate X-User-Id header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /webhooks/ton-transaction:
+    post:
+      tags: [webhooks]
+      summary: TON deposit notifications received from block watchers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tx_hash:
+                  type: string
+                sender:
+                  type: string
+                amount:
+                  type: string
+                destination:
+                  type: string
+      responses:
+        '200':
+          description: recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /payments:
+    get:
+      tags: [payments]
+      summary: List payments for the current user
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: payments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentsList'
+
+  /payments/{id}:
+    get:
+      tags: [payments]
+      summary: Get payment by id
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: payment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /payments/stats:
+    get:
+      tags: [payments]
+      summary: Aggregated payment statistics for the current user
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionsStats'
+
+  # Conversions
+  /conversions/estimate:
+    post:
+      tags: [conversions]
+      summary: Estimate conversion output and fees
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+      responses:
+        '200':
+          description: estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estimate:
+                    $ref: '#/components/schemas/ConversionQuote'
+
+  /conversions/lock-rate:
+    post:
+      tags: [conversions]
+      summary: Lock an exchange rate for a short duration
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+                durationSeconds:
+                  type: integer
+      responses:
+        '200':
+          description: rate locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rateLock:
+                    $ref: '#/components/schemas/RateLock'
+
+  /conversions:
+    post:
+      tags: [conversions]
+      summary: Create conversion from received payments
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentIds:
+                  type: array
+                  items:
+                    type: string
+                targetCurrency:
+                  type: string
+                rateLockId:
+                  type: string
+      responses:
+        '201':
+          description: conversion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  conversion:
+                    $ref: '#/components/schemas/Conversion'
+
+    get:
+      tags: [conversions]
+      summary: List conversions (paginated)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: conversions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionList'
+
+  /conversions/{id}/status:
+    get:
+      tags: [conversions]
+      summary: Retrieve conversion status/progress
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: object
+
+  # DEX endpoints
+  /dex/rates:
+    get:
+      tags: [dex]
+      summary: Query aggregated DEX rates
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: fromToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: toToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: rates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      rates:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DexRate'
+                      bestRate:
+                        $ref: '#/components/schemas/DexRate'
+
+  /dex/liquidity:
+    get:
+      tags: [dex]
+      summary: Get liquidity pools for a token pair
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: token0
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: token1
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: liquidity
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /dex/route:
+    post:
+      tags: [dex]
+      summary: Compute best route for a swap
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                maxHops:
+                  type: integer
+      responses:
+        '200':
+          description: route
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DexRoute'
+
+  /dex/swap:
+    post:
+      tags: [dex]
+      summary: Execute a swap (admin only)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                poolId:
+                  type: string
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                minReceive:
+                  type: number
+                slippage:
+                  type: number
+      responses:
+        '200':
+          description: swap executed
+
+  # P2P order endpoints
+  /p2p/orders:
+    post:
+      tags: [p2p]
+      summary: Create P2P order
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/P2POrder'
+      responses:
+        '201':
+          description: order created
+
+    get:
+      tags: [p2p]
+      summary: List P2P orders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: own
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/P2POrderList'
+
+  /p2p/orders/{orderId}:
+    delete:
+      tags: [p2p]
+      summary: Cancel a pending order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: cancelled
+
+  /p2p/orders/{orderId}/confirm:
+    post:
+      tags: [p2p]
+      summary: Confirm an order has been matched and received funds
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: confirmed
+
+  /p2p/orders/{orderId}/fulfil:
+    post:
+      tags: [p2p]
+      summary: Mark an order as fulfilled (internal)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: fulfilled
+
+  /p2p/match:
+    post:
+      tags: [p2p]
+      summary: Attempt to match an order against available book
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: string
+      responses:
+        '200':
+          description: matched
+
+  # Admin endpoints
+  /admin/stats:
+    get:
+      tags: [admin]
+      summary: System and revenue KPIs
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
+
+  /admin/users:
+    get:
+      tags: [admin]
+      summary: List dashboard users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminUser'
+
+  /admin/revenue:
+    get:
+      tags: [admin]
+      summary: Revenue time-series
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: time series
+
+  /admin/revenue/summary:
+    get:
+      tags: [admin]
+      summary: Revenue summary for a period
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: summary
+
+  /admin/config:
+    get:
+      tags: [admin]
+      summary: Read runtime configuration
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: config
+
+    put:
+      tags: [admin]
+      summary: Update runtime configuration
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminConfig'
+      responses:
+        '200':
+          description: updated
+
+  /admin/payments:
+    get:
+      tags: [admin]
+      summary: Query payments across merchants (admin)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  /admin/conversions:
+    get:
+      tags: [admin]
+      summary: Query conversions across the system (admin)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  # Fees & settlement
+  /fees/stats:
+    get:
+      tags: [fees]
+      summary: Aggregated fee statistics
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: stats
+
+  /fees/history:
+    get:
+      tags: [fees]
+      summary: List fee collection events
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: history
+
+  /fees/uncollected:
+    get:
+      tags: [fees]
+      summary: Pending uncollected fees
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: uncollected
+
+  /fees/collections:
+    get:
+      tags: [fees]
+      summary: List fee collection batches
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: collections
+
+    post:
+      tags: [fees]
+      summary: Create a fee collection batch (admin)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '201':
+          description: created
+
+  /fees/collect:
+    post:
+      tags: [fees]
+      summary: Trigger a manual fee sweep (admin)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: triggered
+
+  /fees/collections/{id}:
+    get:
+      tags: [fees]
+      summary: Get a single fee collection batch
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: batch
+
+  /fees/collections/{id}/complete:
+    post:
+      tags: [fees]
+      summary: Mark a fee collection batch as completed
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: completed
+
+  # webhook management
+  /webhooks:
+    get:
+      tags: [webhooks]
+      summary: List configured webhooks for the current user
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  /webhooks/{id}:
+    get:
+      tags: [webhooks]
+      summary: Get webhook details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: webhook
+
+  # Spec endpoints
+  /swagger.json:
+    get:
+      tags: [spec]
+      summary: Raw OpenAPI JSON spec
+      responses:
+        '200':
+          description: spec
+
+  /openapi.yaml:
+    get:
+      tags: [spec]
+      summary: Raw OpenAPI YAML spec
+      responses:
+        '200':
+          description: spec
+
+  /sdk/example:
+    get:
+      tags: [spec]
+      summary: Developer SDK example snippet
+      responses:
+        '200':
+          description: snippet
+
+  # small convenience ping for SDK smoke-tests
+  /sdk/smoke:
+    get:
+      summary: SDK smoke endpoint
+      responses:
+        '200':
+          description: OK
+
+  /health:
+    get:
+      tags: [system]
+      summary: API health
+      description: Basic health status for probes and uptime checks
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /users/register:
+    post:
+      tags: [users]
+      summary: Register developer/application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [appName]
+              properties:
+                appName:
+                  type: string
+                description:
+                  type: string
+                webhookUrl:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+                  credentials:
+                    $ref: '#/components/schemas/ApiCredentials'
+
+  /users/me:
+    get:
+      tags: [users]
+      summary: Current user profile
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /users/api-keys/regenerate:
+    post:
+      tags: [users]
+      summary: Regenerate API keys
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: new keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  apiKey:
+                    type: string
+                  apiSecret:
+                    type: string
+
+  /auth/magic-link:
+    post:
+      tags: [auth]
+      summary: Request magic link for passwordless login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '202':
+          description: accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /auth/magic-link/verify:
+    post:
+      tags: [auth]
+      summary: Verify magic link token and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: session created (sets secure cookie)
+        '206':
+          description: two-factor required
+
+  /auth/totp/enable:
+    post:
+      tags: [auth]
+      summary: Begin TOTP provisioning (returns QR/otpauth)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: provisioning
+
+  /auth/totp/confirm:
+    post:
+      tags: [auth]
+      summary: Confirm TOTP provisioning by verifying provided code
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                secret_proof:
+                  type: string
+      responses:
+        '200':
+          description: confirmed
+
+  /auth/totp/verify:
+    post:
+      tags: [auth]
+      summary: Verify TOTP code during login flow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: verified
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Revoke current session
+      responses:
+        '200':
+          description: logged out
+
+  /auth/session/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh session cookie / token
+      responses:
+        '200':
+          description: refreshed
+
+  /auth/backup-codes/generate:
+    post:
+      tags: [auth]
+      summary: Generate backup codes for account recovery
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '201':
+          description: backup codes created
+
+  /payments/webhook:
+    post:
+      tags: [payments]
+      summary: Telegram webhook for successful payments
+      description: Public webhook endpoint receives `successful_payment` objects from Telegram. Servers should validate `X-User-Id` and webhook signature if configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /webhooks/ton-transaction:
+    post:
+      tags: [webhooks]
+      summary: TON blockchain transaction webhook (deposit notifications)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tx_hash:
+                  type: string
+                sender:
+                  type: string
+                amount:
+                  type: string
+                destination:
+                  type: string
+      responses:
+        '200':
+          description: received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /payments:
+    get:
+      tags: [payments]
+      summary: List payments - paginated
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: Results per page
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: payments list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  pagination:
+                    type: object
+
+  /payments/{id}:
+    get:
+      tags: [payments]
+      summary: Get payment by id
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: payment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment:
+                    $ref: '#/components/schemas/Payment'
+
+  /payments/stats:
+    get:
+      tags: [payments]
+      summary: Aggregated payment statistics for current user
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionsStats'
+
+  /conversions/estimate:
+    post:
+      tags: [conversions]
+      summary: Get conversion estimate (fees and net output)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+      responses:
+        '200':
+          description: estimated conversion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estimate:
+                    $ref: '#/components/schemas/ConversionQuote'
+
+  /conversions/lock-rate:
+    post:
+      tags: [conversions]
+      summary: Lock a conversion rate for a short duration
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAmount:
+                  type: number
+                sourceCurrency:
+                  type: string
+                targetCurrency:
+                  type: string
+                durationSeconds:
+                  type: integer
+      responses:
+        '200':
+          description: rate locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rateLock:
+                    $ref: '#/components/schemas/RateLock'
+
+  /conversions:
+    post:
+      tags: [conversions]
+      summary: Create conversion using received payments
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentIds:
+                  type: array
+                  items:
+                    type: string
+                targetCurrency:
+                  type: string
+                rateLockId:
+                  type: string
+      responses:
+        '201':
+          description: conversion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  conversion:
+                    $ref: '#/components/schemas/Conversion'
+
+    get:
+      tags: [conversions]
+      summary: List conversions
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: conversions list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  conversions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversion'
+
+  /conversions/{id}/status:
+    get:
+      tags: [conversions]
+      summary: Retrieve conversion status/progress
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  status:
+                    type: object
+
+  /dex/rates:
+    get:
+      tags: [dex]
+      summary: Get aggregated DEX rates
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: fromToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: toToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: rates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      rates:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DexRate'
+                      bestRate:
+                        $ref: '#/components/schemas/DexRate'
+
+  /dex/liquidity:
+    get:
+      tags: [dex]
+      summary: Get liquidity pools for a token pair
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: token0
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: token1
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: provider
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: liquidity
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /dex/route:
+    post:
+      tags: [dex]
+      summary: Find optimal swap route
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                maxHops:
+                  type: integer
+      responses:
+        '200':
+          description: route
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DexRoute'
+
+  /dex/swap:
+    post:
+      tags: [dex]
+      summary: Execute swap (admin)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                poolId:
+                  type: string
+                fromToken:
+                  type: string
+                toToken:
+                  type: string
+                amount:
+                  type: number
+                minReceive:
+                  type: number
+                slippage:
+                  type: number
+      responses:
+        '200':
+          description: swap result
+
+  /p2p/orders:
+    post:
+      tags: [p2p]
+      summary: Create P2P order
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/P2POrder'
+      responses:
+        '201':
+          description: created
+
+    get:
+      tags: [p2p]
+      summary: List P2P orders (own or global)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: own
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list
+
+  /p2p/orders/{orderId}:
+    delete:
+      tags: [p2p]
+      summary: Cancel P2P order
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: cancelled
+
+  /admin/stats:
+    get:
+      tags: [admin]
+      summary: System and revenue KPIs (admin only)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: metrics
+
+  /admin/users:
+    get:
+      tags: [admin]
+      summary: List dashboard users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: admin users
+
+  /admin/revenue:
+    get:
+      tags: [admin]
+      summary: Revenue time series
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: revenue
+
+  /admin/revenue/summary:
+    get:
+      tags: [admin]
+      summary: Revenue summary for a timespan
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: summary
+
+  /admin/config:
+    get:
+      tags: [admin]
+      summary: Get runtime configuration
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: config
+
+    put:
+      tags: [admin]
+      summary: Update runtime configuration (admin)
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: updated
+
+  /fees/stats:
+    get:
+      tags: [fees]
+      summary: Aggregated fee statistics
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: stats
+
+  /fees/history:
+    get:
+      tags: [fees]
+      summary: List fee collection events
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: history
+
+  /fees/uncollected:
+    get:
+      tags: [fees]
+      summary: Uncollected fees list
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: uncollected
+
+  /fees/collections:
+    get:
+      tags: [fees]
+      summary: Fee collection batches
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: collections
+
+  /fees/collect:
+    post:
+      tags: [fees]
+      summary: Trigger manual fee collection (admin)
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: collection triggered
+
+  /fees/collections/{id}/complete:
+    post:
+      tags: [fees]
+      summary: Mark collection as completed
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: completed
+
+  /webhooks:
+    get:
+      tags: [webhooks]
+      summary: (optional) List configured webhooks for the current user
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  /webhooks/{id}:
+    get:
+      tags: [webhooks]
+      summary: Get webhook details
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: webhook
+
+  /p2p/match:
+    post:
+      tags: [p2p]
+      summary: Attempt to match P2P orders for execution
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: string
+      responses:
+        '200':
+          description: matched
+
+  /admin/payments:
+    get:
+      tags: [admin]
+      summary: Admin-level payments query
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  /admin/conversions:
+    get:
+      tags: [admin]
+      summary: Admin-level conversions query
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: list
+
+  /fees/collections/{id}:
+    get:
+      tags: [fees]
+      summary: Get a single fee collection batch
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: batch
+
+  /p2p/orders/{orderId}/confirm:
+    post:
+      tags: [p2p]
+      summary: Confirm an order as matched and accept funds
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: confirmed
+
+  /p2p/orders/{orderId}/fulfil:
+    post:
+      tags: [p2p]
+      summary: Mark an order as fulfilled (internal)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: fulfilled
+
+  /swagger.json:
+    get:
+      tags: [spec]
+      summary: Return the raw OpenAPI JSON spec
+      responses:
+        '200':
+          description: spec
+
+  /openapi.yaml:
+    get:
+      tags: [spec]
+      summary: Return the raw OpenAPI YAML spec
+      responses:
+        '200':
+          description: spec
+
+  /sdk/example:
+    get:
+      summary: Example SDK usage snippet (developer convenience)
+      responses:
+        '200':
+          description: code snippet
+openapi: 3.0.3
+info:
   title: Telegram Payment Gateway API
   version: "2.2.0"
   description: |
     OpenAPI description for the Telegram Payment Gateway. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
+=======
+    OpenAPI description for the TelePayGate. This file includes the core endpoints (users, payments, conversions, dex, p2p, auth and admin).
+>>>>>>> main
 servers:
   - url: https://api.yourgateway.com/v1
     description: Production
@@ -512,98 +2771,3 @@ paths:
       responses:
         '200':
           description: Order cancelled
-openapi: 3.0.3
-info:
-  title: Telegram Payment Gateway API
-  version: "1.0.0"
-  description: API for accepting Telegram Stars payments and converting to TON.
-servers:
-  - url: https://api.yourgateway.com/v1
-  - url: http://localhost:3000/api/v1
-paths:
-  /users/register:
-    post:
-      summary: Register a new developer application
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                appName:
-                  type: string
-                description:
-                  type: string
-                webhookUrl:
-                  type: string
-      responses:
-        '201':
-          description: Created - returns apiKey and apiSecret
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      apiKey:
-                        type: string
-                      apiSecret:
-                        type: string
-
-  /users/me:
-    get:
-      summary: Get profile for authenticated user
-      security:
-        - ApiKeyAuth: []
-      responses:
-        '200':
-          description: Profile object
-
-  /payments/webhook:
-    post:
-      summary: Telegram payment webhook (public)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Acknowledged
-
-  /payments:
-    get:
-      summary: List payments
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-        - in: query
-          name: limit
-          schema:
-            type: integer
-        - in: query
-          name: status
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Array of payments
-
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key

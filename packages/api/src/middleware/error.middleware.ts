@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AppError, ErrorHandler } from "@tg-payment/core";
+import { AppError, ErrorHandler } from "telepaygate-core";
 
 export function errorHandler(error: Error, req: Request, res: Response): void {
   // Log error

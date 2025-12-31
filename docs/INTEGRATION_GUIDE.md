@@ -1,6 +1,6 @@
 # Integration Guide
 
-Step-by-step guide to integrating Telegram Payment Gateway into your application.
+Step-by-step guide to integrating TelePayGate into your application.
 
 ## Table of Contents
 
@@ -141,9 +141,9 @@ text
 
 **Using SDK:**
 
-import TelegramPaymentGateway from '@tg-payment/sdk';
+import TelePayGate from '@tg-payment/sdk';
 
-const gateway = new TelegramPaymentGateway({
+const gateway = new TelePayGate({
 apiKey: process.env.TG_PAYMENT_API_KEY!,
 apiSecret: process.env.TG_PAYMENT_API_SECRET!,
 });
@@ -590,5 +590,5 @@ text
 
 ## Support
 
-- GitHub Issues: [Report a bug](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
+- GitHub Issues: [Report a bug](https://github.com/toxzak-svg/telepaygate/issues)
 - Documentation: [docs.yourgateway.com](https://docs.yourgateway.com)

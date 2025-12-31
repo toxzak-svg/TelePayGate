@@ -1,4 +1,5 @@
 import { Database } from "../db/connection";
+import { buildDynamicUpdate } from "../utils/model-helpers";
 
 export interface Conversion {
   id: string;
@@ -116,27 +117,8 @@ export class ConversionModel {
       completedAt?: Date;
     },
   ): Promise<Conversion> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value !== undefined) {
-        const dbKey = key.replace(
-          /[A-Z]/g,
-          (letter) => `_${letter.toLowerCase()}`,
-        );
-        fields.push(`${dbKey} = $${paramIndex}`);
-
-        if (key === "fees") {
-          values.push(JSON.stringify(value));
-        } else if (key === "completedAt") {
-          values.push(value);
-        } else {
-          values.push(value);
-        }
-        paramIndex++;
-      }
+    const { fields, values, nextParamIndex } = buildDynamicUpdate(updates, {
+      jsonFields: ["fees"],
     });
 
     if (fields.length === 0) {
@@ -146,7 +128,7 @@ export class ConversionModel {
     const result = await this.db.one(
       `UPDATE conversions 
        SET ${fields.join(", ")} 
-       WHERE id = $${paramIndex} 
+       WHERE id = $${nextParamIndex} 
        RETURNING *`,
       [...values, id],
     );

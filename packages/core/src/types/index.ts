@@ -1,5 +1,5 @@
 /**
- * Core Type Definitions for Telegram Payment Gateway
+ * Core Type Definitions for TelePayGate
  */
 
 // User types
@@ -113,36 +113,13 @@ export interface TelegramPreCheckoutQuery {
   orderInfo?: TelegramOrderInfo;
 }
 
-// Error types
-export class PaymentGatewayError extends Error {
-  constructor(
-    public code: string,
-    message: string,
-    public statusCode: number = 400,
-    public details?: Record<string, any>,
-  ) {
-    super(message);
-    this.name = "PaymentGatewayError";
-  }
-}
-
-export class ValidationError extends PaymentGatewayError {
-  constructor(message: string, details?: Record<string, any>) {
-    super("VALIDATION_ERROR", message, 400, details);
-  }
-}
-
-export class ExternalApiError extends PaymentGatewayError {
-  constructor(service: string, message: string) {
-    super("EXTERNAL_API_ERROR", `${service}: ${message}`, 502);
-  }
-}
-
-export class ConversionError extends PaymentGatewayError {
-  constructor(message: string, details?: Record<string, any>) {
-    super("CONVERSION_ERROR", message, 400, details);
-  }
-}
+// Re-export error types from centralized errors module
+export {
+  PaymentGatewayError,
+  ValidationError,
+  ExternalApiError,
+  ConversionError,
+} from "../errors";
 
 export type FeeBreakdown = {
   platform: number;

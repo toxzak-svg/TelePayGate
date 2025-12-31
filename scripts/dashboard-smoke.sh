@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+<<<<<<< HEAD
+# Simple smoke-check script for local dev flows.
+# Polls a health endpoint until it returns success or times out.
+=======
 # Simple smoke-check script used by dev-up to ensure the API is reachable
 # Usage: scripts/dashboard-smoke.sh [url=<default http://localhost:3000/health>] [timeout=60]
+>>>>>>> main
 
 URL=${1:-${API_HEALTH_CHECK_URL:-http://localhost:3000/health}}
 TIMEOUT=${2:-60}

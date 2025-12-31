@@ -1,5 +1,5 @@
 const pgp = require('pg-promise')();
-const db = pgp(process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev');
+const db = pgp(process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev');
 
 async function getApiKey() {
   try {

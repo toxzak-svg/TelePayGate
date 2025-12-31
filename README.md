@@ -1,37 +1,9 @@
-# Telegram Payment Gateway
+# TelePayGate
 
-Lightweight monorepo for converting Telegram Stars → TON via decentralized P2P pools.
+![CI](https://github.com/toxzak-svg/TelePayGate/actions/workflows/ci-coverage.yml/badge.svg)
+![Codecov](https://codecov.io/gh/toxzak-svg/TelePayGate/branch/main/graph/badge.svg)
 
-Quick links
-
-- Docs: `docs/`
-- Developer process: `docs/process/CONTRIBUTING.md`
-- Response helpers: `docs/process/response-helpers.md`
-
-Quick start (local dev)
-
-```bash
-npm install
-docker-compose up -d
-npm run migrate
-npm run dev
-```
-
-Testing
-
-```bash
-npm run test --workspace packages/api
-```
-
-Contributing
-
-- See `docs/process/CONTRIBUTING.md` for test and runner guidance.
-
-This README is a scaffold for a larger overhaul; please see `docs/` for in-depth documentation.
-
-# Telegram Payment Gateway
-
-> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to TON cryptocurrency through P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
+> **Decentralized P2P Payment Processing Gateway** — TelePayGate accepts Telegram Stars and converts them into TON (and optionally fiat) using decentralized P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -96,8 +68,8 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ```bash
 # Clone repository
-git clone https://github.com/toxzak-svg/telegram-payment-gateway.git
-cd telegram-payment-gateway
+git clone https://github.com/toxzak-svg/telepaygate.git
+cd telepaygate
 
 # Install dependencies
 npm install
@@ -107,7 +79,10 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start infrastructure
-docker-compose up -d
+docker compose up -d
+# Documentation site
+
+We publish the repository documentation as a static site via GitHub Pages. Once built by CI the docs will be available on the project's GitHub Pages URL (or you can run MkDocs locally using `mkdocs serve`).
 
 # Run database migrations
 npm run migrate
@@ -117,6 +92,49 @@ npm run dev
 ```
 
 ## 🧭 Developer Notes: Response Helpers
+
+## ⚡ Faster installs & builds (safe, opt-in)
+
+To speed up local and CI installs and builds we added a few safe, non-breaking improvements:
+
+- A repository-level `.npmrc` disables npm audit and funding prompts and silences progress output (reduces noisy network calls):
+
+   ```text
+   audit=false
+   fund=false
+   progress=false
+   ```
+
+- Use this faster install command locally or in CI (skips audit/fund checks):
+
+   ```bash
+   npm ci --workspaces --no-audit --no-fund
+   ```
+
+- Build faster (root build runs the core build first, then builds remaining workspaces in parallel):
+
+   ```bash
+   npm run build:parallel
+   ```
+
+These edits are safe and optional — they do not change runtime behaviour, only speed up developer/CI workflows.
+
+### Troubleshooting: Permission errors during install
+
+If `npm ci` fails with EACCES / permission denied errors (e.g. renaming files inside `node_modules`), this usually means some previously-installed files are owned by root. Run the helper script to diagnose and repair ownership:
+
+```bash
+# show if any files are mis-owned and print the chown command to run
+bash scripts/fix-permissions.sh
+
+# when prompted by the previous script, run one of these (requires sudo):
+sudo chown -R $(id -u):$(id -g) $PWD
+# or to only fix node_modules dirs (faster):
+sudo find $PWD -name node_modules -type d -prune -exec chown -R $(id -u):$(id -g) {} +
+```
+
+Avoid running package managers with `sudo` in this repository in the future — it often leaves root-owned files which block later installs.
+
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 
@@ -294,7 +312,7 @@ Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` i
 ### Package Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/          # Business logic & services
 │   ├── api/           # REST API server
@@ -366,7 +384,7 @@ pending → awaiting_confirmation → confirmed
 ## 📁 Project Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/                    # @tg-payment/core
 │   │   └── src/
@@ -519,7 +537,7 @@ Create `.env` file:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://user:pass@localhost:5432/telepaygate_dev
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 
@@ -650,7 +668,21 @@ npm run migrate:status
 
 ## 🚀 Deployment
 
-### Docker Deployment
+### Production Platforms
+
+**TelePayGate supports multiple deployment platforms with comprehensive guides:**
+
+- **🚂 Railway** — Recommended for quick deployment ([Deployment Guide](./docs/DEPLOYMENT_RAILWAY.md))
+  - Automated migrations via `railway.json`
+  - Managed PostgreSQL with automatic `DATABASE_URL`
+  - SSL support built-in
+  - One-click GitHub integration
+
+- **🎨 Render** — Great for static sites + API ([Deployment Guide](./docs/DEPLOYMENT_RENDER.md))
+
+- **🐳 Docker** — For custom infrastructure ([Docker Guide](./docs/DOCKER.md))
+
+### Docker Deployment (Local/Self-Hosted)
 
 ```bash
 # Build images
@@ -666,24 +698,45 @@ docker-compose logs -f api
 docker-compose down
 ```
 
-### Production Environment
+### Railway Deployment (Recommended)
 
-**Recommended Hosting:**
+**Quick Start:**
 
-- **API**: Railway, Render, or AWS ECS
-- **Database**: Managed PostgreSQL (AWS RDS, Railway, Supabase)
-- **Redis**: Upstash or AWS ElastiCache (for job queues)
+1. Connect GitHub repository to Railway
+2. Add PostgreSQL database (auto-configures `DATABASE_URL`)
+3. Set environment variables (see [Railway Guide](./docs/DEPLOYMENT_RAILWAY.md))
+4. Deploy automatically on push
+
+```bash
+# Or use Railway CLI
+railway login
+railway link
+railway up
+```
+
+**Database Migrations:** Automatically run via `preDeployCommand` in `railway.json`
+
+### Production Environment Setup
+
+**Database Configuration:**
+
+- `DATABASE_URL` — Primary connection string (auto-set by Railway/Render)
+- `DATABASE_POOL_MAX=10` — Connection pool size
+- `DATABASE_POOL_MIN=2` — Minimum connections
+- SSL enabled automatically for Railway/Render PostgreSQL
 
 **Environment Checklist:**
 
 - [ ] Set `NODE_ENV=production`
+- [ ] Configure `DATABASE_URL` (or use platform-provided)
 - [ ] Use strong `WALLET_ENCRYPTION_KEY` (32+ bytes)
-- [ ] Enable database SSL (`DATABASE_SSL=true`)
-- [ ] Configure webhook URL for Telegram
+- [ ] Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET`
+- [ ] Configure `TON_WALLET_MNEMONIC` for blockchain operations
+- [ ] Set webhook URL for Telegram bot
 - [ ] Set up monitoring (Sentry, Datadog)
 - [ ] Enable rate limiting on reverse proxy
 - [ ] Configure CORS for allowed origins
-- [ ] Set up automated backups for PostgreSQL
+- [ ] Set up automated database backups
 
 ### Health Checks
 
@@ -694,6 +747,17 @@ curl https://your-domain.com/health
 # Database connectivity
 curl https://your-domain.com/api/v1/health
 ```
+
+### Troubleshooting
+
+**Database Connection Issues:**
+- Verify `DATABASE_URL` is set correctly
+- Check SSL configuration (auto-enabled for production)
+- Ensure migrations ran successfully: `railway run node database/migrate.cjs status`
+
+**See platform-specific guides for detailed troubleshooting:**
+- [Railway Troubleshooting](./docs/DEPLOYMENT_RAILWAY.md#troubleshooting)
+- [Render Troubleshooting](./docs/DEPLOYMENT_RENDER.md#troubleshooting)
 
 ---
 
@@ -724,6 +788,17 @@ curl https://your-domain.com/api/v1/health
 - Retry failed webhooks with exponential backoff
 
 ---
+
+## Documentation site
+
+Built with MkDocs. To preview locally and verify `PRIVACY`/`TERMS` pages before publishing run:
+
+```bash
+pip install mkdocs mkdocs-material
+./scripts/deploy-mkdocs.sh serve
+```
+
+Ensure `docs/PRIVACY.md` and `docs/TERMS.md` contain production contact info and publicly-accessible HTTPS URLs before submission to Telegram Apps Center.
 
 ## 📊 Monitoring & Observability
 
@@ -828,8 +903,8 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 - **Documentation**: [/docs](/docs)
 - **GitHub Copilot Setup**: [Copilot Configuration Guide](./docs/COPILOT_SETUP.md)
-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telegram-payment-gateway/discussions)
+-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telepaygate/issues)
+-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telepaygate/discussions)
 
 ---
 

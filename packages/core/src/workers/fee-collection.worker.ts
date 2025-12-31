@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { getDatabase, Database } from "../db/connection";
+import { initDatabase, Database } from "../db/connection";
 import { FeeService } from "../services/fee.service";
 import TonBlockchainService from "../services/ton-blockchain.service";
 import {
@@ -255,7 +255,7 @@ async function bootstrap() {
     throw new Error("TON_WALLET_MNEMONIC is required for fee collection");
   }
 
-  const db = getDatabase();
+  const db = initDatabase(process.env.DATABASE_URL);
 
   const feeService = new FeeService(db);
 

@@ -1,13 +1,13 @@
 # API Reference
 
-Complete reference for the Telegram Payment Gateway REST API.
+Complete reference for the TelePayGate REST API.
 
 ## Base URL
 
 Production: https://api.yourgateway.com/v1
 Development: http://localhost:3000/api/v1
 
-text
+Use the Base URL above when calling API endpoints. The `/api/v1` prefix is the canonical versioned namespace for this project.
 
 ## Authentication
 
@@ -18,22 +18,33 @@ All endpoints (except registration and webhooks) require authentication via API 
 **Method 1: Header (Recommended)**
 X-API-Key: pk_your_api_key
 
-text
+Example (curl):
+
+```bash
+curl -H "X-API-Key: pk_your_api_key" "http://localhost:3000/api/v1/users/me"
+```
 
 **Method 2: Bearer Token**
 Authorization: Bearer pk_your_api_key
 
-text
+ 
 
 **Method 3: Query Parameter**
+Notes:
+- The registered `apiSecret` is shown only once — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
+
+**Rate Limit:** 10 requests/minute per IP
+
 GET /api/v1/payments?api_key=pk_your_api_key
 
-text
+Query param auth is supported for convenience but is discouraged for production traffic since URLs may be logged and expose sensitive keys.
 
 ---
 
 ## User Endpoints
 
+ 
 ### Register New User
 
 Create a new user account and receive API credentials.
@@ -63,8 +74,11 @@ text
 }
 }
 
-text
 
+Notes:
+- The registered `apiSecret` is shown only once — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
+ 
 **Rate Limit:** 10 requests/minute per IP
 
 ---
@@ -73,6 +87,7 @@ text
 
 Retrieve authenticated user's profile information.
 
+ 
 **Endpoint:** `GET /api/v1/users/me`  
 **Authentication:** Required
 
@@ -90,7 +105,6 @@ Retrieve authenticated user's profile information.
 }
 }
 
-text
 
 ---
 
@@ -887,9 +901,9 @@ npm install @tg-payment/sdk
 
 text
 undefined
-import TelegramPaymentGateway from '@tg-payment/sdk';
+import TelePayGate from '@tg-payment/sdk';
 
-const gateway = new TelegramPaymentGateway({
+const gateway = new TelePayGate({
 apiKey: 'pk_your_key',
 apiSecret: 'sk_your_secret',
 });

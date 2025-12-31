@@ -492,7 +492,7 @@
          - run: npm ci
          - run: npm run test
          - run: npm run build
-         - run: docker build -t tg-payment-gateway .
+         - run: docker build -t telepaygate .
          - run: docker push ${{ secrets.DOCKER_REGISTRY }}
          - run: kubectl apply -f k8s/
    ```
@@ -654,9 +654,9 @@ Track these KPIs weekly after launch:
 ## 📞 Support & Contact
 
 - **Documentation**: [docs/](./docs/)
-- **Discord**: [discord.gg/tg-payment-gateway](https://discord.gg/tg-payment-gateway)
-- **Email**: support@tg-payment-gateway.com
-- **GitHub Issues**: [github.com/toxzak-svg/telegram-payment-gateway/issues](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
+- **Discord**: [discord.gg/telepaygate](https://discord.gg/telepaygate)
+- **Email**: support@telepaygate.com
+- **GitHub Issues**: [github.com/toxzak-svg/telepaygate/issues](https://github.com/toxzak-svg/telepaygate/issues)
 
 ---
 

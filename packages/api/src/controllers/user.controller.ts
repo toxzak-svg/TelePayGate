@@ -1,7 +1,16 @@
+<<<<<<< HEAD
+import { Response, Request } from 'express';
+import { v4 as uuid } from 'uuid';
+import crypto from 'crypto';
+import { getDatabase, PaymentModel } from '@tg-payment/core';
+import config from '../config';
+import { verifyToken } from './captcha.controller';
+=======
 import { Response, Request } from "express";
 import { v4 as uuid } from "uuid";
 import crypto from "crypto";
-import { getDatabase, PaymentModel } from "@tg-payment/core";
+import { getDatabase, PaymentModel } from "telepaygate-core";
+>>>>>>> main
 
 export class UserController {
   private static getServices() {
@@ -17,7 +26,20 @@ export class UserController {
     const requestId = uuid();
     try {
       const { db } = UserController.getServices();
-      const { appName, description, webhookUrl } = req.body;
+      const { appName, description, webhookUrl, captchaToken } = req.body;
+
+      if (config.captcha.enabled) {
+        // Require captcha token when server-side captcha is enabled
+        const result = await verifyToken(captchaToken, req.ip);
+        if (!result.ok) {
+          return res.status(400).json({
+            success: false,
+            error: { code: 'CAPTCHA_FAILED', message: 'Captcha validation failed' },
+            details: result.details || null,
+            requestId,
+          });
+        }
+      }
 
       if (!appName) {
         return res.status(400).json({

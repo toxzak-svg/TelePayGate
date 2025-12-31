@@ -1,0 +1,30 @@
+# Source files
+src/
+
+# Tests
+__tests__/
+*.test.ts
+*.spec.ts
+jest.config.js
+jest.global-setup.js
+jest.global-teardown.js
+coverage/
+
+# Development files
+.gitignore
+tsconfig.json
+tsconfig.tsbuildinfo
+
+# Scripts
+scripts/
+
+# IDE & editor files
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Debug logs
+*.log

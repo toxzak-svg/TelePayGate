@@ -8,7 +8,7 @@ export interface PaymentRecord {
   user_telegram_username?: string;
   stars_amount: number;
   status: string;
-  raw_payload: any;
+  raw_payload: unknown;
   created_at: Date;
 }
 

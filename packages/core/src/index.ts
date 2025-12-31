@@ -1,13 +1,13 @@
 /**
  * @tg-payment/core
- * Core business logic for Telegram Payment Gateway
+ * Core business logic for TelePayGate
  *
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025
  */
 /**
  * @tg-payment/core
- * Core business logic for Telegram Payment Gateway
+ * Core business logic for TelePayGate
  *
  * VERSION: 2.0.0 - Direct TON Integration (No Fragment API)
  * Updated: November 14, 2025
@@ -28,7 +28,14 @@ export { WebhookService } from "./services/webhook.service";
 export { ReconciliationService } from "./services/reconciliation.service";
 export { WithdrawalService } from "./services/withdrawal.service";
 export { StarsP2PService } from "./services/stars-p2p.service";
+export { FragmentService } from "./services/fragment.service";
+export { NitroSwapsService } from "./services/nitroswaps.service";
 export { AuthService } from "./services/auth.service";
+export {
+  AdminAnalyticsService,
+  DashboardStats,
+  DailyMetric,
+} from "./services/admin-analytics.service";
 export { StarsOrderModel } from "./models/stars-order.model";
 export * from "./services/wallet-manager.service";
 export * from "./services/webhook.service";
@@ -85,6 +92,13 @@ export {
   ErrorHandler,
 } from "./utils/error-handler";
 
+export {
+  validateEnvironment,
+  validateEnvironmentOrExit,
+  getEnvironmentSummary,
+  EnvValidationResult,
+} from "./utils/env-validation";
+
 // ============================================
 // DATABASE
 // ============================================
@@ -108,13 +122,12 @@ export { ServerBase } from "./server";
 // ============================================
 // VERSION INFO
 // ============================================
-export const VERSION = "2.0.0";
+export const VERSION = "0.1.2";
 export const API_VERSION = "v1";
 export const INTEGRATION_METHOD = "DIRECT_TON"; // No Fragment
 
-console.log("✅ @tg-payment/core v2.0.0 initialized");
-console.log("🔗 Integration: Direct TON Blockchain (No Fragment API)");
-console.log("📦 Features: No KYC | No Holding Period | Instant Withdrawals");
+// Note: Removed console.log side effects for cleaner npm package
+// Use initializeKmsProvider() to set up AWS KMS if needed
 
 // If an AWS KMS key is configured, wire the AWS provider into KMS abstraction.
 try {
