@@ -1,10 +1,8 @@
 openapi: 3.0.3
 info:
   title: TelePayGate API
-<<<<<<< HEAD
   version: "2.2.0"
   description: |
-<<<<<<< HEAD
     Full OpenAPI 3.0 specification for the Telegram Payment Gateway.
     This spec covers the API used by merchants, dashboard admins and
     background workers. It is used for client SDK generation, docs and
