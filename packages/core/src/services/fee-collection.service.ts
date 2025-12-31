@@ -1,4 +1,4 @@
-import { IDatabase } from 'pg-promise';
+import { IDatabase } from "pg-promise";
 
 export interface FeeCollectionRequest {
   targetAddress: string;
@@ -35,14 +35,14 @@ export class FeeCollectionService {
         COALESCE(SUM(fee_amount_ton), 0) as total_ton,
         COALESCE(SUM(fee_amount_usd), 0) as total_usd
        FROM platform_fees 
-       WHERE status = 'pending'`
+       WHERE status = 'pending'`,
     );
 
     return {
       feeCount: parseInt(result.fee_count),
       totalStars: parseFloat(result.total_stars),
       totalTon: parseFloat(result.total_ton),
-      totalUsd: parseFloat(result.total_usd)
+      totalUsd: parseFloat(result.total_usd),
     };
   }
 
@@ -51,27 +51,36 @@ export class FeeCollectionService {
    */
   async createCollectionRequest(
     userId: string,
-    request: FeeCollectionRequest
+    request: FeeCollectionRequest,
   ): Promise<FeeCollectionResult> {
     // Get pending fees
-    let feeQuery = 'SELECT * FROM platform_fees WHERE status = \'pending\'';
+    let feeQuery = "SELECT * FROM platform_fees WHERE status = 'pending'";
     const params: any[] = [];
 
     if (request.feeIds && request.feeIds.length > 0) {
-      feeQuery += ' AND id = ANY($1)';
+      feeQuery += " AND id = ANY($1)";
       params.push(request.feeIds);
     }
 
     const fees = await this.db.manyOrNone(feeQuery, params);
 
     if (!fees || fees.length === 0) {
-      throw new Error('No pending fees to collect');
+      throw new Error("No pending fees to collect");
     }
 
     // Calculate totals
-    const totalStars = fees.reduce((sum, f) => sum + parseFloat(f.fee_amount_stars || 0), 0);
-    const totalTon = fees.reduce((sum, f) => sum + parseFloat(f.fee_amount_ton || 0), 0);
-    const totalUsd = fees.reduce((sum, f) => sum + parseFloat(f.fee_amount_usd || 0), 0);
+    const totalStars = fees.reduce(
+      (sum, f) => sum + parseFloat(f.fee_amount_stars || 0),
+      0,
+    );
+    const totalTon = fees.reduce(
+      (sum, f) => sum + parseFloat(f.fee_amount_ton || 0),
+      0,
+    );
+    const totalUsd = fees.reduce(
+      (sum, f) => sum + parseFloat(f.fee_amount_usd || 0),
+      0,
+    );
 
     // Create collection record
     const result = await this.db.one(
@@ -82,13 +91,13 @@ export class FeeCollectionService {
       RETURNING *`,
       [
         userId,
-        fees.map(f => f.id),
+        fees.map((f) => f.id),
         request.targetAddress,
         totalStars,
         totalTon,
         totalUsd,
-        fees.length
-      ]
+        fees.length,
+      ],
     );
 
     console.log(`📊 Fee collection request created: ${result.id}`);
@@ -100,30 +109,27 @@ export class FeeCollectionService {
       totalFeesTon: totalTon,
       totalFeesUsd: totalUsd,
       feesCollected: fees.length,
-      status: 'pending',
-      createdAt: new Date(result.created_at)
+      status: "pending",
+      createdAt: new Date(result.created_at),
     };
   }
 
   /**
    * Mark collection as completed (after TON transfer)
    */
-  async markAsCollected(
-    collectionId: string,
-    txHash: string
-  ): Promise<void> {
+  async markAsCollected(collectionId: string, txHash: string): Promise<void> {
     // Update collection record
     await this.db.none(
       `UPDATE fee_collections 
        SET status = 'completed', tx_hash = $1, collected_at = NOW()
        WHERE id = $2`,
-      [txHash, collectionId]
+      [txHash, collectionId],
     );
 
     // Get fee IDs
     const collection = await this.db.one(
-      'SELECT fee_ids FROM fee_collections WHERE id = $1',
-      [collectionId]
+      "SELECT fee_ids FROM fee_collections WHERE id = $1",
+      [collectionId],
     );
 
     const feeIds = collection.fee_ids;
@@ -133,7 +139,7 @@ export class FeeCollectionService {
       `UPDATE platform_fees 
        SET status = 'collected', collection_tx_hash = $1, collected_at = NOW()
        WHERE id = ANY($2)`,
-      [txHash, feeIds]
+      [txHash, feeIds],
     );
 
     console.log(`✅ Fees collected successfully. TX: ${txHash}`);
@@ -142,16 +148,19 @@ export class FeeCollectionService {
   /**
    * Get collection history
    */
-  async getCollectionHistory(userId: string, limit: number = 20): Promise<FeeCollectionResult[]> {
+  async getCollectionHistory(
+    userId: string,
+    limit: number = 20,
+  ): Promise<FeeCollectionResult[]> {
     const result = await this.db.manyOrNone(
       `SELECT * FROM fee_collections 
        WHERE user_id = $1
        ORDER BY created_at DESC 
        LIMIT $2`,
-      [userId, limit]
+      [userId, limit],
     );
 
-    return result.map(row => ({
+    return result.map((row) => ({
       id: row.id,
       totalFeesStars: parseFloat(row.total_fees_stars),
       totalFeesTon: parseFloat(row.total_fees_ton),
@@ -159,17 +168,19 @@ export class FeeCollectionService {
       feesCollected: row.fees_collected,
       status: row.status,
       txHash: row.tx_hash,
-      createdAt: new Date(row.created_at)
+      createdAt: new Date(row.created_at),
     }));
   }
 
   /**
    * Get collection by ID
    */
-  async getCollectionById(collectionId: string): Promise<FeeCollectionResult | null> {
+  async getCollectionById(
+    collectionId: string,
+  ): Promise<FeeCollectionResult | null> {
     const row = await this.db.oneOrNone(
-      'SELECT * FROM fee_collections WHERE id = $1',
-      [collectionId]
+      "SELECT * FROM fee_collections WHERE id = $1",
+      [collectionId],
     );
 
     if (!row) return null;
@@ -182,7 +193,7 @@ export class FeeCollectionService {
       feesCollected: row.fees_collected,
       status: row.status,
       txHash: row.tx_hash,
-      createdAt: new Date(row.created_at)
+      createdAt: new Date(row.created_at),
     };
   }
 }

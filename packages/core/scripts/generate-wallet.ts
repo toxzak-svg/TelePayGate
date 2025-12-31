@@ -12,7 +12,9 @@ async function main() {
   console.log("Public Key (hex):", publicKey);
   console.log("Secret Key (hex):", secretKey);
   console.log("\n✅ Wallet generated. Please fund it with testnet TON.");
-  console.log("Go to a testnet faucet (e.g., on Telegram: @testgiver_ton_bot) to get funds.");
+  console.log(
+    "Go to a testnet faucet (e.g., on Telegram: @testgiver_ton_bot) to get funds.",
+  );
 }
 
 main().catch(console.error);

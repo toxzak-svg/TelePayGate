@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 import { Response, Request } from 'express';
 import { v4 as uuid } from 'uuid';
 import crypto from 'crypto';
 import { getDatabase, PaymentModel } from '@tg-payment/core';
+import config from '../config';
+import { verifyToken } from './captcha.controller';
+=======
+import { Response, Request } from "express";
+import { v4 as uuid } from "uuid";
+import crypto from "crypto";
+import { getDatabase, PaymentModel } from "telepaygate-core";
+>>>>>>> main
 
 export class UserController {
   private static getServices() {
@@ -17,27 +26,44 @@ export class UserController {
     const requestId = uuid();
     try {
       const { db } = UserController.getServices();
-      const { appName, description, webhookUrl } = req.body;
+      const { appName, description, webhookUrl, captchaToken } = req.body;
+
+      if (config.captcha.enabled) {
+        // Require captcha token when server-side captcha is enabled
+        const result = await verifyToken(captchaToken, req.ip);
+        if (!result.ok) {
+          return res.status(400).json({
+            success: false,
+            error: { code: 'CAPTCHA_FAILED', message: 'Captcha validation failed' },
+            details: result.details || null,
+            requestId,
+          });
+        }
+      }
 
       if (!appName) {
         return res.status(400).json({
           success: false,
-          error: { code: 'MISSING_APP_NAME', message: 'appName is required' },
+          error: { code: "MISSING_APP_NAME", message: "appName is required" },
           requestId,
           timestamp: new Date().toISOString(),
         });
       }
 
-      const apiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
-      const apiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
+      const apiKey = `pk_${crypto.randomBytes(24).toString("hex")}`;
+      const apiSecret = `sk_${crypto.randomBytes(32).toString("hex")}`;
 
       const user = await db.one(
         `INSERT INTO users (api_key, api_secret, app_name, description, webhook_url, kyc_status, is_active, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, 'pending', true, NOW(), NOW()) RETURNING *`,
-        [apiKey, apiSecret, appName, description || null, webhookUrl || null]
+        [apiKey, apiSecret, appName, description || null, webhookUrl || null],
       );
 
-      console.log('✅ User registered:', { requestId, userId: user.id, appName });
+      console.log("✅ User registered:", {
+        requestId,
+        userId: user.id,
+        appName,
+      });
 
       return res.status(201).json({
         success: true,
@@ -54,10 +80,16 @@ export class UserController {
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      console.error('❌ Registration error:', { requestId, error: error.message });
+      console.error("❌ Registration error:", {
+        requestId,
+        error: error.message,
+      });
       return res.status(500).json({
         success: false,
-        error: { code: 'REGISTRATION_FAILED', message: 'Failed to register user' },
+        error: {
+          code: "REGISTRATION_FAILED",
+          message: "Failed to register user",
+        },
         requestId,
         timestamp: new Date().toISOString(),
       });
@@ -69,7 +101,7 @@ export class UserController {
    */
   static async getMe(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     try {
       const { db } = UserController.getServices();
@@ -77,20 +109,19 @@ export class UserController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+          error: { code: "UNAUTHORIZED", message: "Authentication required" },
           requestId,
         });
       }
 
-      const user = await db.oneOrNone(
-        'SELECT * FROM users WHERE id = $1',
-        [userId]
-      );
+      const user = await db.oneOrNone("SELECT * FROM users WHERE id = $1", [
+        userId,
+      ]);
 
       if (!user) {
         return res.status(404).json({
           success: false,
-          error: { code: 'USER_NOT_FOUND', message: 'User not found' },
+          error: { code: "USER_NOT_FOUND", message: "User not found" },
           requestId,
         });
       }
@@ -109,10 +140,10 @@ export class UserController {
         requestId,
       });
     } catch (error) {
-      console.error('❌ Get profile error:', { requestId, error });
+      console.error("❌ Get profile error:", { requestId, error });
       return res.status(500).json({
         success: false,
-        error: { code: 'SERVER_ERROR', message: 'Failed to get profile' },
+        error: { code: "SERVER_ERROR", message: "Failed to get profile" },
         requestId,
       });
     }
@@ -123,7 +154,7 @@ export class UserController {
    */
   static async regenerateApiKey(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     try {
       const { db } = UserController.getServices();
@@ -131,25 +162,25 @@ export class UserController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+          error: { code: "UNAUTHORIZED", message: "Authentication required" },
           requestId,
         });
       }
 
-      const newApiKey = `pk_${crypto.randomBytes(24).toString('hex')}`;
-      const newApiSecret = `sk_${crypto.randomBytes(32).toString('hex')}`;
+      const newApiKey = `pk_${crypto.randomBytes(24).toString("hex")}`;
+      const newApiSecret = `sk_${crypto.randomBytes(32).toString("hex")}`;
 
       const updatedUser = await db.oneOrNone(
         `UPDATE users SET api_key = $1, api_secret = $2, updated_at = NOW()
          WHERE id = $3
          RETURNING api_key, api_secret`,
-        [newApiKey, newApiSecret, userId]
+        [newApiKey, newApiSecret, userId],
       );
 
       if (!updatedUser) {
         return res.status(404).json({
           success: false,
-          error: { code: 'USER_NOT_FOUND', message: 'User not found' },
+          error: { code: "USER_NOT_FOUND", message: "User not found" },
           requestId,
         });
       }
@@ -158,14 +189,17 @@ export class UserController {
         success: true,
         apiKey: updatedUser.api_key,
         apiSecret: updatedUser.api_secret,
-        message: 'API keys regenerated successfully',
+        message: "API keys regenerated successfully",
         requestId,
       });
     } catch (error) {
-      console.error('❌ Regenerate key error:', { requestId, error });
+      console.error("❌ Regenerate key error:", { requestId, error });
       return res.status(500).json({
         success: false,
-        error: { code: 'REGENERATE_FAILED', message: 'Failed to regenerate API key' },
+        error: {
+          code: "REGENERATE_FAILED",
+          message: "Failed to regenerate API key",
+        },
         requestId,
       });
     }
@@ -176,7 +210,7 @@ export class UserController {
    */
   static async getStats(req: Request, res: Response) {
     const requestId = uuid();
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     try {
       const { paymentModel } = UserController.getServices();
@@ -184,7 +218,7 @@ export class UserController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
+          error: { code: "UNAUTHORIZED", message: "Authentication required" },
           requestId,
         });
       }
@@ -201,10 +235,10 @@ export class UserController {
         requestId,
       });
     } catch (error) {
-      console.error('❌ Get stats error:', { requestId, error });
+      console.error("❌ Get stats error:", { requestId, error });
       return res.status(500).json({
         success: false,
-        error: { code: 'SERVER_ERROR', message: 'Failed to get statistics' },
+        error: { code: "SERVER_ERROR", message: "Failed to get statistics" },
         requestId,
       });
     }

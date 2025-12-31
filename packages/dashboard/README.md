@@ -1,73 +1,163 @@
-# React + TypeScript + Vite
+# TelePayGate Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-based merchant dashboard for managing TelePayGate payment integrations.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📊 **Dashboard Overview** - Real-time revenue, transactions, and success rates
+- 💳 **Transaction Management** - View and export payment history
+- 🔄 **P2P Orders** - Monitor buy/sell orders
+- 📈 **DEX Analytics** - Liquidity pool rates and performance
+- 🔔 **Webhook Configuration** - Set up and test webhook endpoints
+- ⚙️ **Settings** - API key management, theme preferences
+- 🌙 **Dark Mode** - Full dark/light theme support
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **TanStack Query** - Data fetching & caching
+- **React Router** - Client-side routing
+- **Tailwind CSS** - Styling
+- **Recharts** - Charts and analytics
+- **Lucide Icons** - Icon library
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+
+- API server running (`packages/api`)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Development
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# From monorepo root
+npm install
+
+# Start dashboard dev server
+cd packages/dashboard
+npm run dev
+
+# Or from root
+npm run dev -w @tg-payment/dashboard
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:5173
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Environment Variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
 ```
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `http://localhost:3000/api/v1` |
+| `VITE_FEATURE_PASSWORDLESS_AUTH` | Enable magic link login | `false` |
+
+### Production Build
+
+```bash
+npm run build
+npm run preview  # Preview production build
+```
+
+## Project Structure
+
+```
+src/
+├── api/              # API client and services
+│   ├── client.ts     # Axios instance with interceptors
+│   ├── services.ts   # API service functions
+│   └── queryClient.ts
+├── components/
+│   ├── analytics/    # Charts and stats components
+│   ├── auth/         # Auth-related components
+│   ├── common/       # Shared UI components
+│   └── layout/       # Layout and navigation
+├── context/
+│   └── AuthContext.tsx
+├── hooks/
+│   └── useTheme.ts
+├── pages/
+│   ├── Dashboard.tsx
+│   ├── Transactions.tsx
+│   ├── P2POrders.tsx
+│   ├── DexAnalytics.tsx
+│   ├── Webhooks.tsx
+│   ├── Settings.tsx
+│   ├── Login.tsx
+│   ├── Signup.tsx
+│   └── Landing.tsx
+├── types/            # TypeScript definitions
+├── utils/            # Helper functions
+├── App.tsx           # Routes and providers
+└── main.tsx          # Entry point
+```
+
+## Authentication
+
+The dashboard uses API key authentication:
+
+1. User logs in with `pk_*` API key
+2. Key stored in localStorage
+3. Attached to all requests via `x-api-key` header
+4. Profile fetched from `/users/me`
+
+## API Integration
+
+Services in `src/api/services.ts`:
+
+- `paymentService` - Payment CRUD operations
+- `conversionService` - Currency conversions
+- `userService` - User profile and API keys
+- `statsService` - Dashboard analytics
+- `p2pService` - P2P order management
+- `webhookService` - Webhook configuration
+- `dexService` - DEX rates and quotes
+
+## Testing
+
+```bash
+npm run test        # Run tests
+npm run test:watch  # Watch mode
+```
+
+## Deployment
+
+### Render.com (Static Site)
+
+Configured in `render.yaml`:
+
+```yaml
+- type: web
+  name: telepaygate-dashboard
+  runtime: static
+  buildCommand: npm ci && npm run build -w @tg-payment/dashboard
+  staticPublishPath: packages/dashboard/dist
+  envVars:
+    - key: VITE_API_URL
+      value: https://telegram-payment-api.onrender.com/api/v1
+```
+
+### Manual Deploy
+
+```bash
+npm run build
+# Upload dist/ to any static hosting (Vercel, Netlify, S3, etc.)
+```
+
+## Contributing
+
+1. Follow existing code patterns
+2. Use TypeScript strict mode
+3. Add types for new API responses
+4. Test new features
+
+## License
+
+MIT

@@ -1,41 +1,125 @@
 {
-  "name": "@tg-payment/api",
+  "name": "telepaygate-api",
   "version": "0.1.0",
-  "description": "REST API for Telegram Payment Gateway",
-  "main": "dist/server.js",
-  "scripts": {
-    "build": "tsc --build",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "node dist/server.js",
-    "test": "jest --passWithNoTests",
-    "clean": "rm -rf dist"
+  "description": "REST API server for TelePayGate - Telegram Stars to TON/Fiat payment gateway",
+  "author": "TelePayGate Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toxzak-svg/TelePayGate.git",
+    "directory": "packages/api"
   },
-  "dependencies": {
-    "@tg-payment/core": "*",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-    "compression": "^1.7.4",
-    "express-rate-limit": "^7.1.5",
-    "dotenv": "^16.3.1",
-    "uuid": "^9.0.1",
-    "pg": "^8.11.3",
-    "module-alias": "^2.2.3"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/compression": "^1.7.5",
-    "@types/uuid": "^9.0.7",
-    "@types/node": "^20.9.0",
-    "@types/supertest": "^2.0.12",
-    "ts-jest": "^29.1.0",
-    "@types/jest": "^29.5.3",
-    "supertest": "^7.1.4",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.2.2"
+  "bugs": {
+    "url": "https://github.com/toxzak-svg/TelePayGate/issues"
   },
   "_moduleAliases": {
-    "@tg-payment/core": "../core/dist"
+    "telepaygate-core": "../core"
+  },
+  "homepage": "https://github.com/toxzak-svg/TelePayGate/tree/main/packages/api#readme",
+  "keywords": [
+    "telegram",
+    "telegram-stars",
+    "ton",
+    "payment",
+    "api",
+    "rest",
+    "express",
+    "gateway"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "telepaygate-api": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "require": "./dist/server.js",
+      "default": "./dist/server.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "require": "./dist/middleware/index.js",
+      "default": "./dist/middleware/index.js"
+    },
+    "./controllers": {
+      "types": "./dist/controllers/index.d.ts",
+      "require": "./dist/controllers/index.js",
+      "default": "./dist/controllers/index.js"
+    },
+    "./routes": {
+      "types": "./dist/routes/index.d.ts",
+      "require": "./dist/routes/index.js",
+      "default": "./dist/routes/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force && rm -rf dist/__tests__",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "dotenv -e .env.test -- jest --passWithNoTests --forceExit",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@dedust/sdk": "^0.8.7",
+    "@ston-fi/sdk": "^2.7.0",
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.1.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.8.2",
+    "module-alias": "^2.2.3",
+    "nodemailer": "^6.10.1",
+    "pg-promise": "^12.3.0",
+    "prom-client": "^15.1.3",
+    "serverless-http": "^2.0.2",
+    "speakeasy": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "telepaygate-core": "^0.1.2",
+    "tonweb": "^0.0.66",
+    "uuid": "^9.0.1"
+  },
+  "peerDependencies": {
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.3",
+    "@types/module-alias": "^2.0.4",
+    "@types/node": "^20.9.0",
+    "@types/supertest": "^2.0.12",
+    "@types/uuid": "^9.0.7",
+    "dotenv-cli": "^11.0.0",
+    "pg": "^8.11.3",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.2.2"
   }
 }
