@@ -1,89 +1,25 @@
 
 > telepaygate-core@0.1.2 test
 > jest --forceExit
- PASS  src/__tests__/rate.aggregator.test.ts (11.265 s)
+ PASS  src/__tests__/unit/settlement.service.test.ts (10.263 s)
   ● Console
     console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+      💸 Executing fiat payout via stub: 55 USD to user user-1
+      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:426:13)
     console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+      💸 [STUB] Fiat payout: 55 USD to user user-1
+      at StubFiatGateway.executePayout (src/services/settlement.service.ts:73:13)
     console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      📊 Fetching rates: TON → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
- PASS  src/__tests__/transaction-monitor.test.ts (11.519 s)
-  ● Console
-    console.log
-      ✅ Transaction confirmed: hash-123 for conversion conv-123
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
-    console.error
-      ❌ Transaction failed: hash-456 for conversion conv-456
-       99 |         });
-      100 |       } else if (state && state.status === 'failed') {
-    > 101 |         console.error(
-          |                 ^
-      102 |           `❌ Transaction failed: ${txHash} for conversion ${conversion.id}`,
-      103 |         );
-      104 |         await this.db.none(
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:101:17)
-      at TransactionMonitorService.checkPendingTransactions (src/services/transaction-monitor.service.ts:57:9)
-      at Object.<anonymous> (src/__tests__/transaction-monitor.test.ts:64:5)
-    console.log
-      ✅ Transaction confirmed: hash-789 for conversion conv-789
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
- PASS  src/__tests__/unit/deposit-monitor.service.test.ts (11.567 s)
-  ● Console
-    console.log
-      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
-      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:47:13)
-    console.log
-      ✅ Manual deposit confirmed {
-        depositId: 'deposit-1',
-        paymentId: 'payment-1',
-        conversionId: undefined,
-        txHash: 'abc'
-      }
-      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:164:13)
- PASS  src/__tests__/unit/basic.test.ts (12.046 s)
-  ● Console
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      📊 Fetching rates: TON → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
-    console.log
-      🧪 Simulated rates for TON → USD: [
-        {
-          source: 'coingecko',
-          value: 2.1607499999999997,
-          timestamp: 1767127334675
-        },
-        {
-          source: 'dexscreener',
-          value: 2.1456999999999997,
-          timestamp: 1767127334675
-        },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767127334675 }
-      ]
-      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
- PASS  src/__tests__/reconciliation.service.test.ts (11.969 s)
-  ● Console
-    console.log
-      ✅ Conversion reconciled: conv-id - Status: matched
-      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
- PASS  src/__tests__/unit/webhook.service.test.ts
+      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
+      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:410:15)
+ PASS  src/__tests__/unit/webhook.service.test.ts (10.289 s)
   ● Console
     console.error
       ❌ Webhook delivery failed (attempt NaN/5): {
         eventId: 'event-1',
         url: 'http://test.com',
         error: "Cannot read properties of undefined (reading 'status')",
-        nextRetry: 2025-12-30T21:42:14.905Z
+        nextRetry: 2025-12-30T23:35:39.090Z
       }
       132 |       );
       133 |
@@ -103,7 +39,7 @@
         eventId: 'event-2',
         url: 'https://example.com/webhook',
         error: 'Connection timeout',
-        nextRetry: 2025-12-30T20:42:44.920Z
+        nextRetry: 2025-12-30T22:36:09.122Z
       }
       132 |       );
       133 |
@@ -114,7 +50,77 @@
       137 |           eventId,
       at WebhookService.deliverEvent (src/services/webhook.service.ts:134:15)
       at Object.<anonymous> (src/__tests__/unit/webhook.service.test.ts:92:7)
- PASS  src/__tests__/auth.totp.test.ts (12.65 s)
+ PASS  src/__tests__/unit/basic.test.ts (10.279 s)
+  ● Console
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: TON → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+    console.log
+      🧪 Simulated rates for TON → USD: [
+        {
+          source: 'coingecko',
+          value: 2.1607499999999997,
+          timestamp: 1767134139225
+        },
+        {
+          source: 'dexscreener',
+          value: 2.1456999999999997,
+          timestamp: 1767134139225
+        },
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767134139225 }
+      ]
+      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
+ PASS  src/__tests__/rate.aggregator.test.ts (10.589 s)
+  ● Console
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: TON → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+ PASS  src/__tests__/transaction-monitor.test.ts
+  ● Console
+    console.log
+      ✅ Transaction confirmed: hash-123 for conversion conv-123
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
+    console.error
+      ❌ Transaction failed: hash-456 for conversion conv-456
+       99 |         });
+      100 |       } else if (state && state.status === 'failed') {
+    > 101 |         console.error(
+          |                 ^
+      102 |           `❌ Transaction failed: ${txHash} for conversion ${conversion.id}`,
+      103 |         );
+      104 |         await this.db.none(
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:101:17)
+      at TransactionMonitorService.checkPendingTransactions (src/services/transaction-monitor.service.ts:57:9)
+      at Object.<anonymous> (src/__tests__/transaction-monitor.test.ts:64:5)
+    console.log
+      ✅ Transaction confirmed: hash-789 for conversion conv-789
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
+ PASS  src/__tests__/unit/deposit-monitor.service.test.ts
+  ● Console
+    console.log
+      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
+      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:47:13)
+    console.log
+      ✅ Manual deposit confirmed {
+        depositId: 'deposit-1',
+        paymentId: 'payment-1',
+        conversionId: undefined,
+        txHash: 'abc'
+      }
+      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:164:13)
+ PASS  src/__tests__/auth.totp.test.ts (10.889 s)
   ● Console
     console.warn
       ⚠️ Database not available for TOTP tests, skipping
@@ -129,25 +135,7 @@
     console.log
       ⏭️ Skipping test - database not available
       at Object.<anonymous> (src/__tests__/auth.totp.test.ts:58:13)
- PASS  src/__tests__/unit/settlement.service.test.ts (12.542 s)
-  ● Console
-    console.log
-      💸 Executing fiat payout via stub: 55 USD to user user-1
-      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:426:13)
-    console.log
-      💸 [STUB] Fiat payout: 55 USD to user user-1
-      at StubFiatGateway.executePayout (src/services/settlement.service.ts:73:13)
-    console.log
-      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
-      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:410:15)
- PASS  src/__tests__/auth.service.test.ts
- PASS  src/__tests__/unit/direct-conversion.service.test.ts
-  ● Console
-    console.log
-      ✅ Conversion created (direct TON): { id: 'conv-1', stars: 1000, ton: 2.955, destination: 'dest-addr' }
-      at src/services/direct-conversion.service.ts:261:15
- PASS  src/__tests__/unit/wallet-manager.service.test.ts (12.883 s)
- PASS  src/__tests__/unit/services.test.ts (12.984 s)
+ PASS  src/__tests__/unit/services.test.ts (11.008 s)
   ● Console
     console.log
       💰 Processing payment: { amount: undefined, currency: 'XTR', chargeId: undefined }
@@ -177,14 +165,14 @@
         {
           source: 'coingecko',
           value: 2.1607499999999997,
-          timestamp: 1767127335662
+          timestamp: 1767134139784
         },
         {
           source: 'dexscreener',
           value: 2.1456999999999997,
-          timestamp: 1767127335662
+          timestamp: 1767134139784
         },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767127335662 }
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767134139784 }
       ]
       at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
     console.log
@@ -198,32 +186,39 @@
         {
           source: 'coingecko',
           value: 45224.99999999999,
-          timestamp: 1767127335667
+          timestamp: 1767134139789
         },
-        { source: 'dexscreener', value: 44910, timestamp: 1767127335667 },
-        { source: 'coinmarketcap', value: 45090, timestamp: 1767127335667 }
+        { source: 'dexscreener', value: 44910, timestamp: 1767134139789 },
+        { source: 'coinmarketcap', value: 45090, timestamp: 1767134139789 }
       ]
       at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
- PASS  src/__tests__/unit/nitroswaps.service.test.ts
- PASS  src/__tests__/integration/stonfi-swap.test.ts (13.092 s)
+ PASS  src/__tests__/integration/stonfi-swap.test.ts (11.067 s)
   ● Console
     console.log
       🧪 DEX integration tests running in simulation mode
       at setupDexIntegrationTest (src/test-utils.ts:21:13)
- PASS  src/__tests__/unit/stars-p2p.service.test.ts (13.077 s)
- PASS  src/__tests__/integration/dedust-swap.test.ts (13.121 s)
+ PASS  src/__tests__/integration/dedust-swap.test.ts (11.149 s)
   ● Console
     console.log
       🧪 DEX integration tests running in simulation mode
       at setupDexIntegrationTest (src/test-utils.ts:21:13)
- PASS  src/__tests__/conversion.service.test.ts (13.348 s)
+ PASS  src/__tests__/reconciliation.service.test.ts
+  ● Console
+    console.log
+      ✅ Conversion reconciled: conv-id - Status: matched
+      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
+ PASS  src/__tests__/unit/nitroswaps.service.test.ts (11.124 s)
+ PASS  src/__tests__/auth.service.test.ts
+ PASS  src/__tests__/unit/wallet-manager.service.test.ts (11.294 s)
+ PASS  src/__tests__/unit/stars-p2p.service.test.ts (11.302 s)
+ PASS  src/__tests__/conversion.service.test.ts (11.487 s)
   ● Console
     console.log
       ✅ Fee fee-id marked as collected.
       at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
     console.log
       ✅ Conversion completed: {
-        conversionId: '6ae12869-3190-4982-aee7-e3e2b83ea9a6',
+        conversionId: 'b0517e11-7f57-4b49-a392-5128546be81e',
         txHash: 'tx-hash'
       }
       at src/services/conversion.service.ts:426:21
@@ -232,11 +227,16 @@
       at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
     console.log
       ✅ Conversion completed: {
-        conversionId: '5b67fcbb-bedf-4373-9301-2fc497f9eb45',
+        conversionId: 'b9dffecf-589e-44b6-90d3-742fe58cf986',
         txHash: 'tx-1'
       }
       at src/services/conversion.service.ts:426:21
- PASS  src/__tests__/integration.test.ts (13.298 s)
+ PASS  src/__tests__/unit/direct-conversion.service.test.ts (11.603 s)
+  ● Console
+    console.log
+      ✅ Conversion created (direct TON): { id: 'conv-1', stars: 1000, ton: 2.955, destination: 'dest-addr' }
+      at src/services/direct-conversion.service.ts:261:15
+ PASS  src/__tests__/integration.test.ts (11.538 s)
   ● Console
     console.log
       ✅ Fee recorded: {
@@ -256,9 +256,9 @@
       }
       at ConversionService.createConversion (src/services/conversion.service.ts:235:13)
     console.log
-      ✅ Conversion reconciled: 6f042f4f-40d7-4c95-b0e9-2818340d1402 - Status: matched
+      ✅ Conversion reconciled: 0c4c6b9f-aec5-49e6-b890-70765ae54eb5 - Status: matched
       at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
- PASS  src/__tests__/unit/p2p-liquidity.service.test.ts (13.367 s)
+ PASS  src/__tests__/unit/p2p-liquidity.service.test.ts (11.696 s)
   ● Console
     console.error
       DeDust API error: Invalid URL
@@ -352,16 +352,6 @@ A worker process has failed to exit gracefully and has been force exited. This i
 Test Suites: 19 passed, 19 total
 Tests:       2 skipped, 58 passed, 60 total
 Snapshots:   0 total
-Time:        15.192 s
+Time:        13.352 s
 Ran all test suites.
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
-> telepaygate-sdk@0.1.0 test
-> jest
- PASS  src/__tests__/client.error.test.ts
- PASS  src/__tests__/index.test.ts
- PASS  src/__tests__/client.test.ts
-Test Suites: 3 passed, 3 total
-Tests:       21 passed, 21 total
-Snapshots:   0 total
-Time:        3.309 s, estimated 4 s
-Ran all test suites.

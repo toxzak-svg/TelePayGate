@@ -20,7 +20,7 @@ export class RateController {
         pairs.map(async ({ source, target }) => {
           const rateData = await rateService.getAggregatedRate(source, target);
           if (!rates[source]) rates[source] = {};
-          rates[source][target] = rateData.rate;
+          rates[source][target] = rateData.averageRate;
         })
       );
 

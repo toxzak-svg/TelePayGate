@@ -3,7 +3,7 @@
 # =============================================================================
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -52,7 +52,7 @@ RUN if [ -d "/app/packages/dashboard/dist" ]; then \
 # =============================================================================
 # Runtime stage - Minimal production image
 # =============================================================================
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
