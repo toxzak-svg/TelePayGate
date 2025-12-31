@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Key, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Login() {
-  const [apiKey, setApiKey] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -13,27 +15,20 @@ export default function Login() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    
-    if (!apiKey.trim()) {
-      setError('Please enter your API key');
-      return;
-    }
 
-    if (!apiKey.startsWith('pk_')) {
-      setError('API key must start with "pk_"');
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password');
       return;
     }
 
     setLoading(true);
 
     try {
-      await login(apiKey);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(
-        err.response?.data?.error?.message ||
-          'Invalid API key. Please check and try again.'
-      );
+      await login({ email, password });
+      navigate('/app/dashboard');
+    } catch (err: unknown) {
+      console.error('Login error details:', err);
+      setError('Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,7 +40,7 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-blue-100 rounded-full">
-              <Key className="h-10 w-10 text-blue-600" />
+              <Mail className="h-10 w-10 text-blue-600" />
             </div>
           </div>
 
@@ -53,25 +48,45 @@ export default function Login() {
             Welcome Back
           </h1>
           <p className="text-gray-600 text-center mb-8">
-            Enter your API key to access the dashboard
+            Sign in to your merchant dashboard
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="apiKey"
+                htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                API Key
+                Email Address
               </label>
               <input
-                id="apiKey"
-                type="text"
-                placeholder="pk_..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
               />
             </div>
 
@@ -90,7 +105,7 @@ export default function Login() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Verifying...
+                  Signing in...
                 </span>
               ) : (
                 'Login'
@@ -100,17 +115,33 @@ export default function Login() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 text-center">
+<<<<<<< HEAD
               Don't have an API key?{' '}
               <a
-                href="https://docs.example.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/register"
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                View Documentation
+                Create one now
               </a>
+=======
+              Don't have an account?{' '}
+              <Link
+                to="/signup"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Sign Up
+              </Link>
+>>>>>>> main
             </p>
           </div>
+
+          {import.meta.env.VITE_FEATURE_PASSWORDLESS_AUTH === 'true' && (
+            <div className="mt-4 text-center">
+              <Link to="/auth/passwordless" className="text-sm text-blue-600 hover:underline">
+                Sign in with email (passwordless)
+              </Link>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-sm text-gray-600 mt-6">

@@ -9,26 +9,26 @@ export interface PaymentGatewayConfig {
 
 // ==================== CURRENCIES ====================
 
-export type Currency = 'STARS' | 'TON' | 'USD' | 'EUR' | 'GBP';
+export type Currency = "STARS" | "TON" | "USD" | "EUR" | "GBP";
 
-export type PaymentStatus = 
-  | 'pending' 
-  | 'received' 
-  | 'converting' 
-  | 'converted' 
-  | 'settled' 
-  | 'failed';
+export type PaymentStatus =
+  | "pending"
+  | "received"
+  | "converting"
+  | "converted"
+  | "settled"
+  | "failed";
 
-export type ConversionStatusType = 
-  | 'pending' 
-  | 'rate_locked' 
-  | 'phase1_prepared' 
-  | 'phase2_committed' 
-  | 'phase3_confirmed'
-  | 'in_progress' 
-  | 'confirmed' 
-  | 'completed' 
-  | 'failed';
+export type ConversionStatusType =
+  | "pending"
+  | "rate_locked"
+  | "phase1_prepared"
+  | "phase2_committed"
+  | "phase3_confirmed"
+  | "in_progress"
+  | "confirmed"
+  | "completed"
+  | "failed";
 
 // ==================== CONVERSION ====================
 
@@ -39,19 +39,21 @@ export interface EstimationParams {
 }
 
 export interface EstimationResult {
-  starsAmount: number;
-  tonEquivalent?: number;
-  estimatedFiat?: number;
+  sourceCurrency: string;
   targetCurrency: Currency;
+  sourceAmount: number;
+  targetAmount: number;
   exchangeRate: number;
-  lockedUntil?: number;
   fees: {
-    telegram?: number;
-    dex?: number;
-    ton?: number;
-    exchange?: number;
+    dex: number;
+    network: number;
+    platform: number;
     total: number;
+    platformPercentage: number;
   };
+  platformWallet: string;
+  estimatedArrival: string;
+  validUntil: string;
 }
 
 export interface RateLockParams {
@@ -61,17 +63,17 @@ export interface RateLockParams {
 }
 
 export interface RateLock {
-  id: string;
-  exchangeRate: number;
-  lockedUntil: number;
-  starsAmount: number;
-  targetCurrency: Currency;
+  conversionId: string;
+  rate: number;
+  lockedUntil: string;
+  targetAmount: number;
+  platformFee: number;
 }
 
 export interface ConversionParams {
   paymentIds: string[];
   targetCurrency: Currency;
-  rateLockId?: string;
+  destinationAddress?: string;
 }
 
 export interface Conversion {
@@ -88,15 +90,18 @@ export interface Conversion {
   dexTxHash?: string;
   tonTxHash?: string;
   status: ConversionStatusType;
-  fees?: {
-    telegram?: number;
-    dex?: number;
-    ton?: number;
-    exchange?: number;
+  fee_breakdown?: {
+    dex: number;
+    network: number;
+    platform: number;
     total: number;
+    platformPercentage: number;
   };
+  platform_fee_amount?: number;
+  platform_fee_percentage?: number;
   errorMessage?: string;
   createdAt: string;
+  updatedAt: string;
   completedAt?: string;
 }
 
@@ -137,7 +142,7 @@ export interface UserProfile {
   appName: string;
   apiKey: string;
   webhookUrl?: string;
-  kycStatus: 'pending' | 'verified' | 'rejected';
+  kycStatus: "pending" | "verified" | "rejected";
   createdAt: string;
 }
 

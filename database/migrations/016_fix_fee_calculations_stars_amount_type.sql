@@ -1,0 +1,1 @@
+ALTER TABLE fee_calculations ALTER COLUMN stars_amount TYPE DECIMAL(18, 2);

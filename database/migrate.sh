@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Database migration script for Telegram Payment Gateway
+# Database migration script for TelePayGate
 # Usage: ./database/migrate.sh [command]
 # Commands: up, down, reset, status
 
@@ -12,7 +12,7 @@ if [ -f .env ]; then
 fi
 
 # Database connection string
-DB_URL="${DATABASE_URL:-postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev}"
+DB_URL="${DATABASE_URL:-postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev}"
 
 # Colors for output
 RED='\033[0;31m'

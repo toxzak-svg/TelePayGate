@@ -1,41 +1,155 @@
 {
-  "name": "@tg-payment/core",
-  "version": "0.1.0",
-  "description": "Core business logic for Telegram Payment Gateway",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "name": "telepaygate-core",
+  "version": "0.1.2",
+  "description": "Core business logic for TelePayGate - Telegram Stars to TON/Fiat payment processing",
+  "author": "TelePayGate Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toxzak-svg/TelePayGate.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/toxzak-svg/TelePayGate/issues"
+  },
+  "homepage": "https://github.com/toxzak-svg/TelePayGate/tree/main/packages/core#readme",
+  "keywords": [
+    "telegram",
+    "telegram-stars",
+    "ton",
+    "toncoin",
+    "payment",
+    "payment-gateway",
+    "crypto",
+    "p2p",
+    "dedust",
+    "stonfi",
+    "blockchain",
+    "web3"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "require": "./dist/services/index.js",
+      "default": "./dist/services/index.js"
+    },
+    "./models": {
+      "types": "./dist/models/index.d.ts",
+      "require": "./dist/models/index.js",
+      "default": "./dist/models/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/types/index.js",
+      "default": "./dist/types/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "require": "./dist/utils/index.js",
+      "default": "./dist/utils/index.js"
+    },
+    "./db": {
+      "types": "./dist/db/connection.d.ts",
+      "require": "./dist/db/connection.js",
+      "default": "./dist/db/connection.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "require": "./dist/config/index.js",
+      "default": "./dist/config/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "test": "jest",
+    "build": "rm -f tsconfig.tsbuildinfo && tsc --build --force",
+    "dev": "tsx watch src/index.ts",
+    "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run clean && npm run build",
     "worker:monitor": "ts-node src/workers/deposit-settlement.worker.ts",
-    "worker:fees": "ts-node src/workers/fee-collection.worker.ts"
+    "worker:fees": "ts-node src/workers/fee-collection.worker.ts",
+    "worker:webhooks": "ts-node src/workers/webhook-dispatcher.worker.ts"
   },
   "dependencies": {
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.0.0",
+    "axios": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1",
+    "ioredis": "^5.8.2",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.4",
+    "pg": "^8.11.3",
+    "pg-promise": "^12.3.0",
+    "speakeasy": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "tonweb": "^0.0.66",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-kms": "^3.0.0",
+    "@dedust/sdk": "^0.8.0",
+    "@ston-fi/sdk": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@aws-sdk/client-kms": {
+      "optional": true
+    },
+    "@dedust/sdk": {
+      "optional": true
+    },
+    "@ston-fi/sdk": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@aws-sdk/client-kms": "^3.939.0",
     "@dedust/sdk": "^0.8.7",
     "@ston-fi/sdk": "^2.7.0",
     "@ton/core": "^0.62.0",
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.0.0",
-    "axios": "^1.13.2",
-    "dotenv": "^16.3.1",
-    "pg-promise": "^12.3.0",
-    "telegraf": "^4.16.3",
-    "tonweb": "^0.0.66",
-    "winston": "^3.11.0"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.8",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/ioredis": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.9.0",
+    "@types/nodemailer": "^7.0.4",
     "@types/pg": "^8.15.6",
     "@types/pg-promise": "^0.0.28",
+    "@types/speakeasy": "^2.0.10",
+    "@types/uuid": "^9.0.0",
+    "ioredis": "^5.8.2",
     "jest": "^29.7.0",
+    "nodemailer": "^6.9.4",
+    "pg-promise": "^12.3.0",
+    "speakeasy": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "tonweb": "^0.0.66",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.2.2"
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }

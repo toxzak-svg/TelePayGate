@@ -1,0 +1,32 @@
+# Prettier ignore file
+
+# Build outputs
+dist/
+build/
+coverage/
+.next/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.d.ts
+*.min.js
+*.min.css
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Database
+database/migrations/*.sql
+
+# Documentation
+docs/
+*.md
+
+# Config files (keep original formatting)
+*.config.js
+*.config.ts
+tsconfig.json

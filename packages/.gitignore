@@ -1,0 +1,36 @@
+# Package-level ignores for all packages inside /packages
+
+# Node & package build artifacts
+node_modules/
+dist/
+build/
+out/
+lib/
+
+# Environment files (do not ignore *.example or templates)
+.env
+.env.local
+.env.*.local
+
+# Logs and test output
+*.log
+logs/
+coverage/
+.nyc_output/
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# caches
+.cache/
+tmp/
+temp/
+
+# Common tooling
+*.tsbuildinfo
+*.seed
+
+# Keep package specific exceptions in package-level .gitignore files where needed
