@@ -1,9 +1,12 @@
+// Import shared types from core
+export type { DashboardStats } from "@tg-payment/core";
+
 export interface Payment {
   id: string;
   userId: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'received' | 'converting' | 'settled' | 'failed';
+  status: "pending" | "received" | "converting" | "settled" | "failed";
   telegramUserId: string;
   telegramPaymentChargeId?: string;
   createdAt: string;
@@ -18,8 +21,15 @@ export interface Conversion {
   targetAmount: number;
   targetCurrency: string;
   rate: number;
-  status: 'pending' | 'rate_locked' | 'awaiting_ton' | 'ton_received' | 'converting_fiat' | 'completed' | 'failed';
-  dexProvider?: 'dedust' | 'stonfi' | 'p2p';
+  status:
+    | "pending"
+    | "rate_locked"
+    | "awaiting_ton"
+    | "ton_received"
+    | "converting_fiat"
+    | "completed"
+    | "failed";
+  dexProvider?: "dedust" | "stonfi" | "p2p";
   dexTxHash?: string;
   dexPoolId?: string;
   feeBreakdown?: {
@@ -45,13 +55,16 @@ export interface User {
 export interface DashboardStats {
   totalRevenueTon: number;
   totalRevenueStars: number;
+  totalRevenue: number;
   totalTransactions: number;
   totalPayments: number;
   totalUsers: number;
+  activeUsers: number;
   activeMerchants: number;
   successRate: number;
   revenueChange: number;
   transactionChange: number;
+  userChange: number;
   activeMerchantsChange: number;
   successRateChange: number;
 }
@@ -71,19 +84,19 @@ export interface TransactionSummaryEntry {
 
 export interface P2POrder {
   id: string;
-  type: 'buy' | 'sell';
+  type: "buy" | "sell";
   userId: string;
   starsAmount: number;
   tonAmount: string;
   rate: string;
-  status: 'open' | 'matched' | 'completed' | 'cancelled' | 'expired';
+  status: "open" | "matched" | "completed" | "cancelled" | "expired";
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface DexQuote {
-  provider: 'dedust' | 'stonfi';
+  provider: "dedust" | "stonfi";
   rate: number;
   liquidityUsd: number;
   priceImpact: number;
@@ -91,8 +104,8 @@ export interface DexQuote {
 }
 
 export interface LiquiditySource {
-  type: 'p2p' | 'dex';
-  provider?: 'dedust' | 'stonfi';
+  type: "p2p" | "dex";
+  provider?: "dedust" | "stonfi";
   rate: number;
   liquidity: number;
   liquidityUsd?: number;
@@ -104,13 +117,18 @@ export interface WebhookEvent {
   id: string;
   event: string;
   url: string;
-  status: 'pending' | 'delivered' | 'failed';
+  status: "pending" | "delivered" | "failed";
   statusCode?: number;
   attempts: number;
-  payload: any;
+  payload: Record<string, unknown>;
   response?: string;
   createdAt: string;
   deliveredAt?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface ChartData {
@@ -121,6 +139,10 @@ export interface ChartData {
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
+  meta?: {
+    total?: number;
+    [key: string]: unknown;
+  };
   error?: {
     code: string;
     message: string;

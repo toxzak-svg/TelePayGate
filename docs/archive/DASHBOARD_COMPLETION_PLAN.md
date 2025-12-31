@@ -5,6 +5,7 @@
 ### ✅ What's Already Built
 
 **Structure:**
+
 - ✅ React 18 + TypeScript + Vite setup
 - ✅ Basic routing with react-router-dom
 - ✅ 3 main pages: Dashboard, Transactions, Settings
@@ -14,11 +15,13 @@
 - ✅ Lucide icons for UI elements
 
 **Pages:**
+
 - ✅ Dashboard: Stats cards, charts placeholder, recent transactions
 - ✅ Transactions: Filterable/sortable transaction list
 - ✅ Settings: API key management (mock)
 
 **Components:**
+
 - ✅ AnalyticsCharts: Uses recharts for revenue/transaction visualization
 - ✅ RecentTransactionsTable: Basic transaction display
 - ✅ Sidebar: Navigation with icons
@@ -27,39 +30,27 @@
 ### ❌ What's Missing
 
 **Critical:**
+
 1. **Missing Dependencies**: `react-router-dom`, `recharts`, `lucide-react` not in package.json
 2. **No API Integration**: All data is hardcoded mock data
 3. **No Authentication**: No login/logout, no token management
 4. **No Real-time Updates**: Static data, no websockets or polling
 5. **No Error Handling**: No error boundaries or toast notifications
 
-**Important:**
-6. **No Loading States**: No spinners or skeletons
-7. **No Pagination**: Transaction lists need pagination
-8. **No Data Validation**: Forms don't validate input
-9. **No Environment Config**: No .env support for API URLs
-10. **Incomplete Features**:
-    - P2P order management
-    - DEX liquidity visualization
-    - Conversion tracking
-    - Webhook management
-    - Fee collection analytics
+**Important:** 6. **No Loading States**: No spinners or skeletons 7. **No Pagination**: Transaction lists need pagination 8. **No Data Validation**: Forms don't validate input 9. **No Environment Config**: No .env support for API URLs 10. **Incomplete Features**: - P2P order management - DEX liquidity visualization - Conversion tracking - Webhook management - Fee collection analytics
 
-**Nice-to-Have:**
-11. No dark mode
-12. No responsive mobile optimization
-13. No export functionality (CSV, PDF)
-14. No date range pickers
-15. No advanced filtering
+**Nice-to-Have:** 11. No dark mode 12. No responsive mobile optimization 13. No export functionality (CSV, PDF) 14. No date range pickers 15. No advanced filtering
 
 ---
 
 ## Implementation Plan (6 Phases)
 
 ### Phase 1: Fix Dependencies & Setup (Week 1)
+
 **Goal**: Make the dashboard actually run without errors
 
 #### 1.1 Install Missing Dependencies
+
 ```bash
 cd packages/dashboard
 npm install react-router-dom lucide-react recharts
@@ -67,24 +58,27 @@ npm install -D @types/recharts
 ```
 
 #### 1.2 Create API Client
-**File**: `src/api/client.ts`
-```typescript
-import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+**File**: `src/api/client.ts`
+
+```typescript
+import axios from "axios";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add auth token to requests
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('apiKey');
+  const token = localStorage.getItem("apiKey");
   if (token) {
-    config.headers['x-api-key'] = token;
+    config.headers["x-api-key"] = token;
   }
   return config;
 });
@@ -94,30 +88,34 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('apiKey');
-      window.location.href = '/login';
+      localStorage.removeItem("apiKey");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 ```
 
 #### 1.3 Environment Configuration
+
 **File**: `packages/dashboard/.env.example`
+
 ```bash
 VITE_API_URL=http://localhost:3000/api/v1
 VITE_WS_URL=ws://localhost:3000
 ```
 
 #### 1.4 Type Definitions
+
 **File**: `src/types/index.ts`
+
 ```typescript
 export interface Payment {
   id: string;
   userId: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'received' | 'converting' | 'settled' | 'failed';
+  status: "pending" | "received" | "converting" | "settled" | "failed";
   createdAt: string;
   updatedAt: string;
 }
@@ -131,7 +129,7 @@ export interface Conversion {
   targetCurrency: string;
   rate: number;
   status: string;
-  dexProvider?: 'dedust' | 'stonfi' | 'p2p';
+  dexProvider?: "dedust" | "stonfi" | "p2p";
   dexTxHash?: string;
   createdAt: string;
 }
@@ -157,17 +155,17 @@ export interface Stats {
 
 export interface P2POrder {
   id: string;
-  type: 'buy' | 'sell';
+  type: "buy" | "sell";
   userId: string;
   starsAmount: number;
   tonAmount: string;
   rate: string;
-  status: 'open' | 'matched' | 'completed' | 'cancelled';
+  status: "open" | "matched" | "completed" | "cancelled";
   createdAt: string;
 }
 
 export interface DexQuote {
-  provider: 'dedust' | 'stonfi';
+  provider: "dedust" | "stonfi";
   rate: number;
   liquidityUsd: number;
   priceImpact: number;
@@ -178,94 +176,139 @@ export interface DexQuote {
 ---
 
 ### Phase 2: API Integration (Week 2)
+
 **Goal**: Connect dashboard to real backend API
 
 #### 2.1 API Service Layer
+
 **File**: `src/api/services.ts`
+
 ```typescript
-import { apiClient } from './client';
-import { Payment, Conversion, User, Stats, P2POrder, DexQuote } from '../types';
+import { apiClient } from "./client";
+import { Payment, Conversion, User, Stats, P2POrder, DexQuote } from "../types";
 
 export const paymentService = {
-  async getPayments(params?: { limit?: number; offset?: number; status?: string }) {
-    const { data } = await apiClient.get<{ success: boolean; data: Payment[] }>('/payments', { params });
+  async getPayments(params?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  }) {
+    const { data } = await apiClient.get<{ success: boolean; data: Payment[] }>(
+      "/payments",
+      { params },
+    );
     return data.data;
   },
-  
+
   async getPayment(id: string) {
-    const { data } = await apiClient.get<{ success: boolean; data: Payment }>(`/payments/${id}`);
+    const { data } = await apiClient.get<{ success: boolean; data: Payment }>(
+      `/payments/${id}`,
+    );
     return data.data;
   },
 };
 
 export const conversionService = {
   async getConversions(params?: { limit?: number; offset?: number }) {
-    const { data } = await apiClient.get<{ success: boolean; data: Conversion[] }>('/conversions', { params });
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: Conversion[];
+    }>("/conversions", { params });
     return data.data;
   },
-  
+
   async getConversion(id: string) {
-    const { data } = await apiClient.get<{ success: boolean; data: Conversion }>(`/conversions/${id}`);
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: Conversion;
+    }>(`/conversions/${id}`);
     return data.data;
   },
 };
 
 export const userService = {
   async getProfile() {
-    const { data } = await apiClient.get<{ success: boolean; data: User }>('/user/profile');
+    const { data } = await apiClient.get<{ success: boolean; data: User }>(
+      "/user/profile",
+    );
     return data.data;
   },
-  
+
   async updateWebhookUrl(webhookUrl: string) {
-    const { data } = await apiClient.patch<{ success: boolean; data: User }>('/user/webhook', { webhookUrl });
+    const { data } = await apiClient.patch<{ success: boolean; data: User }>(
+      "/user/webhook",
+      { webhookUrl },
+    );
     return data.data;
   },
-  
+
   async regenerateApiKey() {
-    const { data } = await apiClient.post<{ success: boolean; data: { apiKey: string } }>('/user/regenerate-key');
+    const { data } = await apiClient.post<{
+      success: boolean;
+      data: { apiKey: string };
+    }>("/user/regenerate-key");
     return data.data;
   },
 };
 
 export const statsService = {
   async getDashboardStats() {
-    const { data } = await apiClient.get<{ success: boolean; data: Stats }>('/admin/stats');
+    const { data } = await apiClient.get<{ success: boolean; data: Stats }>(
+      "/admin/stats",
+    );
     return data.data;
   },
-  
+
   async getRevenueChart(days: number = 7) {
-    const { data } = await apiClient.get('/admin/charts/revenue', { params: { days } });
+    const { data } = await apiClient.get("/admin/charts/revenue", {
+      params: { days },
+    });
     return data.data;
   },
-  
+
   async getTransactionChart(days: number = 7) {
-    const { data } = await apiClient.get('/admin/charts/transactions', { params: { days } });
+    const { data } = await apiClient.get("/admin/charts/transactions", {
+      params: { days },
+    });
     return data.data;
   },
 };
 
 export const p2pService = {
-  async getOrders(params?: { type?: 'buy' | 'sell'; status?: string }) {
-    const { data } = await apiClient.get<{ success: boolean; data: P2POrder[] }>('/p2p/orders', { params });
+  async getOrders(params?: { type?: "buy" | "sell"; status?: string }) {
+    const { data } = await apiClient.get<{
+      success: boolean;
+      data: P2POrder[];
+    }>("/p2p/orders", { params });
     return data.data;
   },
-  
-  async createOrder(order: { type: 'buy' | 'sell'; starsAmount: number; rate: string }) {
-    const { data } = await apiClient.post<{ success: boolean; data: P2POrder }>('/p2p/orders', order);
+
+  async createOrder(order: {
+    type: "buy" | "sell";
+    starsAmount: number;
+    rate: string;
+  }) {
+    const { data } = await apiClient.post<{ success: boolean; data: P2POrder }>(
+      "/p2p/orders",
+      order,
+    );
     return data.data;
   },
 };
 
 export const dexService = {
   async getQuote(fromCurrency: string, toCurrency: string, amount: number) {
-    const { data } = await apiClient.get<{ success: boolean; data: DexQuote }>('/dex/quote', {
-      params: { fromCurrency, toCurrency, amount },
-    });
+    const { data } = await apiClient.get<{ success: boolean; data: DexQuote }>(
+      "/dex/quote",
+      {
+        params: { fromCurrency, toCurrency, amount },
+      },
+    );
     return data.data;
   },
-  
+
   async getLiquidity(fromCurrency: string, toCurrency: string, amount: number) {
-    const { data } = await apiClient.get('/dex/liquidity', {
+    const { data } = await apiClient.get("/dex/liquidity", {
       params: { fromCurrency, toCurrency, amount },
     });
     return data.data;
@@ -274,13 +317,15 @@ export const dexService = {
 ```
 
 #### 2.2 React Query Setup (Optional but Recommended)
+
 ```bash
 npm install @tanstack/react-query
 ```
 
 **File**: `src/api/queryClient.ts`
+
 ```typescript
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -293,7 +338,9 @@ export const queryClient = new QueryClient({
 ```
 
 #### 2.3 Update Dashboard Page with Real Data
+
 **File**: `src/pages/Dashboard.tsx`
+
 ```typescript
 import { useQuery } from '@tanstack/react-query';
 import { statsService } from '../api/services';
@@ -316,10 +363,13 @@ export default function Dashboard() {
 ---
 
 ### Phase 3: Authentication & Security (Week 3)
+
 **Goal**: Add proper login/logout and API key management
 
 #### 3.1 Auth Context
+
 **File**: `src/context/AuthContext.tsx`
+
 ```typescript
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
@@ -382,7 +432,9 @@ export function useAuth() {
 ```
 
 #### 3.2 Login Page
+
 **File**: `src/pages/Login.tsx`
+
 ```typescript
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -400,7 +452,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       await login(apiKey);
       navigate('/dashboard');
@@ -421,7 +473,7 @@ export default function Login() {
         </div>
         <h1 className="text-2xl font-bold text-center mb-2">TG Payment Gateway</h1>
         <p className="text-gray-600 text-center mb-6">Enter your API key to continue</p>
-        
+
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -447,7 +499,9 @@ export default function Login() {
 ```
 
 #### 3.3 Protected Route Component
+
 **File**: `src/components/common/ProtectedRoute.tsx`
+
 ```typescript
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -458,7 +512,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (isLoading) return <LoadingSpinner />;
   if (!apiKey) return <Navigate to="/login" replace />;
-  
+
   return <>{children}</>;
 }
 ```
@@ -466,10 +520,13 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 ---
 
 ### Phase 4: New Features & Pages (Week 4-5)
+
 **Goal**: Add P2P orders, DEX analytics, and webhook management
 
 #### 4.1 P2P Orders Page
+
 **File**: `src/pages/P2POrders.tsx`
+
 ```typescript
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -495,7 +552,7 @@ export default function P2POrders() {
           Create Order
         </button>
       </div>
-      
+
       {/* Orders table */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -537,7 +594,9 @@ export default function P2POrders() {
 ```
 
 #### 4.2 DEX Analytics Page
+
 **File**: `src/pages/DexAnalytics.tsx`
+
 ```typescript
 import { useQuery } from '@tanstack/react-query';
 import { dexService } from '../api/services';
@@ -552,7 +611,7 @@ export default function DexAnalytics() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">DEX Analytics</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -602,7 +661,9 @@ export default function DexAnalytics() {
 ```
 
 #### 4.3 Webhooks Management Page
+
 **File**: `src/pages/Webhooks.tsx`
+
 ```typescript
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -627,17 +688,17 @@ export default function Webhooks() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Webhook Configuration</h1>
-      
+
       <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
         <div className="flex items-center gap-3 mb-4">
           <Webhook className="h-6 w-6 text-blue-600" />
           <h2 className="text-lg font-semibold">Webhook URL</h2>
         </div>
-        
+
         <p className="text-gray-600 text-sm mb-4">
           Configure where payment and conversion events should be sent
         </p>
-        
+
         <div className="space-y-4">
           <input
             type="url"
@@ -646,7 +707,7 @@ export default function Webhooks() {
             value={webhookUrl}
             onChange={(e) => setWebhookUrl(e.target.value)}
           />
-          
+
           <button
             onClick={() => updateWebhook.mutate(webhookUrl)}
             disabled={updateWebhook.isPending}
@@ -682,10 +743,13 @@ export default function Webhooks() {
 ---
 
 ### Phase 5: UI/UX Improvements (Week 6)
+
 **Goal**: Polish the interface with loading states, error handling, and responsiveness
 
 #### 5.1 Common Components
+
 **Files to create:**
+
 - `src/components/common/LoadingSpinner.tsx`
 - `src/components/common/ErrorMessage.tsx`
 - `src/components/common/Toast.tsx`
@@ -695,11 +759,13 @@ export default function Webhooks() {
 - `src/components/common/Pagination.tsx`
 
 #### 5.2 Toast Notifications
+
 ```bash
 npm install react-hot-toast
 ```
 
 **File**: `src/components/common/Toast.tsx`
+
 ```typescript
 import { Toaster } from 'react-hot-toast';
 
@@ -732,7 +798,9 @@ export default function ToastProvider() {
 ```
 
 #### 5.3 Skeleton Loaders
+
 **File**: `src/components/common/Skeleton.tsx`
+
 ```typescript
 export function StatCardSkeleton() {
   return (
@@ -756,46 +824,54 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 ```
 
 #### 5.4 Responsive Design Improvements
+
 Update Sidebar.tsx to be mobile-friendly with hamburger menu.
 
 ---
 
 ### Phase 6: Testing & Deployment (Week 7)
+
 **Goal**: Test everything and prepare for production
 
 #### 6.1 Add Vitest for Testing
+
 ```bash
 npm install -D vitest @testing-library/react @testing-library/jest-dom happy-dom
 ```
 
 **File**: `vitest.config.ts`
+
 ```typescript
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'happy-dom',
+    environment: "happy-dom",
     globals: true,
-    setupFiles: './src/test/setup.ts',
+    setupFiles: "./src/test/setup.ts",
   },
 });
 ```
 
 #### 6.2 Write Tests
+
 - API service tests
 - Component unit tests
 - Integration tests for critical flows
 
 #### 6.3 Production Build
+
 ```bash
 npm run build
 npm run preview
 ```
 
 #### 6.4 Docker Support
+
 **File**: `packages/dashboard/Dockerfile`
+
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -816,6 +892,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ## Priority Matrix
 
 ### Must Have (MVP)
+
 1. ✅ Install missing dependencies (react-router-dom, recharts, lucide-react)
 2. ✅ Create API client with axios
 3. ✅ Add authentication (Login page + AuthContext)
@@ -825,6 +902,7 @@ CMD ["nginx", "-g", "daemon off;"]
 7. ✅ Add loading states and error handling
 
 ### Should Have (Phase 2)
+
 8. P2P Orders page
 9. DEX Analytics page
 10. Webhooks management page
@@ -833,6 +911,7 @@ CMD ["nginx", "-g", "daemon off;"]
 13. Real-time updates with WebSocket
 
 ### Nice to Have (Future)
+
 14. Dark mode toggle
 15. Export to CSV/PDF
 16. Advanced filtering with date ranges
@@ -912,6 +991,7 @@ packages/dashboard/
 5. **Add authentication**: Implement login flow before going further
 
 Run this to get started:
+
 ```bash
 cd packages/dashboard
 npm install react-router-dom lucide-react recharts @tanstack/react-query react-hot-toast
