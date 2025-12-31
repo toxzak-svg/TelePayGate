@@ -1,0 +1,76 @@
+name: CI — tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tg_user
+          POSTGRES_PASSWORD: tg_pass
+          POSTGRES_DB: telepaygate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tg_user" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    env:
+      DATABASE_URL: postgresql://tg_user:tg_pass@localhost:5432/telepaygate_test
+      REDIS_URL: redis://localhost:6379
+      CI: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build --workspaces
+
+      - name: Install postgres client (for readiness checks)
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..60}; do
+            if pg_isready -h localhost -p 5432 -U tg_user; then
+              echo "Postgres is ready"; exit 0;
+            fi
+            echo "waiting for postgres...";
+            sleep 1;
+          done
+          exit 1
+
+      - name: Reset DB & run migrations
+        run: |
+          node database/migrate.cjs reset
+
+      - name: Run tests
+        run: npm run test --workspaces --if-present
+
+      - name: Upload test logs (when failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-logs
+          path: |
+            packages/**/test-results.xml
+            **/logs/**

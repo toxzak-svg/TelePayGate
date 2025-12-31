@@ -16,25 +16,26 @@ const statusColor = {
 
 export default function RecentTransactionsTable() {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className="overflow-x-auto" role="region" aria-label="Recent transactions">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800" role="table">
+        <caption className="sr-only">Recent transactions</caption>
         <thead>
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
+            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">User</th>
+            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
+        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
           {mockTx.map((tx) => (
             <tr key={tx.id}>
-              <td className="px-4 py-2 font-mono text-sm text-blue-700">{tx.id}</td>
+              <td className="px-4 py-2 font-mono text-sm text-blue-700 dark:text-blue-300">{tx.id}</td>
               <td className="px-4 py-2">{tx.user}</td>
               <td className="px-4 py-2">${tx.amount}</td>
               <td className={`px-4 py-2 font-semibold ${statusColor[tx.status as keyof typeof statusColor]}`}>{tx.status}</td>
-              <td className="px-4 py-2 text-xs text-gray-500">{tx.date}</td>
+              <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">{tx.date}</td>
             </tr>
           ))}
         </tbody>

@@ -2,7 +2,7 @@ import { logger, task } from "@trigger.dev/sdk/v3";
 
 /**
  * Webhook Handler for GitHub Push Events
- * 
+ *
  * Triggers Render deployment when code is pushed to specific branches
  */
 export const githubPushWebhook = task({
@@ -31,7 +31,9 @@ export const githubPushWebhook = task({
     // Only deploy on specific branches
     const deployBranches = ["main", "production"];
     if (!deployBranches.includes(branch)) {
-      logger.log(`⏭️ Skipping deployment - branch '${branch}' not in deploy list`);
+      logger.log(
+        `⏭️ Skipping deployment - branch '${branch}' not in deploy list`,
+      );
       return {
         skipped: true,
         reason: `Branch '${branch}' is not configured for auto-deployment`,
@@ -57,13 +59,13 @@ export const githubPushWebhook = task({
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${renderApiKey}`,
+            Authorization: `Bearer ${renderApiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             clearCache: "do_not_clear",
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -84,7 +86,6 @@ export const githubPushWebhook = task({
         commits: payload.commits?.length || 0,
         pusher: payload.pusher.name,
       };
-
     } catch (error: any) {
       logger.error("❌ Webhook deployment failed", { error: error.message });
       throw error;
@@ -94,24 +95,26 @@ export const githubPushWebhook = task({
 
 /**
  * Manual Deployment Trigger
- * 
+ *
  * Simple task for triggering deployments manually from Trigger.dev dashboard
  */
 export const manualDeploy = task({
   id: "manual-deploy",
   maxDuration: 600,
-  run: async (payload: {
-    branch?: string;
-    clearCache?: boolean;
-    serviceIds?: string[];
-  } = {}) => {
-    const {
-      branch = "main",
-      clearCache = false,
-      serviceIds = [],
-    } = payload;
+  run: async (
+    payload: {
+      branch?: string;
+      clearCache?: boolean;
+      serviceIds?: string[];
+    } = {},
+  ) => {
+    const { branch = "main", clearCache = false, serviceIds = [] } = payload;
 
-    logger.log("👤 Manual deployment triggered", { branch, clearCache, serviceIds });
+    logger.log("👤 Manual deployment triggered", {
+      branch,
+      clearCache,
+      serviceIds,
+    });
 
     const renderApiKey = process.env.RENDER_API_KEY;
     if (!renderApiKey) {
@@ -119,10 +122,13 @@ export const manualDeploy = task({
     }
 
     const defaultServiceId = process.env.RENDER_API_SERVICE_ID;
-    const servicesToDeploy = serviceIds.length > 0 ? serviceIds : [defaultServiceId];
+    const servicesToDeploy =
+      serviceIds.length > 0 ? serviceIds : [defaultServiceId];
 
     if (!servicesToDeploy[0]) {
-      throw new Error("No service IDs provided and RENDER_API_SERVICE_ID not set");
+      throw new Error(
+        "No service IDs provided and RENDER_API_SERVICE_ID not set",
+      );
     }
 
     const results = [];
@@ -136,13 +142,13 @@ export const manualDeploy = task({
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${renderApiKey}`,
+              Authorization: `Bearer ${renderApiKey}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
               clearCache: clearCache ? "clear" : "do_not_clear",
             }),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -151,7 +157,9 @@ export const manualDeploy = task({
         }
 
         const deployment = await response.json();
-        logger.log(`✅ Service ${serviceId} deployed`, { deployId: deployment.id });
+        logger.log(`✅ Service ${serviceId} deployed`, {
+          deployId: deployment.id,
+        });
 
         results.push({
           serviceId,
@@ -159,9 +167,10 @@ export const manualDeploy = task({
           deployId: deployment.id,
           status: deployment.status,
         });
-
       } catch (error: any) {
-        logger.error(`❌ Failed to deploy service ${serviceId}`, { error: error.message });
+        logger.error(`❌ Failed to deploy service ${serviceId}`, {
+          error: error.message,
+        });
         results.push({
           serviceId,
           success: false,
@@ -170,7 +179,7 @@ export const manualDeploy = task({
       }
     }
 
-    const allSuccessful = results.every(r => r.success);
+    const allSuccessful = results.every((r) => r.success);
 
     return {
       success: allSuccessful,

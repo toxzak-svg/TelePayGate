@@ -3,7 +3,7 @@ import { fullDeploymentPipeline } from "./render-deploy";
 
 /**
  * Scheduled Deployment Task
- * 
+ *
  * Automatically deploys to Render on a schedule (e.g., nightly builds)
  * Configure the schedule in Trigger.dev dashboard or here
  */
@@ -15,7 +15,8 @@ export const scheduledDeployment = schedules.task({
     logger.log("⏰ Starting scheduled deployment");
 
     const apiServiceId = process.env.RENDER_API_SERVICE_ID;
-    const workerServiceIds = process.env.RENDER_WORKER_SERVICE_IDS?.split(",") || [];
+    const workerServiceIds =
+      process.env.RENDER_WORKER_SERVICE_IDS?.split(",") || [];
     const healthCheckUrl = process.env.API_HEALTH_CHECK_URL;
 
     if (!apiServiceId) {

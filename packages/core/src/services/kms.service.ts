@@ -6,9 +6,9 @@
  * - For local development the service falls back to using `WALLET_ENCRYPTION_KEY` env var.
  */
 
-import crypto from 'crypto';
+import crypto from "crypto";
 
-const ENV_KEY_NAME = 'WALLET_ENCRYPTION_KEY';
+const ENV_KEY_NAME = "WALLET_ENCRYPTION_KEY";
 
 export type KmsProvider = {
   // Accepts plaintext string and returns base64 encoded encrypted blob
@@ -20,33 +20,39 @@ export type KmsProvider = {
 // In-memory provider using env key (AES-256-GCM) for local/dev.
 const envProvider: KmsProvider = {
   async encrypt(plaintext: string) {
-    const keyHex = process.env[ENV_KEY_NAME] || '';
+    const keyHex = process.env[ENV_KEY_NAME] || "";
     if (!keyHex || keyHex.length < 64) {
       // fallback: base64 encode plaintext (non-secure, dev only)
-      return Buffer.from(plaintext, 'utf8').toString('base64');
+      return Buffer.from(plaintext, "utf8").toString("base64");
     }
-    const key = Buffer.from(keyHex, 'hex');
+    const key = Buffer.from(keyHex, "hex");
     const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-    const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, "utf8"),
+      cipher.final(),
+    ]);
     const tag = cipher.getAuthTag();
-    return Buffer.concat([iv, tag, encrypted]).toString('base64');
+    return Buffer.concat([iv, tag, encrypted]).toString("base64");
   },
   async decrypt(blobBase64: string) {
-    const keyHex = process.env[ENV_KEY_NAME] || '';
+    const keyHex = process.env[ENV_KEY_NAME] || "";
     if (!keyHex || keyHex.length < 64) {
-      return Buffer.from(blobBase64, 'base64').toString('utf8');
+      return Buffer.from(blobBase64, "base64").toString("utf8");
     }
-    const data = Buffer.from(blobBase64, 'base64');
+    const data = Buffer.from(blobBase64, "base64");
     const iv = data.slice(0, 12);
     const tag = data.slice(12, 28);
     const encrypted = data.slice(28);
-    const key = Buffer.from(keyHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    const key = Buffer.from(keyHex, "hex");
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
     decipher.setAuthTag(tag);
-    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-    return decrypted.toString('utf8');
-  }
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]);
+    return decrypted.toString("utf8");
+  },
 };
 
 // Default provider can be swapped by calling `setProvider` during app init.

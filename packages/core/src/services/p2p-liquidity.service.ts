@@ -1,10 +1,12 @@
-import { IDatabase } from 'pg-promise';
-import { DexAggregatorService } from './dex-aggregator.service';
-import { StarsP2PService } from './stars-p2p.service';
+import { IDatabase } from "pg-promise";
+import { DexAggregatorService } from "./dex-aggregator.service";
+import { StarsP2PService } from "./stars-p2p.service";
+import { FragmentService } from "./fragment.service";
+import { NitroSwapsService } from "./nitroswaps.service";
 
 export interface LiquiditySource {
-  type: 'p2p' | 'dex';
-  provider?: 'dedust' | 'stonfi';
+  type: "p2p" | "dex" | "nitro";
+  provider?: "dedust" | "stonfi" | "nitro";
   rate: number;
   liquidity: number;
   fee: number;
@@ -21,11 +23,11 @@ export interface ConversionRoute {
 
 /**
  * P2P Liquidity Service
- * 
+ *
  * Intelligently routes conversions through:
  * 1. P2P order book (stars_orders table)
  * 2. DEX liquidity pools (DeDust, Ston.fi)
- * 
+ *
  * Selects best route based on:
  * - Output amount (highest net return)
  * - Execution time
@@ -35,11 +37,15 @@ export class P2PLiquidityService {
   private db: IDatabase<any>;
   private dexAggregator: DexAggregatorService;
   private p2pService: StarsP2PService;
+  private fragmentService: FragmentService;
+  private nitroService: NitroSwapsService;
 
   constructor(db: IDatabase<any>) {
     this.db = db;
     this.dexAggregator = new DexAggregatorService();
     this.p2pService = new StarsP2PService(db);
+    this.fragmentService = new FragmentService();
+    this.nitroService = new NitroSwapsService();
   }
 
   /**
@@ -48,27 +54,33 @@ export class P2PLiquidityService {
   async findBestRoute(
     fromCurrency: string,
     toCurrency: string,
-    amount: number
+    amount: number,
   ): Promise<ConversionRoute> {
     try {
-      // Query both P2P order book and DEX pools in parallel
-      const [p2pOrders, dexQuote] = await Promise.allSettled([
+      // Query P2P order book, DEX pools, and Nitro aggregator in parallel
+      const [p2pOrders, dexQuote, nitroQuote] = await Promise.allSettled([
         this.getP2PLiquidity(fromCurrency, toCurrency, amount),
         this.dexAggregator.getBestRate(fromCurrency, toCurrency, amount),
+        this.nitroService.getQuote(fromCurrency, toCurrency, amount),
       ]);
 
       const routes: ConversionRoute[] = [];
 
       // P2P route (if available)
-      if (p2pOrders.status === 'fulfilled' && p2pOrders.value.totalLiquidity >= amount) {
+      if (
+        p2pOrders.status === "fulfilled" &&
+        p2pOrders.value.totalLiquidity >= amount
+      ) {
         routes.push({
-          sources: [{
-            type: 'p2p',
-            rate: p2pOrders.value.averageRate,
-            liquidity: p2pOrders.value.totalLiquidity,
-            fee: 0.001, // 0.1% P2P fee
-            executionTime: 60, // ~1 minute
-          }],
+          sources: [
+            {
+              type: "p2p",
+              rate: p2pOrders.value.averageRate,
+              liquidity: p2pOrders.value.totalLiquidity,
+              fee: 0.001, // 0.1% P2P fee
+              executionTime: 60, // ~1 minute
+            },
+          ],
           totalRate: p2pOrders.value.averageRate,
           totalFee: amount * 0.001,
           estimatedTime: 60,
@@ -77,17 +89,19 @@ export class P2PLiquidityService {
       }
 
       // DEX route (if available)
-      if (dexQuote.status === 'fulfilled') {
+      if (dexQuote.status === "fulfilled") {
         const { bestPool, rate } = dexQuote.value;
         routes.push({
-          sources: [{
-            type: 'dex',
-            provider: bestPool.provider,
-            rate,
-            liquidity: bestPool.liquidity,
-            fee: bestPool.fee,
-            executionTime: 30, // ~30 seconds
-          }],
+          sources: [
+            {
+              type: "dex",
+              provider: bestPool.provider,
+              rate,
+              liquidity: bestPool.liquidity,
+              fee: bestPool.fee,
+              executionTime: 30, // ~30 seconds
+            },
+          ],
           totalRate: rate,
           totalFee: bestPool.fee,
           estimatedTime: 30,
@@ -95,8 +109,54 @@ export class P2PLiquidityService {
         });
       }
 
+      // Nitro route (if available)
+      if (nitroQuote.status === "fulfilled") {
+        const quote = nitroQuote.value;
+        routes.push({
+          sources: [
+            {
+              type: "nitro",
+              provider: "nitro",
+              rate: quote.rate,
+              liquidity: amount * 5, // Simulated sufficient liquidity
+              fee: quote.feePercent,
+              executionTime: 45, // ~45 seconds
+            },
+          ],
+          totalRate: quote.rate,
+          totalFee: amount * quote.feePercent,
+          estimatedTime: 45,
+          confidence: 0.97,
+        });
+      }
+
+      // Fragment route (optional)
+      const fragmentQuote = await this.fragmentService.getQuote(
+        fromCurrency,
+        toCurrency,
+        amount,
+      );
+      if (fragmentQuote) {
+        routes.push({
+          sources: [
+            {
+              type: "dex",
+              provider: "dedust",
+              rate: fragmentQuote.rate,
+              liquidity: fragmentQuote.liquidity,
+              fee: fragmentQuote.fee,
+              executionTime: fragmentQuote.estimatedTime,
+            },
+          ],
+          totalRate: fragmentQuote.rate,
+          totalFee: fragmentQuote.fee,
+          estimatedTime: fragmentQuote.estimatedTime,
+          confidence: 0.9,
+        });
+      }
+
       if (routes.length === 0) {
-        throw new Error('No liquidity routes available for conversion');
+        throw new Error("No liquidity routes available for conversion");
       }
 
       // Return best route (highest net output)
@@ -106,7 +166,7 @@ export class P2PLiquidityService {
         return bOutput - aOutput;
       })[0];
     } catch (error: any) {
-      console.error('Error finding best route:', error);
+      console.error("Error finding best route:", error);
       throw new Error(`Failed to find conversion route: ${error.message}`);
     }
   }
@@ -116,20 +176,36 @@ export class P2PLiquidityService {
    */
   async executeConversion(
     conversionId: string,
-    route: ConversionRoute
-  ): Promise<{ success: boolean; txHash?: string; dexPoolId?: string; dexProvider?: string; error?: string }> {
+    route: ConversionRoute,
+  ): Promise<{
+    success: boolean;
+    txHash?: string;
+    dexPoolId?: string;
+    dexProvider?: string;
+    error?: string;
+  }> {
     const source = route.sources[0];
 
     try {
-      if (source.type === 'p2p') {
+      if (source.type === "p2p") {
         const result = await this.executeP2PConversion(conversionId);
         return {
           success: true,
-          dexProvider: 'p2p',
+          dexProvider: "p2p",
+          ...result,
+        };
+      } else if (source.type === "nitro") {
+        const result = await this.executeNitroConversion(conversionId, source);
+        return {
+          success: true,
+          dexProvider: "nitro",
           ...result,
         };
       } else {
-        const result = await this.executeDexConversion(conversionId, source);
+        const result =
+          this.fragmentService.isEnabled()
+            ? await this.executeFragmentConversion(conversionId, route)
+            : await this.executeDexConversion(conversionId, source);
         return {
           success: true,
           dexProvider: source.provider,
@@ -137,7 +213,7 @@ export class P2PLiquidityService {
         };
       }
     } catch (error: any) {
-      console.error('Conversion execution error:', error);
+      console.error("Conversion execution error:", error);
       return {
         success: false,
         error: error.message,
@@ -151,11 +227,12 @@ export class P2PLiquidityService {
   private async getP2PLiquidity(
     fromCurrency: string,
     toCurrency: string,
-    amount: number
+    amount: number,
   ) {
     try {
       // Query P2P order book for available sell orders
-      const result = await this.db.oneOrNone(`
+      const result = await this.db.oneOrNone(
+        `
         SELECT 
           COUNT(*) as order_count,
           SUM(stars_amount) as total_liquidity,
@@ -164,15 +241,17 @@ export class P2PLiquidityService {
         WHERE type = 'sell' 
           AND status = 'open'
           AND stars_amount >= $1
-      `, [amount]);
+      `,
+        [amount],
+      );
 
       return {
-        totalLiquidity: parseFloat(result?.total_liquidity || '0'),
-        averageRate: parseFloat(result?.average_rate || '0'),
-        orderCount: parseInt(result?.order_count || '0'),
+        totalLiquidity: parseFloat(result?.total_liquidity || "0"),
+        averageRate: parseFloat(result?.average_rate || "0"),
+        orderCount: parseInt(result?.order_count || "0"),
       };
     } catch (error: any) {
-      console.error('P2P liquidity query error:', error);
+      console.error("P2P liquidity query error:", error);
       return {
         totalLiquidity: 0,
         averageRate: 0,
@@ -188,85 +267,163 @@ export class P2PLiquidityService {
     try {
       // Get conversion details
       const conversion = await this.db.oneOrNone(
-        'SELECT * FROM conversions WHERE id = $1',
-        [conversionId]
+        "SELECT * FROM conversions WHERE id = $1",
+        [conversionId],
       );
 
       if (!conversion) {
-        throw new Error('Conversion not found');
+        throw new Error("Conversion not found");
       }
 
-      const { source_amount, user_id, rate: lockedRate, target_currency } = conversion;
+      const {
+        source_amount,
+        user_id,
+        rate: lockedRate,
+        target_currency,
+      } = conversion;
 
       // For P2P, we are assuming Stars to TON conversion
-      if (target_currency.toUpperCase() !== 'TON') {
-        throw new Error(`P2P conversion only supports TON as a target currency, but got ${target_currency}`);
+      if (target_currency.toUpperCase() !== "TON") {
+        throw new Error(
+          `P2P conversion only supports TON as a target currency, but got ${target_currency}`,
+        );
       }
 
       // Use locked rate if available, otherwise fetch current market rate
-      const rate = lockedRate ? lockedRate.toString() : await this.getMarketRate('STARS', 'TON');
+      const rate = lockedRate
+        ? lockedRate.toString()
+        : await this.getMarketRate("STARS", "TON");
       const tonAmount = (source_amount * parseFloat(rate)).toString();
 
-      console.log(`Creating P2P buy order for conversion ${conversionId}: ${source_amount} Stars @ ${rate}`);
-      const order = await this.p2pService.createBuyOrder(user_id, tonAmount, rate);
-      
-      const updatedOrder = await this.db.oneOrNone('SELECT * FROM stars_orders WHERE id = $1', [order.id]);
+      console.log(
+        `Creating P2P buy order for conversion ${conversionId}: ${source_amount} Stars @ ${rate}`,
+      );
+      const order = await this.p2pService.createBuyOrder(
+        user_id,
+        tonAmount,
+        rate,
+      );
+
+      const updatedOrder = await this.db.oneOrNone(
+        "SELECT * FROM stars_orders WHERE id = $1",
+        [order.id],
+      );
       const currentStatus = updatedOrder?.status;
 
-      if (currentStatus === 'completed' || currentStatus === 'matched') {
+      if (currentStatus === "completed" || currentStatus === "matched") {
         const swap = await this.db.oneOrNone(
-          'SELECT * FROM atomic_swaps WHERE buy_order_id = $1 OR sell_order_id = $1 LIMIT 1',
-          [order.id]
+          "SELECT * FROM atomic_swaps WHERE buy_order_id = $1 OR sell_order_id = $1 LIMIT 1",
+          [order.id],
         );
-        
+
         if (swap && swap.ton_tx_hash) {
-             return {
-                txHash: swap.ton_tx_hash,
-                dexPoolId: 'p2p-order-book',
-             };
+          return {
+            txHash: swap.ton_tx_hash,
+            dexPoolId: "p2p-order-book",
+          };
         }
       }
 
       return {
-        txHash: undefined, 
-        dexPoolId: 'p2p-order-book',
+        txHash: undefined,
+        dexPoolId: "p2p-order-book",
       };
     } catch (error: any) {
-      console.error('P2P conversion execution error:', error);
+      console.error("P2P conversion execution error:", error);
       throw new Error(`P2P conversion failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Execute Nitro swap conversion
+   */
+  private async executeNitroConversion(
+    conversionId: string,
+    source: LiquiditySource,
+  ) {
+    try {
+      const conversion = await this.db.oneOrNone(
+        "SELECT * FROM conversions WHERE id = $1",
+        [conversionId],
+      );
+
+      if (!conversion) {
+        throw new Error("Conversion not found");
+      }
+
+      const {
+        source_amount,
+        source_currency,
+        target_currency,
+        user_id,
+      } = conversion;
+
+      const result = await this.nitroService.executeSwap({
+        fromToken: source_currency,
+        toToken: target_currency,
+        amount: source_amount,
+        minReceive: source_amount * source.rate * 0.98, // 2% slippage
+        userId: user_id,
+        referenceId: conversionId,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Nitro swap execution failed");
+      }
+
+      return {
+        txHash: result.txHash,
+        dexPoolId: "nitro-aggregator",
+      };
+    } catch (error: any) {
+      console.error("Nitro conversion execution error:", error);
+      throw new Error(`Nitro conversion failed: ${error.message}`);
     }
   }
 
   /**
    * Execute DEX swap
    */
-  private async executeDexConversion(conversionId: string, source: LiquiditySource) {
+  private async executeDexConversion(
+    conversionId: string,
+    source: LiquiditySource,
+  ) {
     try {
       // Get conversion details
       const conversion = await this.db.oneOrNone(
-        'SELECT * FROM conversions WHERE id = $1',
-        [conversionId]
+        "SELECT * FROM conversions WHERE id = $1",
+        [conversionId],
       );
 
       if (!conversion) {
-        throw new Error('Conversion not found');
+        throw new Error("Conversion not found");
       }
 
-      const { source_amount, source_currency, target_currency, rate: _lockedRate } = conversion;
+      const {
+        source_amount,
+        source_currency,
+        target_currency,
+        rate: _lockedRate,
+      } = conversion;
 
-      const bestQuote = await this.dexAggregator.getBestRate(source_currency, target_currency, source_amount);
+      const bestQuote = await this.dexAggregator.getBestRate(
+        source_currency,
+        target_currency,
+        source_amount,
+      );
       const { poolId } = bestQuote.bestPool;
       const slippageTolerance = 0.05; // 5%
-      const minOutput = source_amount * bestQuote.rate * (1 - slippageTolerance);
+      const minOutput =
+        source_amount * bestQuote.rate * (1 - slippageTolerance);
 
       // Execute DEX swap
       const result = await this.dexAggregator.executeSwap(
-        source.provider as 'dedust' | 'stonfi',
+        source.provider as "dedust" | "stonfi",
         poolId,
         source_currency,
         target_currency,
         source_amount,
-        minOutput
+        minOutput,
       );
 
       return {
@@ -274,18 +431,44 @@ export class P2PLiquidityService {
         dexPoolId: poolId,
       };
     } catch (error: any) {
-      console.error('DEX conversion execution error:', error);
+      console.error("DEX conversion execution error:", error);
       throw new Error(`DEX conversion failed: ${error.message}`);
     }
+  }
+
+  private async executeFragmentConversion(
+    conversionId: string,
+    route: ConversionRoute,
+  ) {
+    const conversion = await this.db.oneOrNone(
+      "SELECT * FROM conversions WHERE id = $1",
+      [conversionId],
+    );
+    if (!conversion) {
+      throw new Error("Conversion not found");
+    }
+    const amount = conversion.source_amount as number;
+    const rate = route.totalRate;
+    const minOutput = amount * rate * 0.95;
+    const result = await this.fragmentService.execute(
+      conversion.source_currency,
+      conversion.target_currency,
+      amount,
+      minOutput,
+    );
+    return {
+      txHash: result.txHash,
+      dexPoolId: "fragment",
+    };
   }
 
   private async getMarketRate(from: string, to: string): Promise<string> {
     // In a real implementation, this would query an oracle or a reliable price feed.
     // For now, we'll use a hardcoded value for demonstration.
-    if (from === 'STARS' && to === 'TON') {
-      return '0.000015';
+    if (from === "STARS" && to === "TON") {
+      return "0.000015";
     }
-    throw new Error(`Unsupported currency pair: ${from} -> ${to}`);
+    throw new Error(`Unsupported currency pair: ${from} → ${to}`);
   }
 
   /**
@@ -294,16 +477,20 @@ export class P2PLiquidityService {
   async getAllLiquiditySources(
     fromCurrency: string,
     toCurrency: string,
-    amount: number
+    amount: number,
   ): Promise<LiquiditySource[]> {
     const sources: LiquiditySource[] = [];
 
     try {
       // Get P2P liquidity
-      const p2pLiquidity = await this.getP2PLiquidity(fromCurrency, toCurrency, amount);
+      const p2pLiquidity = await this.getP2PLiquidity(
+        fromCurrency,
+        toCurrency,
+        amount,
+      );
       if (p2pLiquidity.totalLiquidity > 0) {
         sources.push({
-          type: 'p2p',
+          type: "p2p",
           rate: p2pLiquidity.averageRate,
           liquidity: p2pLiquidity.totalLiquidity,
           fee: 0.001,
@@ -311,15 +498,19 @@ export class P2PLiquidityService {
         });
       }
     } catch (error) {
-      console.warn('Failed to fetch P2P liquidity:', error);
+      console.warn("Failed to fetch P2P liquidity:", error);
     }
 
     try {
       // Get DEX quotes
-      const dexQuote = await this.dexAggregator.getBestRate(fromCurrency, toCurrency, amount);
+      const dexQuote = await this.dexAggregator.getBestRate(
+        fromCurrency,
+        toCurrency,
+        amount,
+      );
       const { bestPool, rate } = dexQuote;
       sources.push({
-        type: 'dex',
+        type: "dex",
         provider: bestPool.provider,
         rate,
         liquidity: bestPool.liquidity,
@@ -327,7 +518,26 @@ export class P2PLiquidityService {
         executionTime: 30,
       });
     } catch (error) {
-      console.warn('Failed to fetch DEX quotes:', error);
+      console.warn("Failed to fetch DEX quotes:", error);
+    }
+
+    try {
+      // Get Nitro quote
+      const nitroQuote = await this.nitroService.getQuote(
+        fromCurrency,
+        toCurrency,
+        amount,
+      );
+      sources.push({
+        type: "nitro",
+        provider: "nitro",
+        rate: nitroQuote.rate,
+        liquidity: amount * 5,
+        fee: nitroQuote.feePercent,
+        executionTime: 45,
+      });
+    } catch (error) {
+      console.warn("Failed to fetch Nitro quotes:", error);
     }
 
     return sources;

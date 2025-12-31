@@ -6,6 +6,7 @@
 Some integration tests can be executed against a disposable Postgres instance using Testcontainers (Docker). These are opt-in and should only be run when Docker is available locally or on a self-hosted runner.
 
 Prerequisites
+
 - Docker must be installed and running on the host.
 - Node.js 20+ and project dependencies installed (`npm ci`).
 
@@ -17,6 +18,7 @@ USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests_
 ```
 
 CI
+
 - A GitHub Actions job `e2e-fixture` exists in `.github/workflows/ci.yml`. It is intended to run on a self-hosted runner that has Docker installed and is labeled `self-hosted`, `linux`, and `docker`.
 - To add a self-hosted runner:
   1. Create a machine (VM, DigitalOcean droplet, or similar) with Docker installed.
@@ -25,6 +27,7 @@ CI
   4. Ensure the runner user has permission to run Docker and has sufficient resources (2+ CPUs, 4GB+ RAM recommended).
 
 Triggering the e2e job
+
 - The `e2e-fixture` job is currently configured to run manually via `workflow_dispatch`. A maintainer can trigger it from the Actions UI on GitHub.
 
 Self-hosted runner bootstrap script
@@ -42,14 +45,20 @@ RUNNER_LABELS="self-hosted,linux,docker" \
 ```
 
 Notes:
+
 - Obtain `RUNNER_TOKEN` from GitHub: Repository Settings → Actions → Runners → New self-hosted runner → Generate token.
 - The script installs Docker and configures the runner as a systemd service.
 - Ensure the VM has at least 2 CPUs and 4GB memory for reliable e2e runs.
 
 Security
+
 - Tests may set `EXPOSE_TEST_TOKENS=true` which causes controllers to include raw magic tokens in JSON responses for deterministic testing. Do not enable this flag in public CI logs or production.
 
 Contact
+
 - For questions about running fixture-backed tests in CI, reach out to the repository maintainers or open an issue.
 
+Response helpers
+
+- **New response helpers**: the API now centralizes HTTP responses via a helpers file. See `docs/process/response-helpers.md` for usage and migration guidance. Controllers should use `respondSuccess` / `respondError` (or `sendSuccess` / `sendError`) and avoid `res.replySuccess` / `res.replyError` where possible.
 ````

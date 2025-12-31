@@ -2,7 +2,7 @@
 export function extractTokenFromUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    return u.searchParams.get('token');
+    return u.searchParams.get("token");
   } catch (e) {
     return null;
   }

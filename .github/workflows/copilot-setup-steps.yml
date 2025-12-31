@@ -25,7 +25,7 @@ jobs:
         env:
           POSTGRES_USER: tg_user
           POSTGRES_PASSWORD: tg_pass
-          POSTGRES_DB: tg_payment_dev
+          POSTGRES_DB: telepaygate_dev
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -45,7 +45,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --workspaces --ignore-scripts
+        run: npm ci
 
       - name: Build all workspaces
         run: npm run build --workspaces --if-present
@@ -54,14 +54,14 @@ jobs:
         run: |
           cp .env.example .env
           # Update DATABASE_URL to match PostgreSQL service configuration
-          # Must match service credentials: tg_user/tg_pass/tg_payment_dev
-          sed -i 's|DATABASE_URL=.*|DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev|g' .env
+          # Must match service credentials: tg_user/tg_pass/telepaygate_dev
+          sed -i 's|DATABASE_URL=.*|DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev|g' .env
 
       - name: Run database migrations
         run: npm run migrate
         env:
           # Use same credentials as PostgreSQL service above
-          DATABASE_URL: postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev
+          DATABASE_URL: postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev
 
       - name: Verify setup
         run: |

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide explains how to deploy the Telegram Payment Gateway to production environments (Render, Railway, Docker, etc.).
+This guide explains how to deploy the TelePayGate to production environments (Render, Railway, Docker, etc.).
 
 ## Prerequisites
 - Node.js 20+

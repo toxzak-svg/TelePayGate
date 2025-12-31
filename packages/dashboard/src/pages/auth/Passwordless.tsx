@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Mail, Lock } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 export default function Passwordless() {
   const [email, setEmail] = useState('');
@@ -34,8 +34,12 @@ export default function Passwordless() {
       }
       if (!data.success) throw new Error(data.error?.message || 'Failed to send magic link');
       setStep('verify');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to send magic link');
+      }
     } finally {
       setLoading(false);
     }
@@ -71,8 +75,12 @@ export default function Passwordless() {
         return;
       }
       throw new Error(data.error?.message || 'Invalid or expired token');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Verification failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -103,8 +111,12 @@ export default function Passwordless() {
         return;
       }
       throw new Error(data.error?.message || 'Invalid TOTP code');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Verification failed');
+      }
     } finally {
       setLoading(false);
     }

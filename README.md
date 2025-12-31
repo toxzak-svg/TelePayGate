@@ -1,8 +1,9 @@
-# Telegram Payment Gateway
+# TelePayGate
 
-> **Decentralized P2P Payment Processing Gateway** — Convert Telegram Stars to
-TON cryptocurrency through P2P liquidity pools and DEX integration. No
-centralized exchanges, no KYC, truly permissionless.
+![CI](https://github.com/toxzak-svg/TelePayGate/actions/workflows/ci-coverage.yml/badge.svg)
+![Codecov](https://codecov.io/gh/toxzak-svg/TelePayGate/branch/main/graph/badge.svg)
+
+> **Decentralized P2P Payment Processing Gateway** — TelePayGate accepts Telegram Stars and converts them into TON (and optionally fiat) using decentralized P2P liquidity pools and DEX integration. No centralized exchanges, no KYC, truly permissionless.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
@@ -14,10 +15,7 @@ centralized exchanges, no KYC, truly permissionless.
 
 ## 🌟 Overview
 
-A production-ready monorepo payment gateway enabling developers to accept
-Telegram Stars payments and convert them to TON cryptocurrency through
-**decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with
-TypeScript, Express.js, PostgreSQL, and the TON SDK for maximum reliability.
+A production-ready monorepo payment gateway enabling developers to accept Telegram Stars payments and convert them to TON cryptocurrency through **decentralized P2P liquidity pools** (DeDust, Ston.fi). Built with TypeScript, Express.js, PostgreSQL, and TON SDK for maximum reliability.
 
 **Latest Updates** (November 22, 2025):
 
@@ -39,6 +37,7 @@ TypeScript, Express.js, PostgreSQL, and the TON SDK for maximum reliability.
 ### Production Status
 
 **✅ Completed** (100%):
+
 - ✅ Core payment processing (Telegram Stars webhook integration)
 - ✅ TON blockchain integration (wallet management, deposit monitoring, polling)
 - ✅ DEX aggregation & P2P routing (DeDust, Ston.fi)
@@ -60,13 +59,17 @@ See [PROJECT_STATUS.md](./docs/PROJECT_STATUS.md) for complete roadmap and 6-wee
 
 ### Prerequisites
 
+- Node.js 20+
+- Docker & Docker Compose
+- PostgreSQL 16+
+- TON wallet with mnemonic
 
 ### Installation
 
 ```bash
 # Clone repository
-git clone https://github.com/toxzak-svg/telegram-payment-gateway.git
-cd telegram-payment-gateway
+git clone https://github.com/toxzak-svg/telepaygate.git
+cd telepaygate
 
 # Install dependencies
 npm install
@@ -76,12 +79,10 @@ cp .env.example .env
 # Edit .env with your credentials
 
 # Start infrastructure
-docker-compose up -d
-
-Documentation site
+docker compose up -d
+# Documentation site
 
 We publish the repository documentation as a static site via GitHub Pages. Once built by CI the docs will be available on the project's GitHub Pages URL (or you can run MkDocs locally using `mkdocs serve`).
-
 
 # Run database migrations
 npm run migrate
@@ -89,23 +90,59 @@ npm run migrate
 # Start development server
 npm run dev
 ```
- 
+
 ## 🧭 Developer Notes: Response Helpers
+
+## ⚡ Faster installs & builds (safe, opt-in)
+
+To speed up local and CI installs and builds we added a few safe, non-breaking improvements:
+
+- A repository-level `.npmrc` disables npm audit and funding prompts and silences progress output (reduces noisy network calls):
+
+   ```text
+   audit=false
+   fund=false
+   progress=false
+   ```
+
+- Use this faster install command locally or in CI (skips audit/fund checks):
+
+   ```bash
+   npm ci --workspaces --no-audit --no-fund
+   ```
+
+- Build faster (root build runs the core build first, then builds remaining workspaces in parallel):
+
+   ```bash
+   npm run build:parallel
+   ```
+
+These edits are safe and optional — they do not change runtime behaviour, only speed up developer/CI workflows.
+
+### Troubleshooting: Permission errors during install
+
+If `npm ci` fails with EACCES / permission denied errors (e.g. renaming files inside `node_modules`), this usually means some previously-installed files are owned by root. Run the helper script to diagnose and repair ownership:
+
+```bash
+# show if any files are mis-owned and print the chown command to run
+bash scripts/fix-permissions.sh
+
+# when prompted by the previous script, run one of these (requires sudo):
+sudo chown -R $(id -u):$(id -g) $PWD
+# or to only fix node_modules dirs (faster):
+sudo find $PWD -name node_modules -type d -prune -exec chown -R $(id -u):$(id -g) {} +
+```
+
+Avoid running package managers with `sudo` in this repository in the future — it often leaves root-owned files which block later installs.
+
 
 The API exposes a small set of shared response helpers at `packages/api/src/utils/response.ts` to standardize JSON responses across controllers.
 
 - Use `newRequestId()` to generate a UUID v4 request id for tracing and pass it to responses when possible.
--- Prefer `sendSuccess(res, { data }, status, requestId)` to return successful
-   JSON objects. The older `respondSuccess` alias is deprecated and will emit
-   a runtime warning; update controllers to use `sendSuccess`.
+- Use `sendSuccess(res, { data }, status, requestId)` or `respondSuccess(res, { data }, status, requestId)` to return successful JSON objects.
 - Use `sendBadRequest(res, code, message, requestId)` and `sendError(res, code, message, status, requestId)` for errors.
 
-Migration tip: When refactoring existing controllers, preserve the previous
-response shape by placing your payload under a `data` key (e.g.
-`sendSuccess(res, { data: { user } }, 200, requestId)`) — many tests and
-consumers expect `res.body.data.*`. Replace any `respondSuccess`/
-`respondError` usages with `sendSuccess`/`sendError`.
-
+Migration tip: When refactoring existing controllers, preserve the previous response shape by placing your payload under a `data` key (e.g. `respondSuccess(res, { data: { user } }, 200, requestId)`) — many tests and consumers expect `res.body.data.*`.
 
 API will be available at `http://localhost:3000`
 
@@ -119,11 +156,13 @@ API will be available at `http://localhost:3000`
 
    Replace the placeholder with your custodial TON address (must start with `EQ` or `UQ`).
 
+2. **Launch the automated fee collector** once you deploy or have test payments flowing:
+
    ```bash
    npm run worker:fees
    ```
 
-   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, and `TON_API_KEY`, plus a wallet mnemonic stored in your environment, to be present in `.env`.
+   This worker checks pending platform fees every hour and transfers the balance to the wallet you configured above. The worker requires `DATABASE_URL`, `TON_API_URL`, `TON_API_KEY`, and `TON_WALLET_MNEMONIC` to be present in `.env`.
 
 3. **Monitor revenue** using the admin endpoints:
    - `GET /api/v1/admin/stats` – dashboard KPIs (revenue, merchants, success rate)
@@ -142,6 +181,7 @@ API will be available at `http://localhost:3000`
 6. [Development Guide](#development-guide)
 7. [Deployment](#deployment)
 8. [Contributing](#contributing)
+
 ---
 
 ## ✨ Key Features
@@ -253,31 +293,26 @@ USE_TESTCONTAINERS=true npm --workspace=@tg-payment/api run test -- src/__tests_
 ```
 
 - This requires Docker available on the machine running the tests.
-   - CI: an optional `e2e-fixture` job has been added to
-      `.github/workflows/ci.yml`. It is configured to run on `self-hosted`
-      runners and must be triggered manually via `workflow_dispatch` by a
-      maintainer. The self-hosted runner must have Docker available and be
-      labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
+- CI: an optional `e2e-fixture` job has been added to `.github/workflows/ci.yml`. It is configured to run on `self-hosted` runners and must be triggered manually via `workflow_dispatch` by a maintainer. The self-hosted runner must have Docker available and be labeled appropriately (e.g., `self-hosted`, `linux`, `docker`).
 
 Security note: tests may set `EXPOSE_TEST_TOKENS=true` or `EXPOSE_TEST_TOKENS` is used in some test files—do not enable that in public CI logs or production.
 
-
 ### Technology Stack
 
-| Layer              | Technology       | Purpose                          |
-|--------------------|------------------|----------------------------------|
-| **Language**       | TypeScript 5.2   | Type-safe development            |
-| **Runtime**        | Node.js 20+      | JavaScript execution             |
-| **API Framework**  | Express 4.x      | REST API server                  |
-| **Database**       | PostgreSQL 16    | Persistent data storage          |
-| **Blockchain**     | TonWeb, @ton/ton | TON blockchain interaction       |
-| **Containerization** | Docker Compose | Development & deployment env    |
-| **Package Manager**| npm workspaces   | Monorepo management              |
+| Layer                | Technology       | Purpose                      |
+| -------------------- | ---------------- | ---------------------------- |
+| **Language**         | TypeScript 5.2   | Type-safe development        |
+| **Runtime**          | Node.js 20+      | JavaScript execution         |
+| **API Framework**    | Express 4.x      | REST API server              |
+| **Database**         | PostgreSQL 16    | Persistent data storage      |
+| **Blockchain**       | TonWeb, @ton/ton | TON blockchain interaction   |
+| **Containerization** | Docker Compose   | Development & deployment env |
+| **Package Manager**  | npm workspaces   | Monorepo management          |
 
 ### Package Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/          # Business logic & services
 │   ├── api/           # REST API server
@@ -327,14 +362,14 @@ telegram-payment-gateway/
 **Payment States:**
 
 ```text
-pending → received → awaiting_ton → ton_pending → 
+pending → received → awaiting_ton → ton_pending →
 ton_confirmed → converting → settled → completed
 ```
 
 **Conversion States:**
 
 ```text
-pending → rate_locked → awaiting_ton → ton_received → 
+pending → rate_locked → awaiting_ton → ton_received →
 converting_fiat → completed
 ```
 
@@ -349,7 +384,7 @@ pending → awaiting_confirmation → confirmed
 ## 📁 Project Structure
 
 ```
-telegram-payment-gateway/
+telepaygate/
 ├── packages/
 │   ├── core/                    # @tg-payment/core
 │   │   └── src/
@@ -502,7 +537,7 @@ Create `.env` file:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://user:pass@localhost:5432/telepaygate_dev
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 
@@ -515,7 +550,7 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
 
 # TON Blockchain (Direct Integration)
-<24-word mnemonic (do NOT store plaintext in this repository)>
+TON_WALLET_MNEMONIC=your 24 word mnemonic phrase
 TON_API_KEY=your_tonx_key
 TON_API_URL=https://toncenter.com/api/v2/jsonRPC
 TON_MAINNET=true
@@ -571,55 +606,6 @@ npm run format
 # Build for production
 npm run build
 ```
-
-### Dev container / Docker Compose (important)
-
-When running services with Docker Compose in development, the codebase uses
-npm workspaces. To make workspace packages (for example
-`@tg-payment/core`) available inside the containers we install at the
-repository root so packages are hoisted into `/app/node_modules`.
-
-Important notes:
-- The `docker-compose.override.yml` dev configuration runs `npm ci` at the
-   repository root inside the container before starting the workspace dev
-   command. This ensures `@tg-payment/core` and other workspace packages
-   resolve correctly.
-- Do not run `npm ci --prefix packages/api` inside the container if you
-   expect workspace dependencies to be hoisted.
-
-If you prefer to run the dev API inside Docker, use the helper script added
-in `scripts/dev-up.sh` which installs workspaces and brings up the stack in
-the correct order.
-
-### Dev helper scripts
-
-We provide two small helper scripts to make development Docker Compose startup easier:
-
-- `scripts/dev-up.sh` — installs workspace dependencies at the repo root,
-   builds images, starts infrastructure (db, redis, mailhog), runs
-   migrations, and brings up `api` and `dashboard` containers.
-- `scripts/wait-for-services.sh` — waits for Postgres, Redis and the API
-   `/health` endpoint to become available (useful after running the compose
-   stack).
-
-Usage:
-
-```bash
-# Make scripts executable first (one-time)
-chmod +x ./scripts/*.sh
-
-# Start the primary services, run migrations and bring up api/dashboard
-./scripts/dev-up.sh
-
-# or use docker compose directly then wait
-docker compose up -d
-./scripts/wait-for-services.sh
-```
-
-Notes:
-- If your host doesn't expose `pg_isready` or `nc`, the wait script falls back to basic TCP checks and curl. It is intended as a convenience for local dev environments.
-- Helper scripts are designed for dev only — production deployments should use your normal CI/CD pipelines and managed services.
-
 
 ### Testing
 
@@ -682,40 +668,75 @@ npm run migrate:status
 
 ## 🚀 Deployment
 
-### Docker Deployment
+### Production Platforms
+
+**TelePayGate supports multiple deployment platforms with comprehensive guides:**
+
+- **🚂 Railway** — Recommended for quick deployment ([Deployment Guide](./docs/DEPLOYMENT_RAILWAY.md))
+  - Automated migrations via `railway.json`
+  - Managed PostgreSQL with automatic `DATABASE_URL`
+  - SSL support built-in
+  - One-click GitHub integration
+
+- **🎨 Render** — Great for static sites + API ([Deployment Guide](./docs/DEPLOYMENT_RENDER.md))
+
+- **🐳 Docker** — For custom infrastructure ([Docker Guide](./docs/DOCKER.md))
+
+### Docker Deployment (Local/Self-Hosted)
 
 ```bash
 # Build images
-docker compose build
+docker-compose build
 
 # Start all services
-docker compose up -d
+docker-compose up -d
 
 # View logs
-docker compose logs -f api
+docker-compose logs -f api
 
 # Stop services
-docker compose down
+docker-compose down
 ```
 
-### Production Environment
+### Railway Deployment (Recommended)
 
-**Recommended Hosting:**
+**Quick Start:**
 
-- **API**: Railway, Render, or AWS ECS
-- **Database**: Managed PostgreSQL (AWS RDS, Railway, Supabase)
-- **Redis**: Upstash or AWS ElastiCache (for job queues)
+1. Connect GitHub repository to Railway
+2. Add PostgreSQL database (auto-configures `DATABASE_URL`)
+3. Set environment variables (see [Railway Guide](./docs/DEPLOYMENT_RAILWAY.md))
+4. Deploy automatically on push
+
+```bash
+# Or use Railway CLI
+railway login
+railway link
+railway up
+```
+
+**Database Migrations:** Automatically run via `preDeployCommand` in `railway.json`
+
+### Production Environment Setup
+
+**Database Configuration:**
+
+- `DATABASE_URL` — Primary connection string (auto-set by Railway/Render)
+- `DATABASE_POOL_MAX=10` — Connection pool size
+- `DATABASE_POOL_MIN=2` — Minimum connections
+- SSL enabled automatically for Railway/Render PostgreSQL
 
 **Environment Checklist:**
 
 - [ ] Set `NODE_ENV=production`
+- [ ] Configure `DATABASE_URL` (or use platform-provided)
 - [ ] Use strong `WALLET_ENCRYPTION_KEY` (32+ bytes)
-- [ ] Enable database SSL (`DATABASE_SSL=true`)
-- [ ] Configure webhook URL for Telegram
+- [ ] Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET`
+- [ ] Configure `TON_WALLET_MNEMONIC` for blockchain operations
+- [ ] Set webhook URL for Telegram bot
 - [ ] Set up monitoring (Sentry, Datadog)
 - [ ] Enable rate limiting on reverse proxy
 - [ ] Configure CORS for allowed origins
-- [ ] Set up automated backups for PostgreSQL
+- [ ] Set up automated database backups
 
 ### Health Checks
 
@@ -726,6 +747,17 @@ curl https://your-domain.com/health
 # Database connectivity
 curl https://your-domain.com/api/v1/health
 ```
+
+### Troubleshooting
+
+**Database Connection Issues:**
+- Verify `DATABASE_URL` is set correctly
+- Check SSL configuration (auto-enabled for production)
+- Ensure migrations ran successfully: `railway run node database/migrate.cjs status`
+
+**See platform-specific guides for detailed troubleshooting:**
+- [Railway Troubleshooting](./docs/DEPLOYMENT_RAILWAY.md#troubleshooting)
+- [Render Troubleshooting](./docs/DEPLOYMENT_RENDER.md#troubleshooting)
 
 ---
 
@@ -757,6 +789,17 @@ curl https://your-domain.com/api/v1/health
 
 ---
 
+## Documentation site
+
+Built with MkDocs. To preview locally and verify `PRIVACY`/`TERMS` pages before publishing run:
+
+```bash
+pip install mkdocs mkdocs-material
+./scripts/deploy-mkdocs.sh serve
+```
+
+Ensure `docs/PRIVACY.md` and `docs/TERMS.md` contain production contact info and publicly-accessible HTTPS URLs before submission to Telegram Apps Center.
+
 ## 📊 Monitoring & Observability
 
 ### Key Metrics
@@ -782,11 +825,11 @@ curl https://your-domain.com/api/v1/health
 Structured JSON logging with Winston:
 
 ```typescript
-logger.info('Payment processed', {
-  paymentId: 'uuid',
+logger.info("Payment processed", {
+  paymentId: "uuid",
   amount: 1000,
-  currency: 'STARS',
-  status: 'completed'
+  currency: "STARS",
+  status: "completed",
 });
 ```
 
@@ -796,8 +839,8 @@ Integrate Sentry for error monitoring:
 
 ```typescript
 Sentry.captureException(error, {
-  tags: { service: 'payment-processor' },
-  extra: { paymentId, userId }
+  tags: { service: "payment-processor" },
+  extra: { paymentId, userId },
 });
 ```
 
@@ -860,8 +903,8 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 - **Documentation**: [/docs](/docs)
 - **GitHub Copilot Setup**: [Copilot Configuration Guide](./docs/COPILOT_SETUP.md)
-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telegram-payment-gateway/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telegram-payment-gateway/discussions)
+-- **Issues**: [GitHub Issues](https://github.com/toxzak-svg/telepaygate/issues)
+-- **Discussions**: [GitHub Discussions](https://github.com/toxzak-svg/telepaygate/discussions)
 
 ---
 

@@ -1,61 +1,109 @@
 # API Reference
+
+Complete reference for the TelePayGate REST API.
+
+## Base URL
+
+Production: https://api.yourgateway.com/v1
+Development: http://localhost:3000/api/v1
+
+Use the Base URL above when calling API endpoints. The `/api/v1` prefix is the canonical versioned namespace for this project.
+
+## Authentication
+
+All endpoints (except registration and webhooks) require authentication via API key.
+
+### Authentication Methods
+
+**Method 1: Header (Recommended)**
+X-API-Key: pk_your_api_key
+
+Example (curl):
+
+```bash
+curl -H "X-API-Key: pk_your_api_key" "http://localhost:3000/api/v1/users/me"
+```
+
+**Method 2: Bearer Token**
+Authorization: Bearer pk_your_api_key
+
+ 
+
+**Method 3: Query Parameter**
+Notes:
+- The registered `apiSecret` is shown only once — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
+
+**Rate Limit:** 10 requests/minute per IP
+
+GET /api/v1/payments?api_key=pk_your_api_key
+
+Query param auth is supported for convenience but is discouraged for production traffic since URLs may be logged and expose sensitive keys.
+
+---
+
+## User Endpoints
+
+ 
 ### Register New User
 
-Create a new user account and receive API credentials (API key + secret). Store secrets in a secure vault — the server will show the `apiSecret` only once.
+Create a new user account and receive API credentials.
 
 **Endpoint:** `POST /api/v1/users/register`  
-**Authentication:** None
+**Authentication:** None required
 
-**Request Example:**
-```json
+**Request Body:**
 {
-  "appName": "My Telegram Bot",
-  "description": "Bot description (optional)",
-  "webhookUrl": "https://myapp.com/webhook"
+"appName": "My Telegram Bot",
+"description": "Bot description (optional)",
+"webhookUrl": "https://myapp.com/webhook"
 }
-```
 
-**Response Example (201 Created):**
-```json
+text
+
+**Response:** `201 Created`
 {
-  "success": true,
-  "user": {
-    "id": "uuid-v4",
-    "appName": "My Telegram Bot",
-    "apiKey": "pk_abc123...",
-    "apiSecret": "sk_xyz789...",
-    "kycStatus": "pending",
-    "createdAt": "2025-11-12T18:00:00Z"
-  }
+"success": true,
+"user": {
+"id": "uuid-v4",
+"appName": "My Telegram Bot",
+"apiKey": "pk_abc123...",
+"apiSecret": "sk_xyz789...",
+"kycStatus": "pending",
+"createdAt": "2025-11-12T18:00:00Z"
 }
-```
+}
+
 
 Notes:
-- The `apiSecret` is shown only once. Save it securely (vault or secure environment variable) and do not commit it into source control.
-- Make sure `webhookUrl` is reachable and uses HTTPS in production.
+- The registered `apiSecret` is shown only once — store it securely (vault / environment variable) and never commit it to source control.
+- `webhookUrl` will be called by Telegram and TON-related workflows; make sure it is reachable and uses HTTPS in production.
+ 
+**Rate Limit:** 10 requests/minute per IP
 
-### Get current user
+---
 
-Return the current user's profile and settings. Authentication required via `X-API-Key` header or `Authorization: Bearer <token>`.
+### Get User Profile
 
+Retrieve authenticated user's profile information.
+
+ 
 **Endpoint:** `GET /api/v1/users/me`  
 **Authentication:** Required
 
-**Response Example (200 OK):**
-```json
+**Response:** `200 OK`
 {
-  "success": true,
-  "user": {
-    "id": "uuid-v4",
-    "appName": "My Telegram Bot",
-    "apiKey": "pk_***",
-    "webhookUrl": "https://myapp.com/webhook",
-    "kycStatus": "pending",
-    "createdAt": "2025-11-12T18:00:00Z",
-    "updatedAt": "2025-11-12T18:30:00Z"
-  }
+"success": true,
+"user": {
+"id": "uuid-v4",
+"appName": "My Telegram Bot",
+"apiKey": "pk\_\*\*\*",
+"webhookUrl": "https://myapp.com/webhook",
+"kycStatus": "pending",
+"createdAt": "2025-11-12T18:00:00Z",
+"updatedAt": "2025-11-12T18:30:00Z"
 }
-```
+}
 
 
 ---
@@ -67,72 +115,21 @@ Generate new API credentials. Old keys are immediately invalidated.
 **Endpoint:** `POST /api/v1/users/api-keys/regenerate`  
 **Authentication:** Required
 
-**Response Example (200 OK):**
-```json
+**Response:** `200 OK`
 {
-  "success": true,
-  "apiKey": "pk_new123...",
-  "apiSecret": "sk_new789...",
-  "message": "API keys regenerated successfully"
+"success": true,
+"apiKey": "pk_new123...",
+"apiSecret": "sk_new789...",
+"message": "API keys regenerated successfully"
 }
-```
 
+text
 
 **⚠️ Warning:** Old keys stop working immediately.
 
 ---
 
 ## Payment Endpoints
- 
-## Authentication / Session Endpoints
-
-These endpoints implement the passwordless magic-link + optional TOTP flows used by the dashboard and SDK. If you are using API keys for machine-to-machine integrations, you do not need these endpoints.
-
-### Request Magic Link
-
-**Endpoint:** `POST /api/v1/auth/magic-link`  
-**Authentication:** None
-
-**Request Example (application/json):**
-```json
-{ "email": "dev@example.com" }
-```
-
-**Response (202 Accepted):**
-```json
-{ "success": true, "message": "Magic link requested" }
-```
-
-### Verify Magic Link / Create Session
-
-**Endpoint:** `POST /api/v1/auth/magic-link/verify`  
-**Authentication:** None
-
-**Request:**
-```json
-{ "token": "magic-token-from-email" }
-```
-
-**Response (200):** Sets secure session cookie and returns 200 with user details, or 206 if TOTP is required.
-
-### TOTP (Optional)
-
-`POST /api/v1/auth/totp/enable` — Begin TOTP provisioning (returns otpauth string + QR data).
-
-`POST /api/v1/auth/totp/confirm` — Confirm provisioning by validating a 6-digit code.
-
-`POST /api/v1/auth/totp/verify` — Verify code during login flow when TOTP is enabled.
-
-### Session Management
-
-`POST /api/v1/auth/logout` — Revoke session cookie (HTTP-only) and clear user session.
-
-`POST /api/v1/auth/session/refresh` — Refresh session (rotate cookie/refresh token), returns a new session cookie.
-
-### Backup / Recovery
-
-`POST /api/v1/auth/backup-codes/generate` — Generate one-time backup codes for account recovery.
-
 
 ### Telegram Webhook
 
@@ -155,6 +152,7 @@ Receive payment notifications from Telegram Bot API.
 }
 }
 
+text
 
 **Response:** `200 OK`
 {
@@ -168,6 +166,7 @@ Receive payment notifications from Telegram Bot API.
 }
 }
 
+text
 
 **Rate Limit:** 100 requests/minute
 
@@ -181,6 +180,7 @@ Receive notifications about TON blockchain transactions (deposits).
 **Authentication:** None (Public endpoint for blockchain scanners)
 
 **Request Body:**
+
 ```json
 {
   "tx_hash": "unmatched_tx_hash",
@@ -191,6 +191,7 @@ Receive notifications about TON blockchain transactions (deposits).
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -222,6 +223,7 @@ Retrieve details for a specific payment.
 }
 }
 
+text
 
 ---
 
@@ -233,6 +235,7 @@ List all payments with pagination and filtering.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `page` (integer, default: 1) - Page number
 - `limit` (integer, default: 20, max: 100) - Results per page
 - `status` (string, optional) - Filter by status: `pending`, `received`, `converting`, `converted`, `settled`, `failed`
@@ -240,6 +243,7 @@ List all payments with pagination and filtering.
 **Example:**
 GET /api/v1/payments?page=1&limit=20&status=received
 
+text
 
 **Response:** `200 OK`
 {
@@ -258,25 +262,9 @@ GET /api/v1/payments?page=1&limit=20&status=received
 "total": 150,
 "pages": 8
 }
-
-## Fee collection & settlement
-
-Endpoints for fee collection, fee statistics and settlement triggers. Some endpoints are admin-only.
-
-`GET /api/v1/fees/stats` — Aggregated fee statistics (collected, pending, sweep history)
-
-`GET /api/v1/fees/history` — Paginated list of fee collection events
-
-`GET /api/v1/fees/uncollected` — List pending uncollected fees suitable for sweep planning
-
-`GET /api/v1/fees/collections` — List fee collection batches
-
-`POST /api/v1/fees/collect` — Trigger a manual fee collection / sweep (admin-only)
-
-`POST /api/v1/fees/collections/:id/complete` — Mark a collection batch as completed (admin-only)
-
 }
 
+text
 
 ---
 
@@ -304,6 +292,7 @@ Get aggregated statistics for user's payments.
 }
 }
 
+text
 
 ---
 
@@ -323,6 +312,7 @@ Get an estimated conversion rate without locking.
 "targetCurrency": "TON"
 }
 
+text
 
 **Response:** `200 OK`
 {
@@ -344,6 +334,7 @@ Get an estimated conversion rate without locking.
 }
 }
 
+text
 
 ---
 
@@ -362,6 +353,7 @@ Lock an exchange rate for a specified duration.
 "durationSeconds": 300
 }
 
+text
 
 **Response:** `200 OK`
 {
@@ -375,8 +367,10 @@ Lock an exchange rate for a specified duration.
 }
 }
 
+text
 
 **Notes:**
+
 - Minimum lock duration: 60 seconds
 - Maximum lock duration: 600 seconds (10 minutes)
 - Rate locks cannot be extended
@@ -397,6 +391,7 @@ Create a new conversion from Stars to target currency.
 "rateLockId": "lock-uuid"
 }
 
+text
 
 **Response:** `201 Created`
 {
@@ -419,8 +414,10 @@ Create a new conversion from Stars to target currency.
 }
 }
 
+text
 
 **Requirements:**
+
 - Minimum 1000 Stars per conversion
 - All payments must be in `received` status
 - Rate lock (if provided) must be valid
@@ -454,8 +451,10 @@ Check the status of an ongoing conversion.
 }
 }
 
+text
 
 **Status Values:**
+
 - `pending` - Conversion created
 - `rate_locked` - Rate locked
 - `phase1_prepared` - Payments verified
@@ -474,6 +473,7 @@ List all conversions with pagination and filtering.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `page` (integer, default: 1)
 - `limit` (integer, default: 20, max: 100)
 - `status` (string, optional)
@@ -498,66 +498,26 @@ List all conversions with pagination and filtering.
 }
 }
 
+text
 
 ---
 
 ## Rate Limits
 
-| Endpoint Type | Rate Limit |
-|--------------|------------|
-| User Registration | 10 req/min per IP |
-| Standard API | 60 req/min per user |
-| Webhooks | 100 req/min per user |
+| Endpoint Type     | Rate Limit           |
+| ----------------- | -------------------- |
+| User Registration | 10 req/min per IP    |
+| Standard API      | 60 req/min per user  |
+| Webhooks          | 100 req/min per user |
 
 **Rate Limit Headers:**
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
 X-RateLimit-Reset: 1699565400
 
+text
 
 ---
-
-## System & Admin endpoints
-
-### Health check
-
-Simple operational health check for the API (useful for load-balancers and uptime probes).
-
-**Endpoint:** `GET /api/v1/health`  
-**Authentication:** None (public)
-
-**Response (200 OK):**
-```json
-{
-  "status": "ok",
-  "database": "connected",
-  "cache": "connected",
-  "uptime": 12345
-}
-```
-
-### Admin / Dashboard endpoints (requires admin or dashboard role)
-
-These endpoints are used by the admin dashboard and require an API key with an admin role or a dashboard session with `admin` privileges.
-
-`GET /api/v1/admin/stats` — Returns high level KPIs (revenue, volumes, success rates)
-
-`GET /api/v1/admin/revenue` — Returns revenue series for the given timespan
-
-`GET /api/v1/admin/revenue/summary?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` — Summary statistics
-
-`GET /api/v1/admin/transactions/summary?startDate=...&endDate=...` — Transaction summaries
-
-`GET /api/v1/admin/users` — List dashboard users
-
-`GET /api/v1/admin/config` — Read runtime configuration (fee structure, thresholds)
-
-`PUT /api/v1/admin/config` — Update runtime configuration (admin only)
-
-`GET /api/v1/admin/payments` — Query payments across merchants (admin-only)
-
-`GET /api/v1/admin/conversions` — Query conversions across the system (admin-only)
-
 
 ## Error Responses
 
@@ -572,21 +532,22 @@ All errors follow this format:
 }
 }
 
+text
 
 ### Common Error Codes
 
-| Code | Status | Description |
-|------|--------|-------------|
-| `UNAUTHORIZED` | 401 | Invalid or missing API key |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request data |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `MINIMUM_AMOUNT_NOT_MET` | 400 | Below 1000 Stars minimum |
-| `INSUFFICIENT_BALANCE` | 400 | Not enough funds |
-| `RATE_LOCK_EXPIRED` | 400 | Rate lock no longer valid |
-| `CONVERSION_IN_PROGRESS` | 409 | Conversion already processing |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                     | Status | Description                   |
+| ------------------------ | ------ | ----------------------------- |
+| `UNAUTHORIZED`           | 401    | Invalid or missing API key    |
+| `FORBIDDEN`              | 403    | Insufficient permissions      |
+| `NOT_FOUND`              | 404    | Resource not found            |
+| `VALIDATION_ERROR`       | 400    | Invalid request data          |
+| `RATE_LIMIT_EXCEEDED`    | 429    | Too many requests             |
+| `MINIMUM_AMOUNT_NOT_MET` | 400    | Below 1000 Stars minimum      |
+| `INSUFFICIENT_BALANCE`   | 400    | Not enough funds              |
+| `RATE_LOCK_EXPIRED`      | 400    | Rate lock no longer valid     |
+| `CONVERSION_IN_PROGRESS` | 409    | Conversion already processing |
+| `INTERNAL_ERROR`         | 500    | Server error                  |
 
 ---
 
@@ -602,11 +563,13 @@ Fetch current exchange rates from all supported DEX providers.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `fromToken` (string, required): Source token symbol (e.g., "TON", "USDT")
 - `toToken` (string, required): Target token symbol
 - `amount` (number, optional): Amount to convert for quote
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -649,11 +612,13 @@ Retrieve liquidity pool information for a specific token pair.
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `token0` (string, required): First token symbol
 - `token1` (string, required): Second token symbol
 - `provider` (string, optional): Filter by provider ("dedust", "stonfi", or omit for all)
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -688,6 +653,7 @@ Find the optimal swap route for a given token pair and amount.
 **Authentication:** Required
 
 **Request Body:**
+
 ```json
 {
   "fromToken": "TON",
@@ -698,6 +664,7 @@ Find the optimal swap route for a given token pair and amount.
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -732,6 +699,7 @@ Execute a swap through the DEX (requires admin privileges).
 **Authentication:** Required (Admin)
 
 **Request Body:**
+
 ```json
 {
   "provider": "stonfi",
@@ -745,6 +713,7 @@ Execute a swap through the DEX (requires admin privileges).
 ```
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -780,6 +749,7 @@ Create a new buy or sell order for Stars/TON exchange.
 **Authentication:** Required
 
 **Request Body:**
+
 ```json
 {
   "type": "buy",
@@ -790,6 +760,7 @@ Create a new buy or sell order for Stars/TON exchange.
 ```
 
 **Response:** `201 Created`
+
 ```json
 {
   "success": true,
@@ -816,11 +787,13 @@ List all P2P orders (own or available for matching).
 **Authentication:** Required
 
 **Query Parameters:**
+
 - `type` (string, optional): Filter by "buy" or "sell"
 - `status` (string, optional): Filter by status
 - `own` (boolean, optional): Show only user's orders
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -853,6 +826,7 @@ Cancel a pending P2P order.
 **Authentication:** Required
 
 **Response:** `200 OK`
+
 ```json
 {
   "success": true,
@@ -878,6 +852,7 @@ Configure webhook URL in your user profile to receive real-time events.
 }
 }
 
+text
 
 **Conversion Completed:**
 {
@@ -890,6 +865,7 @@ Configure webhook URL in your user profile to receive real-time events.
 }
 }
 
+text
 
 ### Webhook Signature Verification
 
@@ -913,33 +889,30 @@ return res.status(401).json({ error: 'Invalid signature' });
 // Process webhook...
 });
 
+text
 
 ---
 
 ## SDK Usage
 
-For TypeScript/JavaScript projects, use the official SDK.
+For TypeScript/JavaScript projects, use the official SDK:
 
-Install the client SDK and initialize it in your application:
-
-```bash
 npm install @tg-payment/sdk
-```
 
-```js
-import TelegramPaymentGateway from '@tg-payment/sdk';
+text
+undefined
+import TelePayGate from '@tg-payment/sdk';
 
-const gateway = new TelegramPaymentGateway({
-  apiKey: process.env.TG_API_KEY,
-  apiSecret: process.env.TG_API_SECRET,
+const gateway = new TelePayGate({
+apiKey: 'pk_your_key',
+apiSecret: 'sk_your_secret',
 });
 
-// Example: estimate a conversion
 const estimate = await gateway.estimateConversion({
-  starsAmount: 5000,
-  targetCurrency: 'TON',
+starsAmount: 5000,
+targetCurrency: 'TON',
 });
-console.log('Estimate:', estimate);
-```
+
+text
 
 See [SDK Documentation](../packages/sdk/README.md) for complete reference.

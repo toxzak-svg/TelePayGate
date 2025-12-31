@@ -8,7 +8,7 @@ const { initDatabase, getDatabase } = require('../packages/core/dist/db/connecti
 const AuthService = require('../packages/core/dist/services/auth.service').default;
 
 async function run() {
-  const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev';
+  const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev';
   console.log('Using DATABASE_URL:', DATABASE_URL);
   // Init DB connection
   const db = initDatabase(DATABASE_URL);

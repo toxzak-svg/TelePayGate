@@ -7,7 +7,7 @@
 
 set -e
 
-echo "🧹 Cleaning Telegram Payment Gateway..."
+echo "🧹 Cleaning TelePayGate..."
 echo ""
 
 # Remove build artifacts

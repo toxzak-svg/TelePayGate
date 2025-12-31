@@ -1,5 +1,5 @@
 {
-  "name": "telegram-payment-gateway",
+  "name": "telepaygate",
   "version": "0.1.0",
   "description": "Unified payment processing for Telegram Stars → TON → Fiat conversions",
   "private": true,
@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+<<<<<<< HEAD
     "build": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api && npm run build -w @tg-payment/dashboard && npm run build -w @tg-payment/sdk",
     "build:backend": "npm run build -w @tg-payment/core && npm run build -w @tg-payment/api",
     "test": "npm run test:prepare && npm run test:run",
@@ -38,40 +39,44 @@
     "trigger:dev": "npx trigger.dev@latest dev",
     "trigger:deploy": "npx trigger.dev@latest deploy",
     "prepare": "bash scripts/install-git-hooks.sh || true"
+=======
+    "test:ci": "npm run -w telepaygate-core test -- --detectOpenHandles && npm run -w telepaygate-api test -- --detectOpenHandles && npm run -w telepaygate-sdk test -- --detectOpenHandles && npm run -w @tg-payment/dashboard test",
+    "coverage:telepaygate-sdk": "npm run -w telepaygate-sdk test:coverage",
+    "coverage:dashboard": "npm run -w @tg-payment/dashboard test -- --coverage",
+    "coverage:core": "npm run -w telepaygate-core test:coverage",
+    "coverage:api": "npm run -w telepaygate-api test -- --coverage",
+    "coverage:all": "npm run coverage:telepaygate-sdk && npm run coverage:dashboard && npm run coverage:core && npm run coverage:api",
+    "coverage:merge": "npx lcov-result-merger './packages/**/coverage/lcov.info' > coverage/lcov.info || true"
+>>>>>>> main
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
-    "@trigger.dev/build": "4.1.2",
+    "@trigger.dev/build": "^4.1.1",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/pg-promise": "^0.0.28",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
-    "cspell": "^9.3.2",
-    "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^8.57.1",
-    "jest": "^30.2.0",
+    "eslint": "^8.53.0",
+    "lcov-result-merger": "^3.0.1",
+    "normalize-range": "^0.1.2",
     "postcss": "^8.5.6",
     "prettier": "^3.0.3",
-    "remark-cli": "^12.0.1",
-    "remark-preset-lint-recommended": "^7.0.1",
-    "retext-spell": "^6.1.0",
+    "sharp": "^0.32.6",
     "supertest": "^7.1.4",
     "tailwindcss": "^4.1.17",
-    "testcontainers": "^11.8.1",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.4",
-    "vitest": "^4.0.14"
+    "testcontainers": "^9.1.0",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.0.0",
-    "@trigger.dev/sdk": "4.1.2",
-    "nodemailer": "7.0.10",
+    "@trigger.dev/sdk": "^4.1.1",
+    "dotenv": "^17.2.3",
     "pg": "^8.11.3",
     "pg-promise": "^12.2.0",
     "tonweb": "^0.0.66"

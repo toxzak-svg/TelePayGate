@@ -4,6 +4,7 @@
 **Goal**: Enhance the gateway with advanced financial tools, security features, and cross-chain capabilities.
 
 ## 1. Advanced Analytics Dashboard
+
 **Objective**: Provide deep insights into P2P markets and DEX performance.
 
 - [ ] **P2P Order Book Page**: Visualize open buy/sell orders from `stars_orders`.
@@ -12,6 +13,7 @@
 - [ ] **Export Tools**: CSV/PDF export for transaction history and tax reporting.
 
 ## 2. Multi-Signature Wallets
+
 **Objective**: Increase security for high-value transactions and platform treasury.
 
 - [ ] **Multisig Contract Integration**: Integrate standard TON multisig wallet contracts (v4).
@@ -20,6 +22,7 @@
 - [ ] **Dashboard UI**: Interface for admins to approve pending withdrawals.
 
 ## 3. Cross-Chain Bridges (ETH/BSC)
+
 **Objective**: Allow settlement in stablecoins on other chains (USDT-ERC20, USDT-BEP20).
 
 - [ ] **Bridge Provider Integration**: Integrate with a reputable bridge provider (e.g., Orbit Bridge or similar) or CEX-based bridge API.
@@ -27,21 +30,22 @@
 - [ ] **Settlement Service Update**: Update `SettlementService` to support non-TON payout addresses.
 
 ## 4. Automated Market Making (AMM)
+
 **Objective**: Provide internal liquidity for Stars <-> TON pairs to reduce reliance on external DEXes.
 
 - [ ] **Liquidity Pools**: Create internal liquidity pool logic in `P2PLiquidityService`.
-- [ ] **Pricing Algorithm**: Implement Constant Product Market Maker (x * y = k) or similar curve.
+- [ ] **Pricing Algorithm**: Implement Constant Product Market Maker (x \* y = k) or similar curve.
 - [ ] **Liquidity Provider API**: Endpoints for users to deposit assets into pools and earn fees.
 - [ ] **Arbitrage Bot**: Simple bot to rebalance internal pools against external DEX rates.
 
 ## Execution Timeline
 
-| Feature | Estimated Effort | Priority |
-| :--- | :--- | :--- |
-| **Advanced Dashboard** | 1 Week | High |
-| **Multi-Sig Wallets** | 1-2 Weeks | Medium |
-| **AMM Logic** | 2 Weeks | Low |
-| **Cross-Chain Bridges** | 2-3 Weeks | Low |
+| Feature                 | Estimated Effort | Priority |
+| :---------------------- | :--------------- | :------- |
+| **Advanced Dashboard**  | 1 Week           | High     |
+| **Multi-Sig Wallets**   | 1-2 Weeks        | Medium   |
+| **AMM Logic**           | 2 Weeks          | Low      |
+| **Cross-Chain Bridges** | 2-3 Weeks        | Low      |
 
 ## Next Steps
 

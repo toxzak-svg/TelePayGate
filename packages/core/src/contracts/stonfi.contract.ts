@@ -1,4 +1,11 @@
-import { Address, beginCell, Contract, ContractProvider, Sender, SendMode } from '@ton/core';
+import {
+  Address,
+  beginCell,
+  Contract,
+  ContractProvider,
+  Sender,
+  SendMode,
+} from "@ton/core";
 
 export interface StonfiSwapParams {
   amountIn: bigint;
@@ -29,14 +36,14 @@ export class StonfiRouter implements Contract {
   async getAmountsOut(
     provider: ContractProvider,
     amountIn: bigint,
-    path: Address[]
+    path: Address[],
   ): Promise<bigint[]> {
     const pathCell = beginCell();
-    path.forEach(addr => pathCell.storeAddress(addr));
+    path.forEach((addr) => pathCell.storeAddress(addr));
 
-    const result = await provider.get('get_amounts_out', [
-      { type: 'int', value: amountIn },
-      { type: 'cell', cell: pathCell.endCell() },
+    const result = await provider.get("get_amounts_out", [
+      { type: "int", value: amountIn },
+      { type: "cell", cell: pathCell.endCell() },
     ]);
 
     const amounts: bigint[] = [];
@@ -59,11 +66,11 @@ export class StonfiRouter implements Contract {
     provider: ContractProvider,
     via: Sender,
     params: StonfiSwapParams,
-    value: bigint
+    value: bigint,
   ) {
     // Encode path as cell
     const pathCell = beginCell();
-    params.path.forEach(addr => pathCell.storeAddress(addr));
+    params.path.forEach((addr) => pathCell.storeAddress(addr));
 
     const messageBody = beginCell()
       .storeUint(0x25938561, 32) // swapExactTokensForTokens op code
@@ -88,15 +95,15 @@ export class StonfiRouter implements Contract {
   async getPoolInfo(
     provider: ContractProvider,
     token0: Address,
-    token1: Address
+    token1: Address,
   ): Promise<{
     reserve0: bigint;
     reserve1: bigint;
     lpSupply: bigint;
   }> {
-    const result = await provider.get('get_pool_data', [
-      { type: 'slice', cell: beginCell().storeAddress(token0).endCell() },
-      { type: 'slice', cell: beginCell().storeAddress(token1).endCell() },
+    const result = await provider.get("get_pool_data", [
+      { type: "slice", cell: beginCell().storeAddress(token0).endCell() },
+      { type: "slice", cell: beginCell().storeAddress(token1).endCell() },
     ]);
 
     return {

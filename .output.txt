@@ -1,0 +1,367 @@
+
+> telepaygate-core@0.1.2 test
+> jest --forceExit
+ PASS  src/__tests__/rate.aggregator.test.ts (11.265 s)
+  ● Console
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: TON → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+ PASS  src/__tests__/transaction-monitor.test.ts (11.519 s)
+  ● Console
+    console.log
+      ✅ Transaction confirmed: hash-123 for conversion conv-123
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
+    console.error
+      ❌ Transaction failed: hash-456 for conversion conv-456
+       99 |         });
+      100 |       } else if (state && state.status === 'failed') {
+    > 101 |         console.error(
+          |                 ^
+      102 |           `❌ Transaction failed: ${txHash} for conversion ${conversion.id}`,
+      103 |         );
+      104 |         await this.db.none(
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:101:17)
+      at TransactionMonitorService.checkPendingTransactions (src/services/transaction-monitor.service.ts:57:9)
+      at Object.<anonymous> (src/__tests__/transaction-monitor.test.ts:64:5)
+    console.log
+      ✅ Transaction confirmed: hash-789 for conversion conv-789
+      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
+ PASS  src/__tests__/unit/deposit-monitor.service.test.ts (11.567 s)
+  ● Console
+    console.log
+      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
+      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:47:13)
+    console.log
+      ✅ Manual deposit confirmed {
+        depositId: 'deposit-1',
+        paymentId: 'payment-1',
+        conversionId: undefined,
+        txHash: 'abc'
+      }
+      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:164:13)
+ PASS  src/__tests__/unit/basic.test.ts (12.046 s)
+  ● Console
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: TON → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+    console.log
+      🧪 Simulated rates for TON → USD: [
+        {
+          source: 'coingecko',
+          value: 2.1607499999999997,
+          timestamp: 1767127334675
+        },
+        {
+          source: 'dexscreener',
+          value: 2.1456999999999997,
+          timestamp: 1767127334675
+        },
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767127334675 }
+      ]
+      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
+ PASS  src/__tests__/reconciliation.service.test.ts (11.969 s)
+  ● Console
+    console.log
+      ✅ Conversion reconciled: conv-id - Status: matched
+      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
+ PASS  src/__tests__/unit/webhook.service.test.ts
+  ● Console
+    console.error
+      ❌ Webhook delivery failed (attempt NaN/5): {
+        eventId: 'event-1',
+        url: 'http://test.com',
+        error: "Cannot read properties of undefined (reading 'status')",
+        nextRetry: 2025-12-30T21:42:14.905Z
+      }
+      132 |       );
+      133 |
+    > 134 |       console.error(
+          |               ^
+      135 |         `❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`,
+      136 |         {
+      137 |           eventId,
+      at WebhookService.deliverEvent (src/services/webhook.service.ts:134:15)
+      at WebhookService.queueEvent (src/services/webhook.service.ts:62:5)
+      at Object.<anonymous> (src/__tests__/unit/webhook.service.test.ts:29:7)
+    console.log
+      ✅ Webhook delivered: event-1 to https://example.com/webhook
+      at WebhookService.deliverEvent (src/services/webhook.service.ts:112:17)
+    console.error
+      ❌ Webhook delivery failed (attempt 1/5): {
+        eventId: 'event-2',
+        url: 'https://example.com/webhook',
+        error: 'Connection timeout',
+        nextRetry: 2025-12-30T20:42:44.920Z
+      }
+      132 |       );
+      133 |
+    > 134 |       console.error(
+          |               ^
+      135 |         `❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`,
+      136 |         {
+      137 |           eventId,
+      at WebhookService.deliverEvent (src/services/webhook.service.ts:134:15)
+      at Object.<anonymous> (src/__tests__/unit/webhook.service.test.ts:92:7)
+ PASS  src/__tests__/auth.totp.test.ts (12.65 s)
+  ● Console
+    console.warn
+      ⚠️ Database not available for TOTP tests, skipping
+      30 |     dbAvailable = true;
+      31 |   } catch (e) {
+    > 32 |     console.warn("⚠️ Database not available for TOTP tests, skipping");
+         |             ^
+      33 |     dbAvailable = false;
+      34 |   }
+      35 | });
+      at Object.<anonymous> (src/__tests__/auth.totp.test.ts:32:13)
+    console.log
+      ⏭️ Skipping test - database not available
+      at Object.<anonymous> (src/__tests__/auth.totp.test.ts:58:13)
+ PASS  src/__tests__/unit/settlement.service.test.ts (12.542 s)
+  ● Console
+    console.log
+      💸 Executing fiat payout via stub: 55 USD to user user-1
+      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:426:13)
+    console.log
+      💸 [STUB] Fiat payout: 55 USD to user user-1
+      at StubFiatGateway.executePayout (src/services/settlement.service.ts:73:13)
+    console.log
+      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
+      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:410:15)
+ PASS  src/__tests__/auth.service.test.ts
+ PASS  src/__tests__/unit/direct-conversion.service.test.ts
+  ● Console
+    console.log
+      ✅ Conversion created (direct TON): { id: 'conv-1', stars: 1000, ton: 2.955, destination: 'dest-addr' }
+      at src/services/direct-conversion.service.ts:261:15
+ PASS  src/__tests__/unit/wallet-manager.service.test.ts (12.883 s)
+ PASS  src/__tests__/unit/services.test.ts (12.984 s)
+  ● Console
+    console.log
+      💰 Processing payment: { amount: undefined, currency: 'XTR', chargeId: undefined }
+      at TelegramService.processSuccessfulPayment (src/services/Telegram.service.ts:147:13)
+    console.warn
+      ⚠️ PaymentModel not configured, returning ephemeral record
+      170 |     }
+      171 |
+    > 172 |     console.warn("⚠️ PaymentModel not configured, returning ephemeral record");
+          |             ^
+      173 |     return {
+      174 |       id: payment.telegram_payment_charge_id,
+      175 |       userId,
+      at TelegramService.processSuccessfulPayment (src/services/Telegram.service.ts:172:13)
+      at Object.<anonymous> (src/__tests__/unit/services.test.ts:26:29)
+    console.log
+      ✅ Telegram webhook set to: https://example.com/webhook
+      at TelegramService.initializeWebhook (src/services/Telegram.service.ts:90:15)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: TON → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+    console.log
+      🧪 Simulated rates for TON → USD: [
+        {
+          source: 'coingecko',
+          value: 2.1607499999999997,
+          timestamp: 1767127335662
+        },
+        {
+          source: 'dexscreener',
+          value: 2.1456999999999997,
+          timestamp: 1767127335662
+        },
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767127335662 }
+      ]
+      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
+    console.log
+      🧪 RateAggregatorService running in simulation mode
+      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+    console.log
+      📊 Fetching rates: BTC → USD
+      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+    console.log
+      🧪 Simulated rates for BTC → USD: [
+        {
+          source: 'coingecko',
+          value: 45224.99999999999,
+          timestamp: 1767127335667
+        },
+        { source: 'dexscreener', value: 44910, timestamp: 1767127335667 },
+        { source: 'coinmarketcap', value: 45090, timestamp: 1767127335667 }
+      ]
+      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
+ PASS  src/__tests__/unit/nitroswaps.service.test.ts
+ PASS  src/__tests__/integration/stonfi-swap.test.ts (13.092 s)
+  ● Console
+    console.log
+      🧪 DEX integration tests running in simulation mode
+      at setupDexIntegrationTest (src/test-utils.ts:21:13)
+ PASS  src/__tests__/unit/stars-p2p.service.test.ts (13.077 s)
+ PASS  src/__tests__/integration/dedust-swap.test.ts (13.121 s)
+  ● Console
+    console.log
+      🧪 DEX integration tests running in simulation mode
+      at setupDexIntegrationTest (src/test-utils.ts:21:13)
+ PASS  src/__tests__/conversion.service.test.ts (13.348 s)
+  ● Console
+    console.log
+      ✅ Fee fee-id marked as collected.
+      at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
+    console.log
+      ✅ Conversion completed: {
+        conversionId: '6ae12869-3190-4982-aee7-e3e2b83ea9a6',
+        txHash: 'tx-hash'
+      }
+      at src/services/conversion.service.ts:426:21
+    console.log
+      ✅ Fee fee-id marked as collected.
+      at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
+    console.log
+      ✅ Conversion completed: {
+        conversionId: '5b67fcbb-bedf-4373-9301-2fc497f9eb45',
+        txHash: 'tx-1'
+      }
+      at src/services/conversion.service.ts:426:21
+ PASS  src/__tests__/integration.test.ts (13.298 s)
+  ● Console
+    console.log
+      ✅ Fee recorded: {
+        feeCollectionId: undefined,
+        conversionId: undefined,
+        feeAmountStars: NaN,
+        feeAmountTon: NaN
+      }
+      at FeeService.recordFee (src/services/fee.service.ts:112:13)
+    console.log
+      ✅ Conversion created with fees: {
+        id: undefined,
+        stars: 1000,
+        ton: NaN,
+        platformFee: NaN,
+        platformFeeTon: NaN
+      }
+      at ConversionService.createConversion (src/services/conversion.service.ts:235:13)
+    console.log
+      ✅ Conversion reconciled: 6f042f4f-40d7-4c95-b0e9-2818340d1402 - Status: matched
+      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
+ PASS  src/__tests__/unit/p2p-liquidity.service.test.ts (13.367 s)
+  ● Console
+    console.error
+      DeDust API error: Invalid URL
+      238 |       };
+      239 |     } catch (error: any) {
+    > 240 |       console.error("DeDust API error:", error.message);
+          |               ^
+      241 |       throw new Error(`DeDust API failed: ${error.message}`);
+      242 |     }
+      243 |   }
+      at DexAggregatorService.getDeDustQuote (src/services/dex-aggregator.service.ts:240:15)
+          at async Promise.allSettled (index 0)
+      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:162:42)
+          at async Promise.allSettled (index 1)
+      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
+      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+    console.error
+      Ston.fi API error: Invalid URL
+      293 |       };
+      294 |     } catch (error: any) {
+    > 295 |       console.error("Ston.fi API error:", error.message);
+          |               ^
+      296 |       throw new Error(`Ston.fi API failed: ${error.message}`);
+      297 |     }
+      298 |   }
+      at DexAggregatorService.getStonfiQuote (src/services/dex-aggregator.service.ts:295:15)
+          at async Promise.allSettled (index 1)
+      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:162:42)
+          at async Promise.allSettled (index 1)
+      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
+      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+    console.warn
+      DeDust quote failed: Error: DeDust API failed: Invalid URL
+          at DexAggregatorService.getDeDustQuote (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:241:13)
+          at processTicksAndRejections (node:internal/process/task_queues:103:5)
+          at async Promise.allSettled (index 0)
+          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:162:42)
+          at async Promise.allSettled (index 1)
+          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
+          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
+      170 |         quotes.push(dedustQuote.value);
+      171 |       } else {
+    > 172 |         console.warn("DeDust quote failed:", dedustQuote.reason);
+          |                 ^
+      173 |       }
+      174 |
+      175 |       if (stonfiQuote.status === "fulfilled") {
+      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:172:17)
+          at async Promise.allSettled (index 1)
+      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
+      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+    console.warn
+      Ston.fi quote failed: Error: Ston.fi API failed: Invalid URL
+          at DexAggregatorService.getStonfiQuote (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:296:13)
+          at processTicksAndRejections (node:internal/process/task_queues:103:5)
+          at async Promise.allSettled (index 1)
+          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:162:42)
+          at async Promise.allSettled (index 1)
+          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
+          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
+      176 |         quotes.push(stonfiQuote.value);
+      177 |       } else {
+    > 178 |         console.warn("Ston.fi quote failed:", stonfiQuote.reason);
+          |                 ^
+      179 |       }
+      180 |
+      181 |       if (quotes.length === 0) {
+      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:178:17)
+          at async Promise.allSettled (index 1)
+      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
+      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+    console.error
+      DEX aggregator error: Error: All DEX providers failed to provide quotes
+          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:182:15)
+          at processTicksAndRejections (node:internal/process/task_queues:103:5)
+          at async Promise.allSettled (index 1)
+          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
+          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
+      186 |       return quotes.sort((a, b) => b.outputAmount - a.outputAmount)[0];
+      187 |     } catch (error: any) {
+    > 188 |       console.error("DEX aggregator error:", error);
+          |               ^
+      189 |       throw new Error(`Failed to get DEX quote: ${error.message}`);
+      190 |     }
+      191 |   }
+      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:188:15)
+          at async Promise.allSettled (index 1)
+      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
+      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Test Suites: 19 passed, 19 total
+Tests:       2 skipped, 58 passed, 60 total
+Snapshots:   0 total
+Time:        15.192 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+> telepaygate-sdk@0.1.0 test
+> jest
+ PASS  src/__tests__/client.error.test.ts
+ PASS  src/__tests__/index.test.ts
+ PASS  src/__tests__/client.test.ts
+Test Suites: 3 passed, 3 total
+Tests:       21 passed, 21 total
+Snapshots:   0 total
+Time:        3.309 s, estimated 4 s
+Ran all test suites.

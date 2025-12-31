@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🔧 Telegram Payment Gateway - Automated Fix Script"
+echo "🔧 TelePayGate - Automated Fix Script"
 echo "=================================================="
 
 # Step 1: Rename docker-compose file

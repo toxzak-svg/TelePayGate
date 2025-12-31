@@ -1,25 +1,25 @@
 export enum DexErrorCode {
-  INSUFFICIENT_LIQUIDITY = 'INSUFFICIENT_LIQUIDITY',
-  SLIPPAGE_EXCEEDED = 'SLIPPAGE_EXCEEDED',
-  INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS',
-  TRANSACTION_REVERTED = 'TRANSACTION_REVERTED',
-  GAS_ESTIMATION_FAILED = 'GAS_ESTIMATION_FAILED',
-  POOL_NOT_FOUND = 'POOL_NOT_FOUND',
-  DEADLINE_EXCEEDED = 'DEADLINE_EXCEEDED',
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  WALLET_NOT_INITIALIZED = 'WALLET_NOT_INITIALIZED',
-  INVALID_TOKEN_ADDRESS = 'INVALID_TOKEN_ADDRESS',
-  TRANSACTION_TIMEOUT = 'TRANSACTION_TIMEOUT',
+  INSUFFICIENT_LIQUIDITY = "INSUFFICIENT_LIQUIDITY",
+  SLIPPAGE_EXCEEDED = "SLIPPAGE_EXCEEDED",
+  INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS",
+  TRANSACTION_REVERTED = "TRANSACTION_REVERTED",
+  GAS_ESTIMATION_FAILED = "GAS_ESTIMATION_FAILED",
+  POOL_NOT_FOUND = "POOL_NOT_FOUND",
+  DEADLINE_EXCEEDED = "DEADLINE_EXCEEDED",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  WALLET_NOT_INITIALIZED = "WALLET_NOT_INITIALIZED",
+  INVALID_TOKEN_ADDRESS = "INVALID_TOKEN_ADDRESS",
+  TRANSACTION_TIMEOUT = "TRANSACTION_TIMEOUT",
 }
 
 export class DexError extends Error {
   constructor(
     public code: DexErrorCode,
     message: string,
-    public metadata?: Record<string, any>
+    public metadata?: Record<string, any>,
   ) {
     super(message);
-    this.name = 'DexError';
+    this.name = "DexError";
     Object.setPrototypeOf(this, DexError.prototype);
   }
 }
@@ -33,9 +33,9 @@ export class DexRetryHandler {
     retryableErrors: DexErrorCode[] = [
       DexErrorCode.NETWORK_ERROR,
       DexErrorCode.TRANSACTION_TIMEOUT,
-    ]
+    ],
   ): Promise<T> {
-    let lastError: Error = new Error('Operation failed with no error details');
+    let lastError: Error = new Error("Operation failed with no error details");
 
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
       try {
@@ -47,7 +47,7 @@ export class DexRetryHandler {
         if (error instanceof DexError && retryableErrors.includes(error.code)) {
           console.log(
             `Retry attempt ${attempt + 1}/${this.maxRetries} for ${error.code}`,
-            error.metadata
+            error.metadata,
           );
 
           if (attempt < this.maxRetries - 1) {
@@ -65,7 +65,7 @@ export class DexRetryHandler {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -75,91 +75,103 @@ export class DexRetryHandler {
 export function parseDexError(error: any): DexError {
   const message = error.message || error.toString();
 
-  if (message.includes('insufficient liquidity') || message.includes('K')) {
+  if (message.includes("insufficient liquidity") || message.includes("K")) {
     return new DexError(
       DexErrorCode.INSUFFICIENT_LIQUIDITY,
-      'Pool has insufficient liquidity for this swap',
-      { originalError: message }
+      "Pool has insufficient liquidity for this swap",
+      { originalError: message },
     );
   }
 
-  if (message.includes('slippage') || message.includes('min amount') || message.includes('SLIPPAGE')) {
+  if (
+    message.includes("slippage") ||
+    message.includes("min amount") ||
+    message.includes("SLIPPAGE")
+  ) {
     return new DexError(
       DexErrorCode.SLIPPAGE_EXCEEDED,
-      'Price moved beyond slippage tolerance',
-      { originalError: message }
+      "Price moved beyond slippage tolerance",
+      { originalError: message },
     );
   }
 
-  if (message.includes('insufficient funds') || message.includes('balance') || message.includes('not enough')) {
+  if (
+    message.includes("insufficient funds") ||
+    message.includes("balance") ||
+    message.includes("not enough")
+  ) {
     return new DexError(
       DexErrorCode.INSUFFICIENT_FUNDS,
-      'Wallet has insufficient balance for this transaction',
-      { originalError: message }
+      "Wallet has insufficient balance for this transaction",
+      { originalError: message },
     );
   }
 
-  if (message.includes('reverted') || message.includes('failed') || message.includes('compute phase')) {
+  if (
+    message.includes("reverted") ||
+    message.includes("failed") ||
+    message.includes("compute phase")
+  ) {
     return new DexError(
       DexErrorCode.TRANSACTION_REVERTED,
-      'Transaction reverted on blockchain',
-      { originalError: message }
+      "Transaction reverted on blockchain",
+      { originalError: message },
     );
   }
 
-  if (message.includes('deadline')) {
+  if (message.includes("deadline")) {
     return new DexError(
       DexErrorCode.DEADLINE_EXCEEDED,
-      'Transaction deadline exceeded',
-      { originalError: message }
+      "Transaction deadline exceeded",
+      { originalError: message },
     );
   }
 
-  if (message.includes('pool') && message.includes('not found')) {
+  if (message.includes("pool") && message.includes("not found")) {
     return new DexError(
       DexErrorCode.POOL_NOT_FOUND,
-      'Liquidity pool not found',
-      { originalError: message }
+      "Liquidity pool not found",
+      { originalError: message },
     );
   }
 
-  if (message.includes('timeout') || message.includes('timed out')) {
+  if (message.includes("timeout") || message.includes("timed out")) {
     return new DexError(
       DexErrorCode.TRANSACTION_TIMEOUT,
-      'Transaction polling timeout',
-      { originalError: message }
+      "Transaction polling timeout",
+      { originalError: message },
     );
   }
 
-  if (message.includes('gas') || message.includes('estimate')) {
+  if (message.includes("gas") || message.includes("estimate")) {
     return new DexError(
       DexErrorCode.GAS_ESTIMATION_FAILED,
-      'Failed to estimate gas fees',
-      { originalError: message }
+      "Failed to estimate gas fees",
+      { originalError: message },
     );
   }
 
-  if (message.includes('wallet') || message.includes('mnemonic')) {
+  if (message.includes("wallet") || message.includes("mnemonic")) {
     return new DexError(
       DexErrorCode.WALLET_NOT_INITIALIZED,
-      'Wallet not properly initialized',
-      { originalError: message }
+      "Wallet not properly initialized",
+      { originalError: message },
     );
   }
 
-  if (message.includes('invalid address') || message.includes('token')) {
+  if (message.includes("invalid address") || message.includes("token")) {
     return new DexError(
       DexErrorCode.INVALID_TOKEN_ADDRESS,
-      'Invalid token address provided',
-      { originalError: message }
+      "Invalid token address provided",
+      { originalError: message },
     );
   }
 
   // Default to network error
   return new DexError(
     DexErrorCode.NETWORK_ERROR,
-    'Unknown DEX error occurred',
-    { originalError: message }
+    "Unknown DEX error occurred",
+    { originalError: message },
   );
 }
 

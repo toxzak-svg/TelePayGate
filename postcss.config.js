@@ -1,5 +1,7 @@
 export default {
   plugins: {
-    '@tailwindcss/postcss': {},
+  // Use the Tailwind PostCSS adapter package installed in workspace devDependencies.
+  "@tailwindcss/postcss": {},
+    autoprefixer: {},
   },
 }

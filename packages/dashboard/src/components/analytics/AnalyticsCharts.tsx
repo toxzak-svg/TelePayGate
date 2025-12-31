@@ -23,8 +23,8 @@ const txData = [
 export default function AnalyticsCharts() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Revenue (Last 7 Days)</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Revenue (Last 7 Days)</h3>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={revenueData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -35,8 +35,8 @@ export default function AnalyticsCharts() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Transactions (Last 7 Days)</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Transactions (Last 7 Days)</h3>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={txData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />

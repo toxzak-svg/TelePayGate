@@ -112,9 +112,10 @@ services:
     name: telegram-payment-api
     env: node
     plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspaces
-    startCommand: npm start --workspace=@tg-payment/api
-    preDeployCommand: npm run migrate -- --env=production
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
+    startCommand: node packages/api/dist/server.js
+    deploy:
+      preDeployCommand: ["npm run migrate"]
     healthCheckPath: /health
     envVarGroups:
       - shared-runtime
@@ -122,12 +123,12 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: tg-payment-db
+          name: telepaygate-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: tg-payment-redis
+          name: telepaygate-redis
           property: connectionString
       - key: PORT
         value: 10000
@@ -140,20 +141,20 @@ services:
     name: worker-deposit-monitor
     env: node
     plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspaces
-    startCommand: npm start --workspace=@tg-payment/worker
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
+    startCommand: node packages/core/dist/workers/deposit-settlement.worker.js
     envVarGroups:
       - shared-runtime
       - shared-secrets
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: tg-payment-db
+          name: telepaygate-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: tg-payment-redis
+          name: telepaygate-redis
           property: connectionString
 
   # --------------------------------------------------------------------------------
@@ -163,57 +164,62 @@ services:
     name: worker-fee-collection
     env: node
     plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspaces
-    startCommand: npm start --workspace=@tg-payment/worker
+    buildCommand: npm ci && npm run -w telepaygate-core build && npm run -w telepaygate-api build && npm run -w telepaygate-sdk build
+    startCommand: node packages/core/dist/workers/fee-collection.worker.js
     envVarGroups:
       - shared-runtime
       - shared-secrets
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: tg-payment-db
+          name: telepaygate-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: tg-payment-redis
+          name: telepaygate-redis
           property: connectionString
+
   # --------------------------------------------------------------------------------
-  # Dashboard (Optional)
+  # Dashboard (Static Site)
   # --------------------------------------------------------------------------------
   - type: web
-    name: telegram-payment-dashboard
-    env: node
-    plan: starter
-    buildCommand: npm install --workspaces && npm run build --workspaces
-    startCommand: npm start --workspace=dashboard
-    envVarGroups:
-      - shared-runtime
-      - shared-secrets
+    name: telepaygate-dashboard
+    runtime: static
+    buildCommand: npm ci && npm run build -w @tg-payment/dashboard
+    staticPublishPath: packages/dashboard/dist
+    pullRequestPreviewsEnabled: true
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: tg-payment-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: tg-payment-redis
-          property: connectionString
-      - key: PORT
-        value: 10001
+      - key: VITE_API_URL
+        value: https://telegram-payment-api.onrender.com/api/v1
+      - key: NODE_VERSION
+        value: "20"
     autoDeploy: true
 
   # --------------------------------------------------------------------------------
   # Redis Service
   # --------------------------------------------------------------------------------
   - type: redis
-    name: tg-payment-redis
+    name: telepaygate-redis
     plan: starter
     ipAllowList: [] # Only allow internal connections
 
 databases:
-  - name: tg-payment-db
-    databaseName: tg_payment_prod
+  - name: telepaygate-db
+    databaseName: telepaygate_prod
     user: tg_user
     plan: starter
