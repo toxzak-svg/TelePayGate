@@ -16,7 +16,7 @@ describe("Conversion and Reconciliation Integration Test", () => {
   let userId: string;
 
   beforeEach(() => {
-    db = initDatabase(process.env.DATABASE_URL!);
+    db = initDatabase(process.env.DATABASE_URL || "postgres://localhost:5432/test");
     conversionService = new ConversionService(db);
     reconciliationService = new ReconciliationService(db);
 

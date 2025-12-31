@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getDatabase } from "@tg-payment/core";
+import { getDatabase } from "telepaygate-core";
 
 // Simple CSRF middleware: for session-authenticated requests, require X-CSRF-Token header
 // Must be used after cookie-parser and authenticate (optionalAuth) so session id is available

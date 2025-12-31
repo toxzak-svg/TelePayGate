@@ -23,14 +23,18 @@ export default function BackupCodes({ email }: { email?: string }) {
       } else {
         setError(data.error?.message || 'Failed to generate backup codes');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to generate backup codes');
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  async function useCode(code: string) {
+  async function consumeCode(code: string) {
     setLoading(true);
     setError('');
     try {
@@ -45,8 +49,12 @@ export default function BackupCodes({ email }: { email?: string }) {
       } else {
         setError(data.error?.message || 'Invalid or used backup code');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Verification failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,7 +73,7 @@ export default function BackupCodes({ email }: { email?: string }) {
               <li key={code} className={`font-mono text-sm p-2 rounded ${used.includes(code) ? 'bg-gray-200 text-gray-400 line-through' : 'bg-gray-50 text-gray-800'}`}>
                 {code}
                 {!used.includes(code) && (
-                  <button className="ml-2 px-2 py-1 text-xs bg-green-600 text-white rounded" onClick={() => useCode(code)} disabled={loading}>Use</button>
+                  <button className="ml-2 px-2 py-1 text-xs bg-green-600 text-white rounded" onClick={() => consumeCode(code)} disabled={loading}>Use</button>
                 )}
               </li>
             ))}

@@ -2,7 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import routes from "../../routes/v1.routes";
 import { responseMiddleware } from "../../middleware/response.middleware";
-import { initDatabase } from "@tg-payment/core";
+import { initDatabase } from "telepaygate-core";
 
 export function buildTestApp() {
   const { DATABASE_URL } = process.env;

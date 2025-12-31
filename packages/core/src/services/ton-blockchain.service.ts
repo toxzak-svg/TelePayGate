@@ -33,13 +33,6 @@ export interface TransactionState {
   hash?: string | null;
 }
 
-export interface TransactionState {
-  status: 'confirmed' | 'pending' | 'failed';
-  confirmations: number;
-  hash?: string;
-  exitCode?: number;
-}
-
 /**
  * TonBlockchainService
  * Direct TON blockchain integration (no Fragment API)
@@ -49,7 +42,7 @@ export class TonBlockchainService {
   private client: TonClient;
   private wallet: WalletContractV4 | null = null;
   private walletAddress: Address | null = null;
-  private keyPair: any = null;
+  private keyPair: { publicKey: Buffer; secretKey: Buffer } | null = null;
 
   constructor(
     private endpoint: string,
@@ -103,7 +96,7 @@ export class TonBlockchainService {
   /**
    * Get the initialized wallet contract and key pair
    */
-  getWallet(): { wallet: WalletContractV4; keyPair: any } {
+  getWallet(): { wallet: WalletContractV4; keyPair: { publicKey: Buffer; secretKey: Buffer } } {
     if (!this.wallet || !this.keyPair) {
       throw new Error("Wallet not initialized. Call initializeWallet() first.");
     }
@@ -377,7 +370,7 @@ export class TonBlockchainService {
   /**
    * Return a standardized transaction state object
    */
-  async getTransactionState(txHash: string): Promise<TransactionState> {
+  async getTransactionState(txHash: string, minConfirmations: number = 0): Promise<TransactionState | null> {
     // Try to fetch the transaction details first
     const tx = await this.getTransaction(txHash);
 
@@ -386,15 +379,36 @@ export class TonBlockchainService {
       return { status: 'pending', confirmations: 0, success: undefined, exitCode: null, hash: null };
     }
 
-    if (tx.confirmed) {
-      if (tx.success === false) {
-        return { status: 'failed', confirmations: tx.confirmations || 0, success: false, exitCode: tx.exitCode ?? null, hash: tx.hash };
-      }
-
-      return { status: 'confirmed', confirmations: tx.confirmations || 0, success: tx.success ?? true, exitCode: tx.exitCode ?? null, hash: tx.hash };
+    // If transaction explicitly failed on-chain
+    if (tx.confirmed && tx.success === false) {
+      return {
+        status: 'failed',
+        confirmations: tx.confirmations || 0,
+        success: false,
+        exitCode: tx.exitCode ?? null,
+        hash: tx.hash,
+      };
     }
 
-    return { status: 'pending', confirmations: tx.confirmations || 0, success: tx.success ?? undefined, exitCode: tx.exitCode ?? null, hash: tx.hash };
+    // Consider it confirmed only when confirmations >= minConfirmations
+    if (tx.confirmed && (tx.confirmations || 0) >= minConfirmations) {
+      return {
+        status: 'confirmed',
+        confirmations: tx.confirmations || 0,
+        success: tx.success ?? true,
+        exitCode: tx.exitCode ?? null,
+        hash: tx.hash,
+      };
+    }
+
+    // Otherwise it's still pending (we return whatever confirmations we have)
+    return {
+      status: 'pending',
+      confirmations: tx.confirmations || 0,
+      success: tx.success ?? undefined,
+      exitCode: tx.exitCode ?? null,
+      hash: tx.hash,
+    };
   }
 
   
@@ -403,32 +417,7 @@ export class TonBlockchainService {
    * Return a simplified transaction state for polling logic
    * status: 'pending' | 'confirmed' | 'failed'
    */
-  async getTransactionState(txHash: string, minConfirmations: number = 1): Promise<{ status: 'pending' | 'confirmed' | 'failed'; confirmations: number; hash?: string; exitCode?: number } | null> {
-    if (!this.walletAddress) {
-      throw new Error('Wallet not initialized');
-    }
-
-    try {
-      const tx = await this.getTransaction(txHash);
-      if (!tx) return { status: 'pending', confirmations: 0 };
-
-      // Transaction explicitly failed on-chain
-      if (tx.confirmed && tx.success === false) {
-        return { status: 'failed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
-      }
-
-      // Consider confirmed only when confirmations >= minConfirmations
-      if (tx.confirmed && (tx.confirmations || 0) >= minConfirmations && tx.success !== false) {
-        return { status: 'confirmed', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
-      }
-
-      // Otherwise still pending
-      return { status: 'pending', confirmations: tx.confirmations || 0, hash: tx.hash, exitCode: tx.exitCode };
-    } catch (error) {
-      console.error('❌ Failed to get transaction state:', error);
-      return null;
-    }
-  }
+  // removed duplicate implementation; behavior merged into the single getTransactionState above
 
   /**
    * Validate TON address format

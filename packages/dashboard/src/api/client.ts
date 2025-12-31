@@ -27,6 +27,7 @@ export const apiClient = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 30000, // 30 seconds
+  withCredentials: true,
 });
 
 // Add auth token to requests

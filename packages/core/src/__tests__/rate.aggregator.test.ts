@@ -1,3 +1,4 @@
+import { describe, expect, it, jest, beforeEach } from "@jest/globals";
 import { RateAggregatorService } from "../services/rate.aggregator";
 import Redis from "ioredis";
 
@@ -5,10 +6,15 @@ jest.mock("ioredis");
 
 describe("RateAggregatorService", () => {
   let rateAggregatorService: RateAggregatorService;
-  let redis: Redis;
+  let redis: any;
 
   beforeEach(() => {
     rateAggregatorService = new RateAggregatorService();
+    // Ensure redis is a mock even if in simulation mode
+    (rateAggregatorService as any).redis = {
+      get: jest.fn(),
+      set: jest.fn(),
+    };
     redis = (rateAggregatorService as any).redis;
   });
 
@@ -26,14 +32,14 @@ describe("RateAggregatorService", () => {
         targetCurrency: "USD",
         timestamp: Date.now(),
       };
-      (redis.get as jest.Mock).mockResolvedValue(JSON.stringify(cachedRate));
+      redis.get.mockResolvedValue(JSON.stringify(cachedRate));
       const rate = await rateAggregatorService.getAggregatedRate("TON", "USD");
       expect(rate.bestRate).toEqual(cachedRate.bestRate);
       expect(redis.get).toHaveBeenCalledWith("rate:TON:USD");
     });
 
     it("should fetch and cache rate if not available", async () => {
-      (redis.get as jest.Mock).mockResolvedValue(null);
+      redis.get.mockResolvedValue(null);
       const mockRate = {
         bestRate: 200.5,
         averageRate: 200.5,

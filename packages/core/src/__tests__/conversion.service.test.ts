@@ -21,7 +21,7 @@ describe("ConversionService", () => {
   let conversionId: string;
 
   beforeEach(() => {
-    db = initDatabase(process.env.DATABASE_URL!);
+    db = initDatabase(process.env.DATABASE_URL || "postgres://localhost:5432/test");
     conversionService = new ConversionService(db);
     conversionId = uuidv4();
   });
@@ -53,11 +53,48 @@ describe("ConversionService", () => {
       // Wait for the polling to complete
       await pollPromise;
 
-      expect(tonService.getTransactionState).toHaveBeenCalledWith("tx-hash");
+      expect(tonService.getTransactionState).toHaveBeenCalledWith("tx-hash", 1);
       expect(dbNoneSpy).toHaveBeenCalledWith(
         expect.stringContaining("UPDATE conversions"),
-        ["completed", undefined, conversionId],
+        expect.arrayContaining([conversionId, "completed"]),
       );
+      jest.useRealTimers();
+    });
+
+    it('should respect confirmations threshold before marking completed', async () => {
+      jest.useFakeTimers();
+      process.env.TON_MIN_CONFIRMATIONS = '2';
+
+      const {tonService} = conversionService as any;
+
+      // First poll returns confirmations=1 (below threshold), second poll confirms
+      tonService.getTransactionState
+        .mockResolvedValueOnce({ status: 'confirmed', confirmations: 1, hash: 'tx-1' })
+        .mockResolvedValueOnce({ status: 'confirmed', confirmations: 2, hash: 'tx-1' });
+
+      const dbNoneSpy = jest.spyOn(db, 'none').mockResolvedValue(undefined);
+      jest.spyOn(db, 'oneOrNone').mockResolvedValue({ id: 'fee-id' });
+
+      const pollPromise = (conversionService as any).pollConversionStatus(
+        conversionId,
+        'tx-1',
+      );
+
+      // Advance time once -> first poll (confirmations 1) should not resolve
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(tonService.getTransactionState).toHaveBeenCalledTimes(1);
+
+      // Advance time again -> second poll meets threshold and completes
+      await jest.advanceTimersByTimeAsync(5000);
+      await pollPromise;
+
+      expect(tonService.getTransactionState).toHaveBeenCalledWith('tx-1', 2);
+      expect(dbNoneSpy).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE conversions'),
+        expect.arrayContaining([expect.any(String), expect.anything(), conversionId]),
+      );
+
+      delete process.env.TON_MIN_CONFIRMATIONS;
       jest.useRealTimers();
     });
   });

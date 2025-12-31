@@ -4,10 +4,15 @@ import {
   FeeService,
   PaymentStatus,
   getDatabase,
-} from "@tg-payment/core";
-import type { Database } from "@tg-payment/core";
-import { TelegramService } from "@tg-payment/core";
+} from "telepaygate-core";
+import type { Database } from "telepaygate-core";
+import { TelegramService } from "telepaygate-core";
 import { respondSuccess, respondError } from "../utils/response";
+import {
+  parsePagination,
+  requireUserId,
+  buildPaginationMeta,
+} from "../utils/controller-helpers";
 import { validate as validateUuid, v5 as uuidv5 } from "uuid";
 
 const USER_ID_NAMESPACE = "3b9d87a2-54d7-4878-9d87-351edcb2564b";
@@ -109,16 +114,16 @@ export class PaymentController {
     } catch (error: unknown) {
       console.error("❌ Webhook processing error:", error);
       let message = "Unknown error";
-      let detail = null;
-      let code_pg = null;
+      let _detail = null;
+      let _code_pg = null;
       if (error instanceof Error) {
         message = error.message;
       }
       if (typeof error === "object" && error !== null) {
         // @ts-expect-error - dynamic error shape coming from pg or other libraries
-        detail = error.detail || null;
+        _detail = error.detail || null;
         // @ts-expect-error - dynamic error shape coming from pg or other libraries
-        code_pg = error.code || null;
+        _code_pg = error.code || null;
       }
       respondError(res, "WEBHOOK_ERROR", message, 500);
     }
@@ -128,7 +133,7 @@ export class PaymentController {
    * Get payment by ID
    * GET /api/v1/payments/:id
    */
-  static async getPayment(req: Request, res: Response): Promise<void> {
+  static async getPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
       const db = getDatabase();
@@ -148,6 +153,7 @@ export class PaymentController {
         payment: {
           id: payment.id,
           userId: payment.userId,
+          telegramInvoiceId: payment.telegramInvoiceId,
           starsAmount: payment.starsAmount,
           status: payment.status,
           telegramPaymentId: payment.telegramPaymentId,
@@ -156,7 +162,7 @@ export class PaymentController {
         },
       });
     } catch (error) {
-      // ...existing code...
+      next(error);
     }
   }
 
@@ -170,26 +176,15 @@ export class PaymentController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: "MISSING_USER_ID",
-            message: "X-User-Id header is required",
-          },
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const normalizedUserId = PaymentController.normalizeUserId(userId);
 
       const db = getDatabase();
       await PaymentController.ensureUserExists(db, normalizedUserId);
       const paymentModel = new PaymentModel(db);
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-      const offset = (page - 1) * limit;
+      const { page, limit, offset } = parsePagination(req);
       const status = req.query.status as PaymentStatus | undefined;
 
       const { payments, total } = await paymentModel.listByUser(
@@ -205,17 +200,15 @@ export class PaymentController {
         success: true,
         data: payments.map((p) => ({
           id: p.id,
+          userId: p.userId,
+          telegramInvoiceId: p.telegramInvoiceId,
           starsAmount: p.starsAmount,
           status: p.status,
           telegramPaymentId: p.telegramPaymentId,
           createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
         })),
-        meta: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
+        meta: buildPaginationMeta(total, page, limit),
       });
     } catch (error) {
       next(error);
@@ -232,17 +225,8 @@ export class PaymentController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.headers["x-user-id"] as string;
-      if (!userId) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: "MISSING_USER_ID",
-            message: "X-User-Id header is required",
-          },
-        });
-        return;
-      }
+      const userId = requireUserId(req, res);
+      if (!userId) return;
 
       const normalizedUserId = PaymentController.normalizeUserId(userId);
 

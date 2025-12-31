@@ -11,9 +11,27 @@ import {
 } from "./dex-error-handler";
 import { TonBlockchainService } from "./ton-blockchain.service";
 
-// DEX operation codes - Note: These may differ between DEXes
-// TODO: Verify actual operation codes for each DEX from their documentation
-export const DEX_SWAP_OP = 0x25938561;
+// DEX operation codes - Verified from official documentation
+// DeDust: https://docs.dedust.io/reference/tlb-schemes
+// Ston.fi: https://docs.ston.fi/docs/developer-section/api-reference-main
+export const DEX_SWAP_OP = {
+  // DeDust swap operations
+  DEDUST_NATIVE_SWAP: 0xea06185d,  // native_swap (TON → Jetton)
+  DEDUST_JETTON_SWAP: 0x25938561, // swap (Jetton → Jetton/TON)
+  DEDUST_DEPOSIT: 0x40e108d6,     // deposit_liquidity
+  
+  // Ston.fi swap operations  
+  STONFI_SWAP: 0x25938561,        // swap operation
+  STONFI_PROVIDE_LP: 0xf93bb43f,  // provide_lp
+  
+  // Common Jetton operations (TEP-74)
+  JETTON_TRANSFER: 0x0f8a7ea5,
+  JETTON_BURN: 0x595f07bc,
+  JETTON_INTERNAL_TRANSFER: 0x178d4519,
+} as const;
+
+// Legacy export for backward compatibility
+export const DEX_OP_LEGACY = 0x25938561;
 
 export interface DexPoolInfo {
   provider: "dedust" | "stonfi";

@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder contains all project documentation for the Telegram Payment Gateway.
+This folder contains all project documentation for the TelePayGate.
 
 ## Structure
 

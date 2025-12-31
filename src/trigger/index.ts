@@ -1,7 +1,7 @@
 /**
  * Trigger.dev Tasks Index
  *
- * All Trigger.dev tasks for the Telegram Payment Gateway
+ * All Trigger.dev tasks for the TelePayGate
  */
 
 // Example task

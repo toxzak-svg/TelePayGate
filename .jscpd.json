@@ -1,4 +1,19 @@
 {
+  "reporters": ["json"],
+  "output": "jscpd-report.json",
+  "path": "./",
+  "ignore": [
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/docs/**",
+    "**/*.min.js",
+    "**/*.bundle.js"
+  ],
+  "threshold": 3,
+  "minLines": 5
+}
+{
   "paths": ["packages", "src"],
   "exclude": [
     "**/node_modules/**",

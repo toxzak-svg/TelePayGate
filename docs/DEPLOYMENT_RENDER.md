@@ -1,139 +1,312 @@
 # Render Deployment Guide
 
-**Last Updated**: November 20, 2025  
-**Status**: ✅ Configured and Deployed  
-**Service ID**: srv-d4d94fggjchc73dr0nug  
-**Region**: Ohio  
-**URL**: https://telepaygate.onrender.com
-
-This document captures everything required to deploy the Telegram Payment Gateway on Render.com using the supplied `render.yaml` blueprint. The blueprint provisions the API, background workers, managed Redis, and managed PostgreSQL while running database migrations automatically before each deploy.
+Complete guide for deploying TelePayGate to Render.com using the `render.yaml` blueprint.
 
 ---
 
-## Recent Deployment Updates (November 20, 2025)
+## Architecture Overview
 
-- ✅ **Security Incident Resolved** - All exposed credentials rotated and secured
-- ✅ **Environment Variables Updated** - New TON wallet, Telegram bot token, Render API key
-- ✅ **Trigger.dev Integration** - Automated deployments configured (project: proj_fqtizcvgqqorjbcikxsa)
-- ✅ **Git History Cleaned** - Removed accidentally committed secrets from repository
-- ✅ **Deployment Status** - Auto-deploy enabled on main branch
+| Component | Type | Purpose |
+|-----------|------|---------|
+| `telegram-payment-api` | Web Service | Express REST API (port 10000) |
+| `telepaygate-dashboard` | Static Site | React dashboard for merchants |
+| `worker-deposit-monitor` | Background Worker | TON deposit monitoring & settlement |
+| `worker-fee-collection` | Background Worker | Platform fee collection |
+| `telepaygate-redis` | Redis | Rate caching, job queues |
+| `telepaygate-db` | PostgreSQL | Primary database |
 
 ---
 
 ## Prerequisites
 
-- Render account with access to Render Blueprints
-- GitHub repository: toxzak-svg/telepaygate
-- Render CLI (optional). Install: `npm install -g render`
-- **IMPORTANT**: Never commit secrets to Git. Use Render dashboard or API to set environment variables
+1. **Render account** with access to Blueprints
+2. **GitHub repository** connected to Render
+3. **TON wallet** with mnemonic (generate: `node scripts/generate-ton-wallet.js`)
+4. **Telegram bot** from [@BotFather](https://t.me/BotFather)
 
 ---
 
-## Blueprint Overview
+## Quick Deploy (5 minutes)
 
-| Component                | Type              | Notes                                                                                                      |
-| ------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-| `telegram-payment-api`   | Web Service       | Runs Express API on port `10000`, exposes `/health`, runs `npm run migrate` before each deploy.            |
-| `worker-deposit-monitor` | Background worker | Executes `packages/core/dist/workers/deposit-settlement.worker.js` for deposit + settlement monitoring.    |
-| `worker-fee-collection`  | Background worker | Executes `packages/core/dist/workers/fee-collection.worker.js` to keep fee ledgers in sync.                |
-| `tg-payment-redis`       | Redis             | Internal queue/cache for rate locking + background jobs.                                                   |
-| `tg-payment-db`          | PostgreSQL        | Stores all platform state. Connection string automatically injected into every service via `DATABASE_URL`. |
+### Step 1: Connect Repository
 
-Services share two env-var groups defined near the top of `render.yaml`:
+1. Go to [Render Dashboard](https://dashboard.render.com)
+2. Click **Blueprints** → **New Blueprint**
+3. Connect your GitHub repo: `toxzak-svg/TelePayGate`
+4. Select branch: `main`
+5. Render detects `render.yaml` automatically
 
-- `shared-runtime`: non-secret config (Node version, TON endpoints, liquidity pool defaults, etc.).
-- `shared-secrets`: all credentials and sensitive API keys. Every service that needs access simply references these groups via `envVarGroups`.
+### Step 2: Configure Secrets
 
-## Environment Variables
+When prompted, enter these **required** secrets:
 
-Render will prompt for every `sync: false` variable on first deploy. Keep copies in a secure secret manager so you can update them quickly if deploys fail. Values marked as _optional_ may be blank.
+```bash
+# Generate these with: openssl rand -hex 32
+API_SECRET_KEY=<your-32-byte-hex>
+JWT_SECRET=<your-32-byte-hex>
+WALLET_ENCRYPTION_KEY=<your-32-byte-hex>
+TELEGRAM_WEBHOOK_SECRET=<your-32-byte-hex>
 
-### shared-runtime (non-secret defaults)
+# From @BotFather
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
 
-| Key                          | Purpose                 | Default                                |
-| ---------------------------- | ----------------------- | -------------------------------------- |
-| `NODE_ENV`                   | Runtime mode            | `production`                           |
-| `NODE_VERSION`               | Node runtime            | `20.11.0`                              |
-| `TON_API_URL`                | TON RPC endpoint        | `https://toncenter.com/api/v2/jsonRPC` |
-| `TON_MAINNET`                | `true` for mainnet      | `"true"`                               |
-| `TON_WORKCHAIN`              | Workchain id            | `"0"`                                  |
-| `DEDUST_API_URL`             | DeDust API base         | `https://api.dedust.io`                |
-| `STONFI_API_URL`             | Ston.fi API base        | `https://api.ston.fi`                  |
-| `DEX_SLIPPAGE_TOLERANCE`     | Swap slippage pct       | `0.5`                                  |
-| `MIN_CONVERSION_STARS`       | Minimum Stars allowed   | `100`                                  |
-| `RATE_LOCK_DURATION_SECONDS` | Rate lock TTL           | `300`                                  |
-| `MAX_PENDING_CONVERSIONS`    | Back-pressure guard     | `10`                                   |
-| `P2P_POOL_REFRESH_INTERVAL`  | DEX refresh cadence     | `30`                                   |
-| `PLATFORM_TON_WALLET`        | Target custodial wallet | _set in dashboard_                     |
+# TON Blockchain
+TON_WALLET_MNEMONIC="word1 word2 word3 ... word24"
+TON_API_KEY=<from-toncenter.com>
+PLATFORM_TON_WALLET=EQxxxxxxxxxx
+```
 
-### shared-secrets (must be supplied manually)
+### Step 3: Deploy
 
-| Key                                                     | Description                                           |
-| ------------------------------------------------------- | ----------------------------------------------------- |
-| `TON_WALLET_MNEMONIC`                                   | 24-word production mnemonic with enough TON for fees. |
-| `TON_API_KEY`                                           | TON RPC API token.                                    |
-| `TELEGRAM_BOT_TOKEN`                                    | Telegram bot token handling Stars webhooks.           |
-| `TELEGRAM_WEBHOOK_SECRET`                               | Signature expected on Telegram webhook payloads.      |
-| `API_SECRET_KEY`                                        | Internal signing key for webhook + SDK auth.          |
-| `JWT_SECRET`                                            | JWT signing key for any session tokens.               |
-| `WALLET_ENCRYPTION_KEY`                                 | 32-byte hex string for encrypting custody wallets.    |
-| `COINGECKO_API_KEY` (_optional_)                        | Needed only if CoinGecko is enabled.                  |
-| `COINMARKETCAP_API_KEY` (_optional_)                    | Needed only if CoinMarketCap fallback is enabled.     |
-| `KRAKEN_API_KEY` / `KRAKEN_API_SECRET` (_optional_)     | Required if Kraken off-ramps are enabled.             |
-| `COINLIST_API_KEY` / `COINLIST_API_SECRET` (_optional_) | Required for CoinList settlements.                    |
+Click **Apply** and wait for all services to build (~5-10 minutes).
 
-### Service-specific variables
+---
 
-| Service | Key            | Source                                                                 |
-| ------- | -------------- | ---------------------------------------------------------------------- |
-| All     | `DATABASE_URL` | Auto-injected from `tg-payment-db`.                                    |
-| All     | `REDIS_URL`    | Auto-injected from `tg-payment-redis`.                                 |
-| API     | `PORT`         | Hard-coded to `10000` (Render automatically routes HTTP traffic here). |
+## Service URLs (After Deploy)
 
-No additional manual wiring is necessary—workers inherit the shared env groups and DB credentials automatically.
+| Service | URL |
+|---------|-----|
+| API | `https://telegram-payment-api.onrender.com` |
+| Dashboard | `https://telepaygate-dashboard.onrender.com` |
+| Health Check | `https://telegram-payment-api.onrender.com/health` |
 
-## Deploying With Render MPC / CLI
+---
 
-1. **Authenticate**
-   ```bash
-   render login
-   ```
-2. **Preview blueprint changes locally** (optional but helpful while iterating):
-   ```bash
-   render blueprint plan --file render.yaml
-   ```
-3. **Launch or update the stack** (this creates/updates all services defined in the blueprint). Depending on your CLI version the subcommand may be `deploy` or the older `launch`:
-   ```bash
-   render blueprint deploy --file render.yaml --name telepaygate
-   # or
-   render blueprint launch --file render.yaml --name telepaygate
-   ```
+## Environment Variables Reference
 
-   - Use `--dry-run` if you just want to verify what Render would change.
-   - You can add `--from-branch main` to pin the branch Render should build.
-4. **Populate secrets**: the deploy command pauses if any `sync: false` env vars are missing. Supply them inline or via `--env` files per Render's CLI docs.
-5. **Watch the build**: the CLI streams build + migration logs. Each deploy runs `npm run migrate` before releasing traffic, guaranteeing schema drift is handled.
+### Required Secrets (`shared-secrets` group)
 
-> **Note:** If your Render account does not yet have access to the MPC/CLI workflow, you can still apply the same blueprint in the Render dashboard: _Blueprints → New Blueprint → Connect GitHub repo → Select `render.yaml` → Configure env groups → Launch_. Once deployed, future pushes to the tracked branch trigger builds if `autoDeploy` is enabled (currently left `false` so you can promote manually).
+| Variable | Description | How to Get |
+|----------|-------------|------------|
+| `TON_WALLET_MNEMONIC` | 24-word seed phrase | `node scripts/generate-ton-wallet.js` |
+| `TON_API_KEY` | TON RPC API key | [toncenter.com](https://toncenter.com) |
+| `TELEGRAM_BOT_TOKEN` | Bot token | [@BotFather](https://t.me/BotFather) |
+| `TELEGRAM_WEBHOOK_SECRET` | Webhook signature | `openssl rand -hex 32` |
+| `API_SECRET_KEY` | Internal signing | `openssl rand -hex 32` |
+| `JWT_SECRET` | JWT signing | `openssl rand -hex 32` |
+| `WALLET_ENCRYPTION_KEY` | Wallet encryption | `openssl rand -hex 32` |
+| `PLATFORM_TON_WALLET` | Fee collection address | Your TON address (EQ...) |
+
+### Optional Secrets
+
+| Variable | Description |
+|----------|-------------|
+| `COINGECKO_API_KEY` | Better rate limits |
+| `COINMARKETCAP_API_KEY` | Backup rate source |
+| `KRAKEN_API_KEY` | Fiat off-ramp |
+| `KRAKEN_API_SECRET` | Fiat off-ramp |
+
+### Auto-Configured (Don't Set Manually)
+
+| Variable | Source |
+|----------|--------|
+| `DATABASE_URL` | telepaygate-db service |
+| `REDIS_URL` | telepaygate-redis service |
+
+---
 
 ## Post-Deployment Checklist
 
-1. Confirm `/health` returns 200 via the Render web service public URL.
-2. Check worker logs to ensure deposit monitoring + fee collection loops start without throwing.
-3. Trigger a dry-run Stars payment via the Telegram sandbox and confirm a payment record appears in Postgres.
-4. Review Redis metrics—if background workers fail to consume jobs, verify `REDIS_URL` is populated and accessible inside both workers.
-5. Back up the Render-provided Postgres connection string and rotation credentials somewhere safe.
+### 1. Verify API Health
+```bash
+curl https://telegram-payment-api.onrender.com/health
+# Expected: {"status":"ok","timestamp":"..."}
+```
 
-## Redeploys and Rollbacks
+### 2. Verify Dashboard
+Open `https://telepaygate-dashboard.onrender.com` in browser.
 
-- Any change to the schema should include a migration; Render automatically runs the migrations on each deploy, so ensure they are idempotent.
-- Set `autoDeploy: true` on services in `render.yaml` if you want Render to deploy on every git push to `main`.
-- Roll back by selecting a previous deploy in Render's dashboard or using `render deploy rollback <service> --deploy <id>` via CLI.
+### 3. Create Test User
+```bash
+# Use the API to create a user and get API key
+curl -X POST https://telegram-payment-api.onrender.com/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","appName":"My App"}'
+```
+
+### 4. Configure Telegram Webhook
+```bash
+# Set webhook URL for your bot
+curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://telegram-payment-api.onrender.com/api/v1/webhooks/telegram&secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+### 5. Check Worker Logs
+In Render dashboard, check logs for:
+- `worker-deposit-monitor` - Should show "Monitoring deposits..."
+- `worker-fee-collection` - Should show "Fee collection started..."
+
+---
+
+## Database Migrations
+
+Migrations run automatically before each deploy via `preDeployCommand`.
+
+To run manually:
+```bash
+# Via Render Shell (in API service)
+npm run migrate
+
+# Check status
+npm run migrate:status
+```
+
+---
+
+## Scaling & Plans
+
+### Starter Plan (Default)
+- API: 512MB RAM, 0.5 CPU
+- Workers: 512MB RAM, 0.5 CPU
+- PostgreSQL: 1GB storage
+- Redis: 25MB
+
+### Production Recommendations
+- API: Standard plan (2GB RAM)
+- Workers: Standard plan
+- PostgreSQL: Standard plan (10GB)
+- Redis: Standard plan (100MB)
+
+Update in `render.yaml`:
+```yaml
+services:
+  - type: web
+    name: telegram-payment-api
+    plan: standard  # Changed from starter
+```
+
+---
+
+## Custom Domain Setup
+
+### API Domain
+1. Go to Render → telegram-payment-api → Settings
+2. Add custom domain: `api.yourdomain.com`
+3. Add DNS CNAME: `api.yourdomain.com` → `telegram-payment-api.onrender.com`
+
+### Dashboard Domain
+1. Go to Render → telepaygate-dashboard → Settings
+2. Add custom domain: `dashboard.yourdomain.com`
+3. Add DNS CNAME: `dashboard.yourdomain.com` → `telepaygate-dashboard.onrender.com`
+
+---
+
+## Monitoring & Alerts
+
+### Health Check
+The API exposes `/health` endpoint. Render automatically:
+- Checks every 10 seconds
+- Restarts service if 3 consecutive failures
+- Sends alerts via notification settings
+
+### Recommended Alerts
+1. **Service Down** - Email when any service fails health check
+2. **Deploy Failed** - Email on build/deploy failures
+3. **High Error Rate** - Integrate with logging service
+
+### Logging Services
+Consider adding:
+- [Logflare](https://logflare.app) - Free tier
+- [Datadog](https://datadoghq.com) - APM + logs
+- [Sentry](https://sentry.io) - Error tracking
+
+---
 
 ## Troubleshooting
 
-- **Migrations fail**: fix the offending migration locally, push a patch, and redeploy. Because migrations run before new code is released, a failure keeps the previous version live.
-- **Health checks keep failing**: inspect API logs and confirm `PORT=10000` is not being overridden. Render will restart the service automatically until `/health` passes.
-- **Workers exit immediately**: usually indicates missing TON credentials. Verify the `shared-secrets` env group was attached to both workers.
+### API Won't Start
+1. Check `DATABASE_URL` is populated (Render → Service → Environment)
+2. Verify migrations succeeded in deploy logs
+3. Check for missing required secrets
 
-Once these steps are complete, Render will continuously run the API and workers, while the CLI (MPC) commands above give you reproducible deployments straight from version control.
+### Dashboard Shows Blank
+1. Verify `VITE_API_URL` points to correct API URL
+2. Check browser console for CORS errors
+3. Rebuild: Manual Deploy → Clear cache & deploy
+
+### Workers Exit Immediately
+1. Check `TON_WALLET_MNEMONIC` is set (24 words)
+2. Check `TON_API_KEY` is valid
+3. Check `DATABASE_URL` is set
+
+### Webhook Not Receiving Events
+1. Verify Telegram webhook is set correctly
+2. Check `TELEGRAM_WEBHOOK_SECRET` matches
+3. Check API logs for incoming requests
+
+### Database Connection Failed
+1. Check PostgreSQL service is running
+2. Verify connection string format
+3. Check if IP allow list is blocking
+
+---
+
+## Rollback Procedure
+
+1. Go to Render Dashboard → Service → Deploys
+2. Find last working deploy
+3. Click "Rollback to this deploy"
+
+Or via CLI:
+```bash
+render deploy rollback telegram-payment-api --deploy <deploy-id>
+```
+
+---
+
+## Cost Estimate (USD/month)
+
+| Component | Starter | Standard |
+|-----------|---------|----------|
+| API Web Service | $7 | $25 |
+| Dashboard Static | Free | Free |
+| Worker (x2) | $14 | $50 |
+| PostgreSQL | $7 | $25 |
+| Redis | $0 | $10 |
+| **Total** | **~$28** | **~$110** |
+
+---
+
+## CI/CD with GitHub Actions
+
+Add to `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+```
+
+Get deploy hook URL from Render → Service → Settings → Deploy Hook.
+
+---
+
+## Security Checklist
+
+- [ ] All secrets set via Render dashboard (not in code)
+- [ ] `TON_WALLET_MNEMONIC` backed up securely offline
+- [ ] HTTPS enforced (Render default)
+- [ ] Redis only accepts internal connections
+- [ ] Database IP allow list configured (if needed)
+- [ ] Rate limiting enabled in API
+- [ ] CORS configured for dashboard domain only
+
+---
+
+## Support
+
+- **Documentation**: `/docs` folder
+- **Issues**: GitHub Issues
+- **npm Packages**: 
+  - `telepaygate-core` - Core business logic
+  - `telepaygate-api` - REST API
+  - `telepaygate-sdk` - Client SDK

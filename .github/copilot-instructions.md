@@ -1,4 +1,4 @@
-# Copilot Instructions for Telegram Payment Gateway
+# Copilot Instructions for TelePayGate
 
 **Status**: Decentralized P2P payment processor | Telegram Stars → TON → Fiat conversions | P2P liquidity pools (no intermediaries)
 
@@ -101,7 +101,7 @@ npm run build --workspaces            # Compile TypeScript
 
 ```bash
 # Database (PostgreSQL 16+)
-DATABASE_URL=postgresql://user:password@localhost:5432/tg_payment_dev
+DATABASE_URL=postgresql://user:password@localhost:5432/telepaygate_dev
 DATABASE_POOL_MIN=2
 DATABASE_POOL_MAX=10
 

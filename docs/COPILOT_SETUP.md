@@ -131,8 +131,8 @@ The setup workflow uses these PostgreSQL credentials for testing:
 ```
 POSTGRES_USER=tg_user
 POSTGRES_PASSWORD=tg_pass
-POSTGRES_DB=tg_payment_dev
-DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_dev
+POSTGRES_DB=telepaygate_dev
+DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/telepaygate_dev
 ```
 
 These match the values in `.env.example` for consistency.

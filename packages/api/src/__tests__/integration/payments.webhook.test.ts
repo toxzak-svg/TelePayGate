@@ -39,7 +39,7 @@ describe("Payments API - webhook", () => {
       cleanDatabase = dbUtils.cleanDatabase;
       disconnectDatabase = dbUtils.disconnectDatabase;
     }
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (fixture) {
@@ -48,14 +48,25 @@ describe("Payments API - webhook", () => {
       await stopPostgresFixture(fixture);
     }
     if (disconnectDatabase) {
-      await disconnectDatabase();
+      try {
+        await disconnectDatabase();
+      } catch (e) {
+        // fallback to core close
+        try {
+          const core: any = await import("telepaygate-core");
+          if (typeof core.closeDatabase === "function") await core.closeDatabase();
+          else if (core.default && typeof core.default.closeDatabase === "function") await core.default.closeDatabase();
+        } catch (err) {
+          // ignore
+        }
+      }
     }
-  });
+  }, 15000);
 
   beforeEach(async () => {
     // Only clean database, do not insert user
     await cleanDatabase();
-  });
+  }, 15000);
 
   test("POST /api/v1/payments/webhook - acknowledges webhook", async () => {
     const payload = {

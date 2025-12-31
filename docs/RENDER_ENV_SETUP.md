@@ -1,6 +1,6 @@
 # Render Environment Variables Setup Guide
 
-This guide provides step-by-step instructions for configuring all required environment variables on Render.com for the Telegram Payment Gateway.
+This guide provides step-by-step instructions for configuring all required environment variables on Render.com for the TelePayGate.
 
 ## 🚨 Critical Variables (Must Configure Before Deploy)
 

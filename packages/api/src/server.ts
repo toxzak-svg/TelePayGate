@@ -7,10 +7,14 @@ import globalLimiter from "./middleware/ratelimit.middleware";
 import { errorHandler } from "./middleware/error.middleware";
 import v1Routes from "./routes/v1.routes";
 import { responseMiddleware } from "./middleware/response.middleware";
+import { metricsMiddleware } from "./middleware/metrics.middleware";
 import "./db/connection";
 
 export function createServer(): Application {
   const app = express();
+
+  // Metrics (should be first to track all requests)
+  app.use(metricsMiddleware);
 
   // Security middleware
   app.use(helmet());

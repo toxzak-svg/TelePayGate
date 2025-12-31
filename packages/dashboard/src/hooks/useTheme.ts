@@ -9,7 +9,7 @@ export default function useTheme() {
     try {
       const stored = localStorage.getItem(THEME_KEY);
       if (stored === "light" || stored === "dark") return stored;
-    } catch (e) {}
+    } catch {}
 
     if (typeof window !== "undefined" && window.matchMedia) {
       return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -29,7 +29,7 @@ export default function useTheme() {
     }
     try {
       localStorage.setItem(THEME_KEY, theme);
-    } catch (e) {}
+    } catch {}
   }, [theme]);
 
   const toggle = useCallback(() => {

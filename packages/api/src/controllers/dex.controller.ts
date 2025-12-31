@@ -3,7 +3,7 @@ import {
   getDatabase,
   P2PLiquidityService,
   DexAggregatorService,
-} from "@tg-payment/core";
+} from "telepaygate-core";
 
 /**
  * DEX Controller

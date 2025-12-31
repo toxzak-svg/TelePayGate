@@ -11,7 +11,7 @@ export default function TotpProvision({ email }: { email?: string }) {
       const json = await res.json();
       if (json.success) setSecretData(json.data);
       else setMessage('Failed to start provisioning');
-    } catch (err) {
+    } catch {
       setMessage('Failed to start provisioning');
     }
   }

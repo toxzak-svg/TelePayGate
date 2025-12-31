@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { AuthService } from "@tg-payment/core";
-import { getDatabase } from "@tg-payment/core";
+import { AuthService } from "telepaygate-core";
+import { getDatabase } from "telepaygate-core";
 import {
   respondSuccess,
   respondError,
@@ -28,13 +28,14 @@ export default class AuthController {
         ip: req.ip,
         userAgent: req.get("User-Agent") || undefined,
       });
-      const responseData = {
+      const responseData: Record<string, unknown> = {
         message: "Magic link issued",
         token_jti: result.token_jti,
         expires_at: result.expires_at,
       };
       if (process.env.EXPOSE_TEST_TOKENS === "true") {
-        (responseData as any).token = result.token;
+        (responseData as Record<string, unknown> & { token?: string }).token =
+          result.token;
       }
       return respondSuccess(res, { data: responseData }, 202);
     } catch (err: unknown) {
@@ -96,6 +97,84 @@ export default class AuthController {
         message || "Verification failed",
         500,
       );
+    }
+  }
+
+  static async registerEmail(req: Request, res: Response) {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
+    if (String(password).length < 8)
+      return respondError(res, "WEAK_PASSWORD", "Password must be at least 8 characters", 400);
+
+    try {
+      const user = await AuthService.registerDashboardUserWithPassword(email, password);
+      // create session
+      const session = await AuthService.createSessionForUser(user.id);
+
+      const isProd = process.env.NODE_ENV === "production";
+      const maxAge = session.expires_at ? Math.max(0, new Date(session.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
+      res.cookie("session_id", session.session_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
+      res.cookie("csrf_token", session.csrf_token, { httpOnly: false, secure: isProd, sameSite: "lax", maxAge });
+
+      return respondSuccess(res, { data: { user: { id: user.id, email: user.email, role: user.role } } }, 201);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return respondError(res, "INTERNAL_ERROR", message || "Registration failed", 500);
+    }
+  }
+
+  static async login(req: Request, res: Response) {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
+
+    try {
+      const result: unknown = await AuthService.loginWithPassword(
+        email,
+        password,
+      );
+      const loginResult = result as {
+        ok: boolean;
+        reason?: string;
+        expires_at?: string;
+        session_token?: string;
+        csrf_token?: string;
+        user?: unknown;
+      };
+      if (!loginResult.ok) {
+        const map: Record<string, [number, string]> = {
+          not_found: [404, "USER_NOT_FOUND"],
+          no_password: [400, "NO_PASSWORD"],
+          inactive: [403, "INACTIVE"],
+          invalid_credentials: [401, "INVALID_CREDENTIALS"],
+        };
+        const [status, code] = map[loginResult.reason as string] || [401, "INVALID_CREDENTIALS"];
+        return respondError(res, code, loginResult.reason || "Login failed", status);
+      }
+
+      const isProd = process.env.NODE_ENV === "production";
+      const maxAge = loginResult.expires_at
+        ? Math.max(0, new Date(loginResult.expires_at).getTime() - Date.now())
+        : 24 * 60 * 60 * 1000;
+      res.cookie("session_id", loginResult.session_token as string, {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: "lax",
+        maxAge,
+      });
+      if (loginResult.csrf_token)
+        res.cookie("csrf_token", loginResult.csrf_token as string, {
+          httpOnly: false,
+          secure: isProd,
+          sameSite: "lax",
+          maxAge,
+        });
+
+      return respondSuccess(res, { data: { user: loginResult.user } }, 200);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      return respondError(res, "INTERNAL_ERROR", message || "Login failed", 500);
     }
   }
 
@@ -201,7 +280,10 @@ export default class AuthController {
       if (new Date(session.expires_at) < new Date())
         return respondError(res, "EXPIRED", "Session expired", 401);
       const user = await db.oneOrNone(
-        "SELECT id, email, role, is_active FROM dashboard_users WHERE id = $1",
+        `SELECT du.id, du.email, du.role, du.is_active, u.api_key as "apiKey"
+         FROM dashboard_users du
+         LEFT JOIN users u ON du.merchant_id = u.id
+         WHERE du.id = $1`,
         [session.user_id],
       );
       if (!user) return respondError(res, "NO_USER", "User not found", 404);

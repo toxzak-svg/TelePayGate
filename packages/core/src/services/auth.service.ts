@@ -227,6 +227,110 @@ export class AuthService {
       );
     }
   }
+
+  // Hash a plain password
+  static async hashPassword(plain: string): Promise<string> {
+    return await bcrypt.hash(plain, 10);
+  }
+
+  // Verify a plain password against stored hash
+  static async verifyPassword(plain: string, hash: string): Promise<boolean> {
+    return await bcrypt.compare(plain, hash);
+  }
+
+  // Create a session for a dashboard user and return session details
+  static async createSessionForUser(userId: string, meta?: any, ttlMs?: number) {
+    const db = getDatabase();
+    const sessionToken = AuthService.generatePendingToken();
+    const csrfToken = AuthService.generatePendingToken();
+    const expiresAt = new Date(Date.now() + (ttlMs || 24 * 60 * 60 * 1000));
+    const metaToStore = Object.assign({}, meta || {}, { csrf_token: csrfToken });
+
+    await db.none(
+      "INSERT INTO sessions (user_id, session_token, created_at, last_seen_at, expires_at, meta) VALUES ($1, $2, now(), now(), $3, $4)",
+      [userId, sessionToken, expiresAt, JSON.stringify(metaToStore)],
+    );
+
+    return {
+      session_token: sessionToken,
+      csrf_token: csrfToken,
+      expires_at: expiresAt.toISOString(),
+    };
+  }
+
+  // Register or set password for a dashboard user (creates user if missing)
+  static async registerDashboardUserWithPassword(
+    email: string,
+    password: string,
+  ) {
+    const db = getDatabase();
+    const hash = await AuthService.hashPassword(password);
+
+    // Ensure dashboard user exists
+    let user = await db.oneOrNone(
+      "SELECT * FROM dashboard_users WHERE email = $1",
+      [email],
+    );
+    if (!user) {
+      // Create a merchant user for this dashboard user
+      const apiKey = `pk_${crypto.randomBytes(16).toString("hex")}`;
+      const apiSecret = `sk_${crypto.randomBytes(24).toString("hex")}`;
+      const appName = `${email.split("@")[0]}'s App`;
+
+      const merchant = await db.one(
+        `INSERT INTO users (api_key, api_secret, app_name, kyc_status, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, 'pending', true, NOW(), NOW()) RETURNING id`,
+        [apiKey, apiSecret, appName],
+      );
+
+      user = await db.one(
+        "INSERT INTO dashboard_users (email, role, is_active, created_at, updated_at, password_hash, password_updated_at, merchant_id) VALUES ($1, $2, true, now(), now(), $3, now(), $4) RETURNING *",
+        [email, "developer", hash, merchant.id],
+      );
+    } else {
+      // update existing user
+      await db.none(
+        "UPDATE dashboard_users SET password_hash = $1, password_updated_at = now() WHERE id = $2",
+        [hash, user.id],
+      );
+      user = await db.one("SELECT * FROM dashboard_users WHERE id = $1", [
+        user.id,
+      ]);
+    }
+
+    return user;
+  }
+
+  // Login an existing dashboard user with email + password
+  static async loginWithPassword(email: string, password: string) {
+    const db = getDatabase();
+    const user = await db.oneOrNone(
+      `SELECT du.*, u.api_key 
+       FROM dashboard_users du 
+       LEFT JOIN users u ON du.merchant_id = u.id 
+       WHERE du.email = $1`,
+      [email],
+    );
+    if (!user) return { ok: false, reason: "not_found" };
+    if (!user.password_hash) return { ok: false, reason: "no_password" };
+    if (!user.is_active) return { ok: false, reason: "inactive" };
+
+    const ok = await AuthService.verifyPassword(password, user.password_hash);
+    if (!ok) return { ok: false, reason: "invalid_credentials" };
+
+    // create session
+    const session = await AuthService.createSessionForUser(user.id);
+    return {
+      ok: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        apiKey: user.api_key,
+      },
+      ...session,
+    };
+  }
 }
 
 export default AuthService;

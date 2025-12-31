@@ -1,8 +1,26 @@
+<<<<<<< HEAD
+import { Router } from 'express';
+import PaymentController from '../controllers/payment.controller';
+import { ConversionController } from '../controllers/conversion.controller';
+import UserController from '../controllers/user.controller';
+import config from '../config';
+import { createRateLimiter } from '../middleware/ratelimit.middleware';
+import AdminController from '../controllers/admin.controller';
+import { requireDashboardRole } from '../middleware/role.middleware';
+import FeeCollectionController from '../controllers/fee-collection.controller';
+import { authenticate } from '../middleware/auth.middleware';
+// import P2POrdersController from '../controllers/p2p-orders.controller';
+import webhookRoutes from './webhooks.routes';
+import AuthController from '../controllers/auth.controller';
+import CaptchaController from '../controllers/captcha.controller';
+import csrfProtect from '../middleware/csrf.middleware';
+=======
 import { Router } from "express";
 import PaymentController from "../controllers/payment.controller";
 import { ConversionController } from "../controllers/conversion.controller";
 import UserController from "../controllers/user.controller";
 import AdminController from "../controllers/admin.controller";
+import RateController from "../controllers/rate.controller";
 import { requireDashboardRole } from "../middleware/role.middleware";
 import FeeCollectionController from "../controllers/fee-collection.controller";
 import { authenticate } from "../middleware/auth.middleware";
@@ -10,9 +28,22 @@ import { authenticate } from "../middleware/auth.middleware";
 import webhookRoutes from "./webhooks.routes";
 import AuthController from "../controllers/auth.controller";
 import csrfProtect from "../middleware/csrf.middleware";
+import nitroRoutes from "./nitro.routes";
+import { getMetrics, getContentType } from "../utils/metrics";
+>>>>>>> main
 
 const router = Router();
 const conversionController = new ConversionController();
+
+// Metrics endpoint
+router.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", getContentType());
+    res.end(await getMetrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
+});
 
 // Health check
 router.get("/health", (req, res) => {
@@ -25,11 +56,19 @@ router.use("/webhooks", webhookRoutes);
 // Auth (passwordless) routes — feature-flagged in controller
 router.post("/auth/magic-link", AuthController.requestMagicLink);
 router.post("/auth/magic-link/verify", AuthController.verifyMagicLink);
+router.post("/auth/register", AuthController.registerEmail);
+router.post("/auth/login", AuthController.login);
 router.post("/auth/totp/verify", AuthController.totpVerify);
 router.post("/auth/totp/enable", AuthController.enableTotp);
 router.post("/auth/totp/confirm", AuthController.totpConfirm);
 router.post("/auth/logout", AuthController.logout);
 router.get("/auth/me", AuthController.me);
+
+// Features endpoint (discovery)
+router.get('/features', CaptchaController.getFeatures);
+
+// Captcha verification used by public forms (register)
+router.post('/captcha/verify', CaptchaController.verify);
 
 // Payment routes
 router.post("/payments/webhook", PaymentController.handleTelegramWebhook);
@@ -44,10 +83,22 @@ router.get(
   "/conversions/rate",
   conversionController.getRate.bind(conversionController),
 );
+router.get("/rates/current", RateController.getCurrentRates);
+router.post(
+  "/conversions/lock-rate",
+  authenticate,
+  conversionController.lockRate.bind(conversionController),
+);
+router.post(
+  "/conversions/create",
+  authenticate,
+  conversionController.createConversion.bind(conversionController),
+);
+// Legacy compatibility
 router.post(
   "/conversions",
   authenticate,
-  conversionController.createConversion.bind(conversionController),
+  conversionController.lockRate.bind(conversionController),
 );
 router.get(
   "/conversions/:id",
@@ -60,7 +111,21 @@ router.get(
   conversionController.getConversionHistory.bind(conversionController),
 );
 
+// NitroSwaps routes
+router.use("/nitro", nitroRoutes);
+
 // User routes
+<<<<<<< HEAD
+// Public registration: apply a stricter rate limiter to avoid abuse
+router.post(
+  '/users/register',
+  createRateLimiter({ windowMs: config.rateLimit.registerWindowMs, maxRequests: config.rateLimit.registerMaxRequests }),
+  UserController.register
+);
+router.get('/users/me', authenticate, UserController.getMe);
+router.post('/users/api-keys/regenerate', authenticate, UserController.regenerateApiKey);
+router.get('/users/stats', authenticate, UserController.getStats);
+=======
 router.post("/users/register", UserController.register);
 router.get("/users/me", authenticate, UserController.getMe);
 router.post(
@@ -69,6 +134,7 @@ router.post(
   UserController.regenerateApiKey,
 );
 router.get("/users/stats", authenticate, UserController.getStats);
+>>>>>>> main
 
 // Admin routes
 router.get(

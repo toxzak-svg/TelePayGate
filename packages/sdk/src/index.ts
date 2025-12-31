@@ -1,6 +1,6 @@
-export { TelegramPaymentGateway } from "./client";
+export { TelePayGate } from "./client";
 export * from "./types";
 
 // Re-export default
-import { TelegramPaymentGateway } from "./client";
-export default TelegramPaymentGateway;
+import { TelePayGate } from "./client";
+export default TelePayGate;

@@ -7,7 +7,7 @@
     "rootDir": "./packages",
     "baseUrl": ".",
     "paths": {
-      "@tg-payment/core": ["packages/core/src"]
+      "telepaygate-core": ["packages/core/src"]
     },
     "strict": false,
     "esModuleInterop": true,

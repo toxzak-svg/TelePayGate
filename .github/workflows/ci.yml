@@ -17,14 +17,14 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: tg_payment_ci
+          POSTGRES_DB: telepaygate_ci
         options: >-
-          --health-cmd="pg_isready -U postgres -d tg_payment_ci"
+          --health-cmd="pg_isready -U postgres -d telepaygate_ci"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tg_payment_ci
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/telepaygate_ci
 
     steps:
       - name: Checkout code
@@ -34,9 +34,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --workspaces
+        run: npm ci --workspaces --no-audit --no-fund
 
       - name: Guard EXPOSE_TEST_TOKENS
         run: |
@@ -55,8 +57,9 @@ jobs:
             sleep 1
           done
 
-      - name: Build (optional)
-        run: npm run build --workspaces --if-present
+      - name: Build (optimized)
+        # Build core first, then build remaining workspaces in parallel (shorter wall-time, preserves d.ts ordering)
+        run: npm run build:parallel --if-present
 
       - name: Run DB migrations (if available)
         run: |
@@ -90,9 +93,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --workspaces
+        run: npm ci --workspaces --no-audit --no-fund
 
       - name: Prepare DB and run tests (fixture-backed)
         run: |
