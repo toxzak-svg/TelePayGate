@@ -468,7 +468,7 @@ export class P2PLiquidityService {
     if (from === "STARS" && to === "TON") {
       return "0.000015";
     }
-    throw new Error(`Unsupported currency pair: ${from} -> ${to}`);
+    throw new Error(`Unsupported currency pair: ${from} → ${to}`);
   }
 
   /**
