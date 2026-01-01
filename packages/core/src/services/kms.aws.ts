@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { KmsProvider } from './kms.service';
 
 // The AWS SDK is an optional dependency in some dev environments and CI images.
@@ -6,10 +5,6 @@ import { KmsProvider } from './kms.service';
 // `@aws-sdk/client-kms` isn't installed. We dynamically require the module at
 // runtime and return a safe provider that throws helpful errors when used but
 // doesn't break builds in environments where KMS is unnecessary.
-=======
-import { KmsProvider } from "./kms.service";
-import { KMSClient, EncryptCommand, DecryptCommand } from "@aws-sdk/client-kms";
->>>>>>> main
 
 const KEY_ID = process.env.AWS_KMS_KEY_ID;
 const REGION = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION;

@@ -115,15 +115,6 @@ export default function Login() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 text-center">
-<<<<<<< HEAD
-              Don't have an API key?{' '}
-              <a
-                href="/register"
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Create one now
-              </a>
-=======
               Don't have an account?{' '}
               <Link
                 to="/signup"
@@ -131,7 +122,6 @@ export default function Login() {
               >
                 Sign Up
               </Link>
->>>>>>> main
             </p>
           </div>
 

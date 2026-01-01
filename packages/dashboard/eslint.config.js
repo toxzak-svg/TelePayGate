@@ -11,7 +11,10 @@ export default [
     ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      sourceType: 'module',
+      globals: {
+        ...globals.builtin,
+      },
     },
     plugins: {
       'react-hooks': reactHooks,

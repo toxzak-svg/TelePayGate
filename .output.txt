@@ -1,357 +1,1143 @@
 
-> telepaygate-core@0.1.2 test
-> jest --forceExit
- PASS  src/__tests__/unit/settlement.service.test.ts (10.263 s)
+> telepaygate@0.1.0 coverage:api
+> npm run -w telepaygate-api test -- --coverage
+> telepaygate-api@0.1.0 test
+> dotenv -e .env.test -- jest --passWithNoTests --forceExit --coverage
+Determining test suites to run...[jest.global-setup] Loaded .env.test from C:\dev\projects\TelePayGate\.env.test
+[jest.global-setup] Starting shared Postgres fixture...
+[postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32803/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32803/telepaygate_tc
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+[postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32803/telepaygate_tc
+🚀 Starting database migration...
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+[jest.global-setup] Wrote DB info to C:\dev\projects\TelePayGate\packages\api\tmp\tc-db.json
+ PASS  src/__tests__/body-parsing.test.ts (13.532 s)
+ PASS  src/__tests__/unit/nitro.test.ts (21.859 s)
   ● Console
     console.log
-      💸 Executing fiat payout via stub: 55 USD to user user-1
-      at SettlementService.executeFiatPayout (src/services/settlement.service.ts:426:13)
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
     console.log
-      💸 [STUB] Fiat payout: 55 USD to user user-1
-      at StubFiatGateway.executePayout (src/services/settlement.service.ts:73:13)
-    console.log
-      ✅ Settlement completed { settlementId: 'settlement-1', conversionId: 'conversion-1' }
-      at SettlementService.completePendingSettlements (src/services/settlement.service.ts:410:15)
- PASS  src/__tests__/unit/webhook.service.test.ts (10.289 s)
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32803/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+ FAIL  src/__tests__/auth.email.test.ts (24.985 s)
   ● Console
-    console.error
-      ❌ Webhook delivery failed (attempt NaN/5): {
-        eventId: 'event-1',
-        url: 'http://test.com',
-        error: "Cannot read properties of undefined (reading 'status')",
-        nextRetry: 2025-12-30T23:35:39.090Z
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32803/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+  ● Email/password registration & login › login with correct password should create session cookie
+    expect(received).toBe(expected) // Object.is equality
+    Expected: 200
+    Received: 500
+
+      at Object.<anonymous> (src/__tests__/auth.email.test.ts:69:28)
+  ● Email/password registration & login › login with wrong password returns 401
+    expect(received).toBe(expected) // Object.is equality
+    Expected: 401
+    Received: 404
+
+      at Object.<anonymous> (src/__tests__/auth.email.test.ts:76:28)
+ PASS  src/__tests__/auth.mailhog.e2e.test.ts (25.003 s)
+  ● Console
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32803/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+    console.log
+      MailHog message body (debug, cleaned): ----_NmP-572ad1888d276e2c-Part_1
+      Content-Type: text/plain; charset=utf-8
+      Content-Transfer-Encoding: quoted-printable
+
+      Sign in: http://localhost:5173/auth/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUyZS1tYWlsaG9nLTE3NjczMDQyMjQ4NDRAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjczMDQyMjQsImV4cCI6MTc2NzMwNTEyNCwianRpIjoiZTcyN2NhOThhYTA1YjBiNzI1NWYwMmY3Njk1MDhkNDYifQ.iQ0oqjoUXjDxfQQ5utDeS28x8hHx_TWfBzifQy1nt8s
+      ----_NmP-572ad1888d276e2c-Part_1
+      Content-Type: text/html; charset=utf-8
+      Content-Transfer-Encoding: quoted-printable
+
+      <p>Sign in: <a href="http://localhost:5173/auth/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUyZS1tYWlsaG9nLTE3NjczMDQyMjQ4NDRAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjczMDQyMjQsImV4cCI6MTc2NzMwNTEyNCwianRpIjoiZTcyN2NhOThhYTA1YjBiNzI1NWYwMmY3Njk1MDhkNDYifQ.iQ0oqjoUXjDxfQQ5utDeS28x8hHx_TWfBzifQy1nt8s">http://localhost:5173/auth/verify?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUyZS1tYWlsaG9nLTE3NjczMDQyMjQ4NDRAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjczMDQyMjQsImV4cCI6MTc2NzMwNTEyNCwianRpIjoiZTcyN2NhOThhYTA1YjBiNzI1NWYwMmY3Njk1MDhkNDYifQ.iQ0oqjoUXjDxfQQ5utDeS28x8hHx_TWfBzifQy1nt8s</a></p>
+      ----_NmP-572ad1888d276e2c-Part_1--
+      at Object.<anonymous> (src/__tests__/auth.mailhog.e2e.test.ts:86:29)
+    console.log
+      Found token via URL match: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImUyZS1tYWlsaG9nLTE3NjczMDQyMjQ4NDRAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjczMDQyMjQsImV4cCI6MTc2NzMwNTEyNCwianRpIjoiZTcyN2NhOThhYTA1YjBiNzI1NWYwMmY3Njk1MDhkNDYifQ.iQ0oqjoUXjDxfQQ5utDeS28x8hHx_TWfBzifQy1nt8s
+      at Object.<anonymous> (src/__tests__/auth.mailhog.e2e.test.ts:98:37)
+ PASS  src/__tests__/integration/unmatched-deposits.test.ts (25.126 s)
+  ● Console
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32803/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+    console.log
+      [db-test-utils] telepaygate-core exports: [
+        'TelegramService',
+        'DirectConversionService',
+        'TonPaymentService',
+        'TonBlockchainService',
+        'FeeService',
+        'FeeCollectionService',
+        'RateAggregatorService',
+        'PaymentService',
+        'WebhookService',
+        'ReconciliationService',
+        'WithdrawalService',
+        'StarsP2PService',
+        'FragmentService',
+        'NitroSwapsService',
+        'AuthService',
+        'AdminAnalyticsService',
+        'StarsOrderModel',
+        'PaymentModel',
+        'PaymentStatus',
+        'ConversionModel',
+        'ConversionStatus',
+        'Currency',
+        'SettlementModel',
+        'SettlementStatus',
+        'FiatCurrency',
+        'RateLockManager',
+        'rateLockManager',
+        'ConversionState',
+        'ConversionStateMachine',
+        'ErrorCode',
+        'AppError',
+        'ValidationError',
+        'AuthenticationError',
+        'AuthorizationError',
+        'NotFoundError',
+        'ConflictError',
+        'RateLimitError',
+        'ExternalServiceError',
+        'ConversionError',
+        'ErrorHandler',
+        'validateEnvironment',
+        'validateEnvironmentOrExit',
+        'getEnvironmentSummary',
+        'initDatabase',
+        'getDatabase',
+        'closeDatabase',
+        'config',
+        'ServerBase',
+        'VERSION',
+        'API_VERSION',
+        'INTEGRATION_METHOD',
+        'WalletManagerService',
+        'P2PLiquidityService',
+        'DEX_SWAP_OP',
+        'DEX_OP_LEGACY',
+        'DexAggregatorService'
+      ]
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1923:11)
+    console.log
+      [db-test-utils] closeDatabase typeof: function
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1927:11)
+    console.log
+      Received TON transaction webhook: {
+        tx_hash: 'unmatched_tx_hash',
+        sender: 'some_ton_address',
+        amount: '1000000000',
+        destination: 'our_custodial_wallet_address'
       }
-      132 |       );
-      133 |
-    > 134 |       console.error(
-          |               ^
-      135 |         `❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`,
-      136 |         {
-      137 |           eventId,
-      at WebhookService.deliverEvent (src/services/webhook.service.ts:134:15)
-      at WebhookService.queueEvent (src/services/webhook.service.ts:62:5)
-      at Object.<anonymous> (src/__tests__/unit/webhook.service.test.ts:29:7)
-    console.log
-      ✅ Webhook delivered: event-1 to https://example.com/webhook
-      at WebhookService.deliverEvent (src/services/webhook.service.ts:112:17)
-    console.error
-      ❌ Webhook delivery failed (attempt 1/5): {
-        eventId: 'event-2',
-        url: 'https://example.com/webhook',
-        error: 'Connection timeout',
-        nextRetry: 2025-12-30T22:36:09.122Z
-      }
-      132 |       );
-      133 |
-    > 134 |       console.error(
-          |               ^
-      135 |         `❌ Webhook delivery failed (attempt ${newAttempts}/${this.MAX_ATTEMPTS}):`,
-      136 |         {
-      137 |           eventId,
-      at WebhookService.deliverEvent (src/services/webhook.service.ts:134:15)
-      at Object.<anonymous> (src/__tests__/unit/webhook.service.test.ts:92:7)
- PASS  src/__tests__/unit/basic.test.ts (10.279 s)
+      at handleTonTransaction (src/controllers/webhook.controller.ts:229:15)
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32804/telepaygate_tc
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32805/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32806/telepaygate_tc
+[migrate.cjs] Using database: postgresql://127.0.0.1:32808/telepaygate_tc
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32809/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[migrate.cjs] Using database: postgresql://127.0.0.1:32807/telepaygate_tc
+C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136
+      const error = this._ending ? new Error('Connection terminated') : new Error('Connection terminated unexpectedly')
+                                                                        ^
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\client.js:136:73)
+    at Object.onceWrapper (node:events:622:28)
+    at Connection.emit (node:events:508:28)
+    at Socket.<anonymous> (C:\dev\projects\TelePayGate\node_modules\pg\lib\connection.js:62:12)
+    at Socket.emit (node:events:508:28)
+    at TCP.<anonymous> (node:net:346:12)
+Node.js v24.12.0
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32810/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32804/telepaygate_tc
+🚀 Starting database migration...
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32805/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32806/telepaygate_tc
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32808/telepaygate_tc
+🚀 Starting database migration...
+🚀 Starting database migration...
+🚀 Starting database migration...
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[migrate.cjs] Using database: postgresql://127.0.0.1:32809/telepaygate_tc
+🚀 Starting database migration...
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[migrate.cjs] Using database: postgresql://127.0.0.1:32807/telepaygate_tc
+🚀 Starting database migration...
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[migrate.cjs] Using database: postgresql://127.0.0.1:32810/telepaygate_tc
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+🚀 Starting database migration...
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+📂 Found 22 migration files
+▸ Running: 001_initial_schema.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 018_create_dashboard_users.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 001_initial_schema.sql
+▸ Running: 002_platform_fees.sql
+✓ Success: 002_platform_fees.sql
+▸ Running: 003_reconciliation_webhooks.sql
+✓ Success: 003_reconciliation_webhooks.sql
+▸ Running: 004_missing_columns.sql
+✓ Success: 004_missing_columns.sql
+▸ Running: 005_fee_collections.sql
+✓ Success: 005_fee_collections.sql
+▸ Running: 006_p2p_tables.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 006_p2p_tables.sql
+▸ Running: 007_withdrawals_table.sql
+✓ Success: 007_withdrawals_table.sql
+▸ Running: 008_stars_p2p_orders.sql
+✓ Success: 008_stars_p2p_orders.sql
+▸ Running: 009_remove_fragment_columns.sql
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 009_remove_fragment_columns.sql
+▸ Running: 010_update_platform_config.sql
+✓ Success: 010_update_platform_config.sql
+▸ Running: 011_deposits_and_settlement_updates.sql
+✓ Success: 011_deposits_and_settlement_updates.sql
+▸ Running: 012_create_wallets_table.sql
+✓ Success: 012_create_wallets_table.sql
+▸ Running: 013_update_atomic_swap_status.sql
+✓ Success: 013_update_atomic_swap_status.sql
+▸ Running: 014_create_fee_calculations.sql
+✓ Success: 014_create_fee_calculations.sql
+▸ Running: 015_add_fee_config_to_fee_calculations.sql
+✓ Success: 015_add_fee_config_to_fee_calculations.sql
+▸ Running: 016_fix_fee_calculations_stars_amount_type.sql
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+✓ Success: 016_fix_fee_calculations_stars_amount_type.sql
+▸ Running: 017_add_auth_tables.sql
+✓ Success: 017_add_auth_tables.sql
+▸ Running: 018_create_dashboard_users.sql
+✓ Success: 018_create_dashboard_users.sql
+▸ Running: 019_dashboard_users_passwords.sql
+✓ Success: 019_dashboard_users_passwords.sql
+▸ Running: 020_add_merchant_id_to_dashboard_users.sql
+✓ Success: 020_add_merchant_id_to_dashboard_users.sql
+▸ Running: 020_nitro_swaps.sql
+✓ Success: 020_nitro_swaps.sql
+▸ Running: 021_swap_logs.sql
+✓ Success: 021_swap_logs.sql
+✅ Migration complete! Applied 22 migration(s).
+ PASS  src/__tests__/auth.backup-codes.test.ts (37.73 s)
   ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32805/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/auth.backup-codes.test.ts:12:29)
+ PASS  src/__tests__/auth.passwordless.test.ts (40.227 s)
+  ● Console
+    console.log
+      [test-debug] USE_TESTCONTAINERS= true
+      at Object.<anonymous> (src/__tests__/auth.passwordless.test.ts:40:9)
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32807/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/auth.passwordless.test.ts:56:27)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32807/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+    console.log
+      [test-debug] Started fixture, built integration app
+      at Object.<anonymous> (src/__tests__/auth.passwordless.test.ts:72:25)
+    console.log
+      [test-debug] magic-link response: 202 {"success":true,"requestId":"1cfc9822-2f44-4ca4-9574-ccd24f8c0703","data":{"message":"Magic link issued","token_jti":"2d16ba98c2fc227b1d6a0d9692007333","expires_at":"2026-01-01T22:05:41.000Z","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjczMDQyNDEsImV4cCI6MTc2NzMwNTE0MSwianRpIjoiMmQxNmJhOThjMmZjMjI3YjFkNmEwZDk2OTIwMDczMzMifQ.B-vMwrhd3LUvyqtJHYO-pZdjuxHqJzUFQj8-lKXr-u0"}}
+      at Object.<anonymous> (src/__tests__/auth.passwordless.test.ts:102:21)
+    console.log
+      [test-debug] verify response: 200 {"success":true,"requestId":"608ddc50-0a07-409a-8979-2382dab1a59f","data":{"user":{"id":"e1399ffc-1af2-4be4-a35e-24aa8715ec07","email":"test@example.com","role":"admin"}}} headers: [
+        'session_id=910fe6a0565b02540143485bcd522c745e165aa1c3026e26; Max-Age=86399; Path=/; Expires=Fri, 02 Jan 2026 21:50:41 GMT; HttpOnly; SameSite=Lax',
+        'csrf_token=a7f62ea3faea3353180e03643d59deffea82dd185bb52c66; Max-Age=86399; Path=/; Expires=Fri, 02 Jan 2026 21:50:41 GMT; SameSite=Lax'
+      ]
+      at Object.<anonymous> (src/__tests__/auth.passwordless.test.ts:122:21)
+ PASS  src/__tests__/auth.magic-link.test.ts (40.561 s)
+  ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32809/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/auth.magic-link.test.ts:58:32)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32809/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+ PASS  src/__tests__/auth.totp.test.ts (40.958 s)
+  ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32804/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/auth.totp.test.ts:54:29)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32804/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+ PASS  src/__tests__/integration/auth.flow.test.ts (41.279 s)
+  ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32808/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/integration/auth.flow.test.ts:54:25)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32808/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+ PASS  src/__tests__/integration/payments.webhook.test.ts (41.627 s)
+  ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32806/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/integration/payments.webhook.test.ts:60:27)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32806/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+    console.log
+      [db-test-utils] telepaygate-core exports: [
+        'TelegramService',
+        'DirectConversionService',
+        'TonPaymentService',
+        'TonBlockchainService',
+        'FeeService',
+        'FeeCollectionService',
+        'RateAggregatorService',
+        'PaymentService',
+        'WebhookService',
+        'ReconciliationService',
+        'WithdrawalService',
+        'StarsP2PService',
+        'FragmentService',
+        'NitroSwapsService',
+        'AuthService',
+        'AdminAnalyticsService',
+        'StarsOrderModel',
+        'PaymentModel',
+        'PaymentStatus',
+        'ConversionModel',
+        'ConversionStatus',
+        'Currency',
+        'SettlementModel',
+        'SettlementStatus',
+        'FiatCurrency',
+        'RateLockManager',
+        'rateLockManager',
+        'ConversionState',
+        'ConversionStateMachine',
+        'ErrorCode',
+        'AppError',
+        'ValidationError',
+        'AuthenticationError',
+        'AuthorizationError',
+        'NotFoundError',
+        'ConflictError',
+        'RateLimitError',
+        'ExternalServiceError',
+        'ConversionError',
+        'ErrorHandler',
+        'validateEnvironment',
+        'validateEnvironmentOrExit',
+        'getEnvironmentSummary',
+        'initDatabase',
+        'getDatabase',
+        'closeDatabase',
+        'config',
+        'ServerBase',
+        'VERSION',
+        'API_VERSION',
+        'INTEGRATION_METHOD',
+        'WalletManagerService',
+        'P2PLiquidityService',
+        'DEX_SWAP_OP',
+        'DEX_OP_LEGACY',
+        'DexAggregatorService'
+      ]
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1923:11)
+    console.log
+      [db-test-utils] closeDatabase typeof: function
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1927:11)
+    console.warn
+      ⚠️ Normalized non-UUID user id "test-user-1" to deterministic uuid 3aaff40c-66c3-5af4-a2e1-0fe7c771bd2d
+
+      at PaymentController.normalizeUserId (src/controllers/payment.controller.ts:2254:13)
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1855:52)
+      at Layer.handle [as handle_request] (../../node_modules/express/lib/router/layer.js:95:5)
+      at next (../../node_modules/express/lib/router/route.js:149:13)
+      at Route.dispatch (../../node_modules/express/lib/router/route.js:119:3)
+      at Layer.handle [as handle_request] (../../node_modules/express/lib/router/layer.js:95:5)
+      at ../../node_modules/express/lib/router/index.js:284:15
+      at router.process_params (../../node_modules/express/lib/router/index.js:346:12)
+      at next (../../node_modules/express/lib/router/index.js:280:10)
+      at router.handle (../../node_modules/express/lib/router/index.js:175:3)
+      at router (../../node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] (../../node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (../../node_modules/express/lib/router/index.js:328:13)
+      at ../../node_modules/express/lib/router/index.js:286:9
+      at router.process_params (../../node_modules/express/lib/router/index.js:346:12)
+      at next (../../node_modules/express/lib/router/index.js:280:10)
+      at cookieParser (../../node_modules/cookie-parser/index.js:57:14)
+      at Layer.handle [as handle_request] (../../node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (../../node_modules/express/lib/router/index.js:328:13)
+      at ../../node_modules/express/lib/router/index.js:286:9
+      at router.process_params (../../node_modules/express/lib/router/index.js:346:12)
+      at next (../../node_modules/express/lib/router/index.js:280:10)
+      at responseMiddleware (src/middleware/response.middleware.ts:581:3)
+      at Layer.handle [as handle_request] (../../node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (../../node_modules/express/lib/router/index.js:328:13)
+      at ../../node_modules/express/lib/router/index.js:286:9
+      at router.process_params (../../node_modules/express/lib/router/index.js:346:12)
+      at next (../../node_modules/express/lib/router/index.js:280:10)
+      at ../../node_modules/body-parser/lib/read.js:137:5
+      at invokeCallback (../../node_modules/raw-body/index.js:238:16)
+      at done (../../node_modules/raw-body/index.js:227:7)
+      at IncomingMessage.onEnd (../../node_modules/raw-body/index.js:287:7)
+    console.log
+      [Webhook] Received x-user-id: test-user-1, normalized: 3aaff40c-66c3-5af4-a2e1-0fe7c771bd2d
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1858:15)
+    console.log
+      [Webhook] Ensuring user exists: 3aaff40c-66c3-5af4-a2e1-0fe7c771bd2d
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1864:15)
+    console.log
+      [Webhook] User provisioning complete for: 3aaff40c-66c3-5af4-a2e1-0fe7c771bd2d
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1870:15)
+    console.log
+      📥 Webhook received: { userId: '3aaff40c-66c3-5af4-a2e1-0fe7c771bd2d', hasPayment: true }
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1893:15)
+    console.log
+      💰 Processing payment: { amount: 1000, currency: undefined, chargeId: 'charge_abc' }
+      at TelegramService.processSuccessfulPayment (../core/src/services/Telegram.service.ts:73:17)
+    console.log
+      ✅ Telegram payment persisted: 99139e2c-5085-4f25-896a-ec6b234006d4
+      at TelegramService.processSuccessfulPayment (../core/src/services/Telegram.service.ts:91:21)
+    console.log
+      ✅ Payment created: 99139e2c-5085-4f25-896a-ec6b234006d4
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1908:17)
+    console.log
+      💰 Platform fee created for payment: 99139e2c-5085-4f25-896a-ec6b234006d4
+      at handleTelegramWebhook (src/controllers/payment.controller.ts:1930:19)
+ PASS  src/__tests__/integration/conversions.test.ts (42.756 s)
+  ● Console
+    console.log
+      [postgresFixture] Started container on postgresql://tc_user:tc_pass@127.0.0.1:32810/telepaygate_tc
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1460:11)
+    console.warn
+      [postgresFixture] Migration failed, retrying in 2s... (4 retries left)
+
+      at startPostgresFixture (src/__tests__/fixtures/postgresFixture.ts:1611:17)
+      at Object.<anonymous> (src/__tests__/integration/conversions.test.ts:49:23)
+    console.log
+      🔍 Looking for .env at: C:\dev\projects\TelePayGate\.env
+      at Object.<anonymous> (src/config/index.ts:2053:9)
+    console.log
+      🔍 DATABASE_URL loaded: postgresql://tc_user:tc_pass@127.0.0.1:32810/telepaygate_tc
+      at Object.<anonymous> (src/config/index.ts:2061:9)
+    console.log
+      [db-test-utils] telepaygate-core exports: [
+        'TelegramService',
+        'DirectConversionService',
+        'TonPaymentService',
+        'TonBlockchainService',
+        'FeeService',
+        'FeeCollectionService',
+        'RateAggregatorService',
+        'PaymentService',
+        'WebhookService',
+        'ReconciliationService',
+        'WithdrawalService',
+        'StarsP2PService',
+        'FragmentService',
+        'NitroSwapsService',
+        'AuthService',
+        'AdminAnalyticsService',
+        'StarsOrderModel',
+        'PaymentModel',
+        'PaymentStatus',
+        'ConversionModel',
+        'ConversionStatus',
+        'Currency',
+        'SettlementModel',
+        'SettlementStatus',
+        'FiatCurrency',
+        'RateLockManager',
+        'rateLockManager',
+        'ConversionState',
+        'ConversionStateMachine',
+        'ErrorCode',
+        'AppError',
+        'ValidationError',
+        'AuthenticationError',
+        'AuthorizationError',
+        'NotFoundError',
+        'ConflictError',
+        'RateLimitError',
+        'ExternalServiceError',
+        'ConversionError',
+        'ErrorHandler',
+        'validateEnvironment',
+        'validateEnvironmentOrExit',
+        'getEnvironmentSummary',
+        'initDatabase',
+        'getDatabase',
+        'closeDatabase',
+        'config',
+        'ServerBase',
+        'VERSION',
+        'API_VERSION',
+        'INTEGRATION_METHOD',
+        'WalletManagerService',
+        'P2PLiquidityService',
+        'DEX_SWAP_OP',
+        'DEX_OP_LEGACY',
+        'DexAggregatorService'
+      ]
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1923:11)
+    console.log
+      [db-test-utils] closeDatabase typeof: function
+      at Object.<anonymous> (src/__tests__/integration/db-test-utils.ts:1927:11)
     console.log
       🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
+      at new RateAggregatorService (../core/src/services/rate.aggregator.ts:35:21)
     console.log
       📊 Fetching rates: TON → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
+      at RateAggregatorService.getAggregatedRate (../core/src/services/rate.aggregator.ts:66:17)
     console.log
       🧪 Simulated rates for TON → USD: [
         {
           source: 'coingecko',
           value: 2.1607499999999997,
-          timestamp: 1767134139225
+          timestamp: 1767304243527
         },
         {
           source: 'dexscreener',
           value: 2.1456999999999997,
-          timestamp: 1767134139225
+          timestamp: 1767304243527
         },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767134139225 }
+        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767304243527 }
       ]
-      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
- PASS  src/__tests__/rate.aggregator.test.ts (10.589 s)
-  ● Console
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      📊 Fetching rates: TON → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
- PASS  src/__tests__/transaction-monitor.test.ts
-  ● Console
-    console.log
-      ✅ Transaction confirmed: hash-123 for conversion conv-123
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
-    console.error
-      ❌ Transaction failed: hash-456 for conversion conv-456
-       99 |         });
-      100 |       } else if (state && state.status === 'failed') {
-    > 101 |         console.error(
-          |                 ^
-      102 |           `❌ Transaction failed: ${txHash} for conversion ${conversion.id}`,
-      103 |         );
-      104 |         await this.db.none(
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:101:17)
-      at TransactionMonitorService.checkPendingTransactions (src/services/transaction-monitor.service.ts:57:9)
-      at Object.<anonymous> (src/__tests__/transaction-monitor.test.ts:64:5)
-    console.log
-      ✅ Transaction confirmed: hash-789 for conversion conv-789
-      at TransactionMonitorService.checkConversionStatus (src/services/transaction-monitor.service.ts:73:17)
- PASS  src/__tests__/unit/deposit-monitor.service.test.ts
-  ● Console
-    console.log
-      🛰️ Deposit monitor running (interval=10ms, confirmations=1)
-      at DepositMonitorService.start (src/services/deposit-monitor.service.ts:47:13)
-    console.log
-      ✅ Manual deposit confirmed {
-        depositId: 'deposit-1',
-        paymentId: 'payment-1',
-        conversionId: undefined,
-        txHash: 'abc'
-      }
-      at DepositMonitorService.confirmDeposit (src/services/deposit-monitor.service.ts:164:13)
- PASS  src/__tests__/auth.totp.test.ts (10.889 s)
-  ● Console
-    console.warn
-      ⚠️ Database not available for TOTP tests, skipping
-      30 |     dbAvailable = true;
-      31 |   } catch (e) {
-    > 32 |     console.warn("⚠️ Database not available for TOTP tests, skipping");
-         |             ^
-      33 |     dbAvailable = false;
-      34 |   }
-      35 | });
-      at Object.<anonymous> (src/__tests__/auth.totp.test.ts:32:13)
-    console.log
-      ⏭️ Skipping test - database not available
-      at Object.<anonymous> (src/__tests__/auth.totp.test.ts:58:13)
- PASS  src/__tests__/unit/services.test.ts (11.008 s)
-  ● Console
-    console.log
-      💰 Processing payment: { amount: undefined, currency: 'XTR', chargeId: undefined }
-      at TelegramService.processSuccessfulPayment (src/services/Telegram.service.ts:147:13)
-    console.warn
-      ⚠️ PaymentModel not configured, returning ephemeral record
-      170 |     }
-      171 |
-    > 172 |     console.warn("⚠️ PaymentModel not configured, returning ephemeral record");
-          |             ^
-      173 |     return {
-      174 |       id: payment.telegram_payment_charge_id,
-      175 |       userId,
-      at TelegramService.processSuccessfulPayment (src/services/Telegram.service.ts:172:13)
-      at Object.<anonymous> (src/__tests__/unit/services.test.ts:26:29)
-    console.log
-      ✅ Telegram webhook set to: https://example.com/webhook
-      at TelegramService.initializeWebhook (src/services/Telegram.service.ts:90:15)
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      📊 Fetching rates: TON → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
-    console.log
-      🧪 Simulated rates for TON → USD: [
-        {
-          source: 'coingecko',
-          value: 2.1607499999999997,
-          timestamp: 1767134139784
-        },
-        {
-          source: 'dexscreener',
-          value: 2.1456999999999997,
-          timestamp: 1767134139784
-        },
-        { source: 'coinmarketcap', value: 2.1543, timestamp: 1767134139784 }
-      ]
-      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
-    console.log
-      🧪 RateAggregatorService running in simulation mode
-      at new RateAggregatorService (src/services/rate.aggregator.ts:51:15)
-    console.log
-      📊 Fetching rates: BTC → USD
-      at RateAggregatorService.getAggregatedRate (src/services/rate.aggregator.ts:86:13)
-    console.log
-      🧪 Simulated rates for BTC → USD: [
-        {
-          source: 'coingecko',
-          value: 45224.99999999999,
-          timestamp: 1767134139789
-        },
-        { source: 'dexscreener', value: 44910, timestamp: 1767134139789 },
-        { source: 'coinmarketcap', value: 45090, timestamp: 1767134139789 }
-      ]
-      at RateAggregatorService.getSimulatedRate (src/services/rate.aggregator.ts:384:13)
- PASS  src/__tests__/integration/stonfi-swap.test.ts (11.067 s)
-  ● Console
-    console.log
-      🧪 DEX integration tests running in simulation mode
-      at setupDexIntegrationTest (src/test-utils.ts:21:13)
- PASS  src/__tests__/integration/dedust-swap.test.ts (11.149 s)
-  ● Console
-    console.log
-      🧪 DEX integration tests running in simulation mode
-      at setupDexIntegrationTest (src/test-utils.ts:21:13)
- PASS  src/__tests__/reconciliation.service.test.ts
-  ● Console
-    console.log
-      ✅ Conversion reconciled: conv-id - Status: matched
-      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
- PASS  src/__tests__/unit/nitroswaps.service.test.ts (11.124 s)
- PASS  src/__tests__/auth.service.test.ts
- PASS  src/__tests__/unit/wallet-manager.service.test.ts (11.294 s)
- PASS  src/__tests__/unit/stars-p2p.service.test.ts (11.302 s)
- PASS  src/__tests__/conversion.service.test.ts (11.487 s)
-  ● Console
-    console.log
-      ✅ Fee fee-id marked as collected.
-      at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
-    console.log
-      ✅ Conversion completed: {
-        conversionId: 'b0517e11-7f57-4b49-a392-5128546be81e',
-        txHash: 'tx-hash'
-      }
-      at src/services/conversion.service.ts:426:21
-    console.log
-      ✅ Fee fee-id marked as collected.
-      at FeeService.markFeeCollected (src/services/fee.service.ts:125:13)
-    console.log
-      ✅ Conversion completed: {
-        conversionId: 'b9dffecf-589e-44b6-90d3-742fe58cf986',
-        txHash: 'tx-1'
-      }
-      at src/services/conversion.service.ts:426:21
- PASS  src/__tests__/unit/direct-conversion.service.test.ts (11.603 s)
-  ● Console
-    console.log
-      ✅ Conversion created (direct TON): { id: 'conv-1', stars: 1000, ton: 2.955, destination: 'dest-addr' }
-      at src/services/direct-conversion.service.ts:261:15
- PASS  src/__tests__/integration.test.ts (11.538 s)
-  ● Console
-    console.log
-      ✅ Fee recorded: {
-        feeCollectionId: undefined,
-        conversionId: undefined,
-        feeAmountStars: NaN,
-        feeAmountTon: NaN
-      }
-      at FeeService.recordFee (src/services/fee.service.ts:112:13)
-    console.log
-      ✅ Conversion created with fees: {
-        id: undefined,
-        stars: 1000,
-        ton: NaN,
-        platformFee: NaN,
-        platformFeeTon: NaN
-      }
-      at ConversionService.createConversion (src/services/conversion.service.ts:235:13)
-    console.log
-      ✅ Conversion reconciled: 0c4c6b9f-aec5-49e6-b890-70765ae54eb5 - Status: matched
-      at ReconciliationService.reconcileConversion (src/services/reconciliation.service.ts:109:13)
- PASS  src/__tests__/unit/p2p-liquidity.service.test.ts (11.696 s)
-  ● Console
-    console.error
-      DeDust API error: Invalid URL
-      238 |       };
-      239 |     } catch (error: any) {
-    > 240 |       console.error("DeDust API error:", error.message);
-          |               ^
-      241 |       throw new Error(`DeDust API failed: ${error.message}`);
-      242 |     }
-      243 |   }
-      at DexAggregatorService.getDeDustQuote (src/services/dex-aggregator.service.ts:240:15)
-          at async Promise.allSettled (index 0)
-      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:162:42)
-          at async Promise.allSettled (index 1)
-      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
-      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
-    console.error
-      Ston.fi API error: Invalid URL
-      293 |       };
-      294 |     } catch (error: any) {
-    > 295 |       console.error("Ston.fi API error:", error.message);
-          |               ^
-      296 |       throw new Error(`Ston.fi API failed: ${error.message}`);
-      297 |     }
-      298 |   }
-      at DexAggregatorService.getStonfiQuote (src/services/dex-aggregator.service.ts:295:15)
-          at async Promise.allSettled (index 1)
-      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:162:42)
-          at async Promise.allSettled (index 1)
-      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
-      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
-    console.warn
-      DeDust quote failed: Error: DeDust API failed: Invalid URL
-          at DexAggregatorService.getDeDustQuote (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:241:13)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at async Promise.allSettled (index 0)
-          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:162:42)
-          at async Promise.allSettled (index 1)
-          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
-          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
-      170 |         quotes.push(dedustQuote.value);
-      171 |       } else {
-    > 172 |         console.warn("DeDust quote failed:", dedustQuote.reason);
-          |                 ^
-      173 |       }
-      174 |
-      175 |       if (stonfiQuote.status === "fulfilled") {
-      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:172:17)
-          at async Promise.allSettled (index 1)
-      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
-      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
-    console.warn
-      Ston.fi quote failed: Error: Ston.fi API failed: Invalid URL
-          at DexAggregatorService.getStonfiQuote (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:296:13)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at async Promise.allSettled (index 1)
-          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:162:42)
-          at async Promise.allSettled (index 1)
-          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
-          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
-      176 |         quotes.push(stonfiQuote.value);
-      177 |       } else {
-    > 178 |         console.warn("Ston.fi quote failed:", stonfiQuote.reason);
-          |                 ^
-      179 |       }
-      180 |
-      181 |       if (quotes.length === 0) {
-      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:178:17)
-          at async Promise.allSettled (index 1)
-      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
-      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
-    console.error
-      DEX aggregator error: Error: All DEX providers failed to provide quotes
-          at DexAggregatorService.getBestRate (C:\dev\projects\TelePayGate\packages\core\src\services\dex-aggregator.service.ts:182:15)
-          at processTicksAndRejections (node:internal/process/task_queues:103:5)
-          at async Promise.allSettled (index 1)
-          at P2PLiquidityService.findBestRoute (C:\dev\projects\TelePayGate\packages\core\src\services\p2p-liquidity.service.ts:61:49)
-          at Object.<anonymous> (C:\dev\projects\TelePayGate\packages\core\src\__tests__\unit\p2p-liquidity.service.test.ts:46:19)
-      186 |       return quotes.sort((a, b) => b.outputAmount - a.outputAmount)[0];
-      187 |     } catch (error: any) {
-    > 188 |       console.error("DEX aggregator error:", error);
-          |               ^
-      189 |       throw new Error(`Failed to get DEX quote: ${error.message}`);
-      190 |     }
-      191 |   }
-      at DexAggregatorService.getBestRate (src/services/dex-aggregator.service.ts:188:15)
-          at async Promise.allSettled (index 1)
-      at P2PLiquidityService.findBestRoute (src/services/p2p-liquidity.service.ts:61:49)
-      at Object.<anonymous> (src/__tests__/unit/p2p-liquidity.service.test.ts:46:19)
+      at RateAggregatorService.getSimulatedRate (../core/src/services/rate.aggregator.ts:300:17)
 A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
-Test Suites: 19 passed, 19 total
-Tests:       2 skipped, 58 passed, 60 total
+Running coverage on untested files...Failed to collect coverage from C:\dev\projects\TelePayGate\packages\api\src\index.ts
+ERROR: src/index.ts:4:74 - error TS6059: File 'C:/dev/projects/TelePayGate/packages/core/src/index.ts' is not under 'rootDir' 'C:/dev/projects/TelePayGate/packages/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/index.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/middleware/error.middleware.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/payment.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/payment.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/payment.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/conversion.controller.ts'
+    Imported via 'telepaygate-core' from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/user.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/admin.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/middleware/role.middleware.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/fee-collection.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/middleware/auth.middleware.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/auth.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/auth.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/middleware/csrf.middleware.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/rate.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/nitro.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/nitro-monitor.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/db/connection.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/dex.controller.ts'
+    Imported via "telepaygate-core" from file 'C:/dev/projects/TelePayGate/packages/api/src/controllers/p2p-orders.controller.ts'
+    Root file specified for compilation
+4 import { initDatabase, validateEnvironment, getEnvironmentSummary } from "telepaygate-core";
+                                                                           ~~~~~~~~~~~~~~~~~~
+  src/middleware/error.middleware.ts:2:40
+    2 import { AppError, ErrorHandler } from "telepaygate-core";
+                                             ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/payment.controller.ts:7:8
+    7 } from "telepaygate-core";
+             ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/payment.controller.ts:8:31
+    8 import type { Database } from "telepaygate-core";
+                                    ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/payment.controller.ts:9:33
+    9 import { TelegramService } from "telepaygate-core";
+                                      ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/conversion.controller.ts:2:41
+    2 import { DirectConversionService } from "telepaygate-core";
+                                              ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/user.controller.ts:4:43
+    4 import { getDatabase, PaymentModel } from 'telepaygate-core';
+                                                ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/admin.controller.ts:3:41
+    3 import { getDatabase, FeeService } from "telepaygate-core";
+                                              ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/middleware/role.middleware.ts:2:29
+    2 import { getDatabase } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/fee-collection.controller.ts:2:51
+    2 import { getDatabase, FeeCollectionService } from "telepaygate-core";
+                                                        ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/middleware/auth.middleware.ts:2:29
+    2 import { getDatabase } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/auth.controller.ts:2:29
+    2 import { AuthService } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/auth.controller.ts:3:29
+    3 import { getDatabase } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/middleware/csrf.middleware.ts:2:29
+    2 import { getDatabase } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/rate.controller.ts:2:39
+    2 import { RateAggregatorService } from "telepaygate-core";
+                                            ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/nitro.controller.ts:2:35
+    2 import { NitroSwapsService } from "telepaygate-core";
+                                        ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/nitro-monitor.controller.ts:2:29
+    2 import { getDatabase } from "telepaygate-core";
+                                  ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/db/connection.ts:1:43
+    1 import { initDatabase, getDatabase } from "telepaygate-core";
+                                                ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/dex.controller.ts:6:8
+    6 } from "telepaygate-core";
+             ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+  src/controllers/p2p-orders.controller.ts:6:8
+    6 } from "telepaygate-core";
+             ~~~~~~~~~~~~~~~~~~
+    File is included via import here.
+STACK:
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   39.16 |    25.63 |    31.9 |   39.58 |
+ src               |   96.77 |    77.77 |   66.66 |   96.77 |
+  server.ts        |   96.77 |    77.77 |   66.66 |   96.77 | 35
+ src/__tests__     |   54.16 |    85.71 |   33.33 |    61.9 |
+  ...test-setup.ts |   41.17 |    85.71 |      20 |      50 | 11-17
+  test-utils.ts    |   85.71 |      100 |     100 |   85.71 | 11
+ ...sts__/fixtures |   72.58 |    48.38 |     100 |   71.66 |
+  ...resFixture.ts |   72.58 |    48.38 |     100 |   71.66 | ...4,89-90,99-100
+ ...__/integration |   54.66 |    48.14 |   46.15 |    62.5 |
+  ...test-setup.ts |   94.73 |    88.88 |     100 |   94.73 | 15
+  db-test-utils.ts |   41.07 |       40 |   36.36 |   48.88 | ...55-56,62-64,72
+ ..._tests__/stubs |   23.68 |    26.08 |   16.66 |   23.68 |
+  ...controller.ts |   23.68 |    26.08 |   16.66 |   23.68 | 13,17-77
+ src/config        |   56.89 |    45.74 |   54.54 |   56.52 |
+  database.ts      |       0 |        0 |       0 |       0 | 2-34
+  index.ts         |   76.74 |    66.15 |   66.66 |   81.25 | 10-11,16,21-23
+ src/controllers   |   24.83 |    16.17 |   25.33 |    24.9 |
+  ...controller.ts |    6.18 |        0 |       0 |    6.18 | 8-277
+  ...controller.ts |   59.82 |    36.84 |   77.77 |   59.82 | ...95,201,205-206
+  ...controller.ts |   12.24 |    14.63 |      25 |   12.24 | 9-66
+  ...controller.ts |   25.75 |     7.14 |   28.57 |   25.75 | 25-155
+  ...controller.ts |       0 |        0 |       0 |       0 | 2-179
+  ...controller.ts |      10 |        0 |       0 |      10 | 8-149
+  ...controller.ts |       0 |        0 |       0 |       0 | 2-18
+  index.ts         |       0 |        0 |       0 |       0 | 6-30
+  ...controller.ts |      30 |        0 |       0 |      30 | 6-36
+  ...controller.ts |   39.53 |    34.37 |   66.66 |   39.53 | ...19-23,29,45-99
+  ...controller.ts |       0 |        0 |       0 |       0 | 2-135
+  ...controller.ts |   44.79 |    17.85 |   55.55 |   44.21 | ...,53,67-188,193
+  ...controller.ts |   33.33 |        0 |       0 |   33.33 | 8-27
+  ...controller.ts |   16.41 |    24.13 |   16.66 |   16.41 | 14-209
+  ...controller.ts |      70 |        0 |     100 |      70 | 14-16
+ src/db            |    87.5 |       50 |       0 |     100 |
+  connection.ts    |    87.5 |       50 |       0 |     100 | 7
+ src/middleware    |   38.06 |    20.75 |    42.1 |   39.18 |
+  ...middleware.ts |   29.16 |    27.58 |      50 |   29.16 | ...5,39-46,54-119
+  ...middleware.ts |      52 |    29.41 |     100 |      52 | 26-50
+  ...middleware.ts |   27.27 |        0 |       0 |   27.27 | 7-26
+  index.ts         |       0 |        0 |       0 |       0 | 6-26
+  ...middleware.ts |     100 |       50 |     100 |     100 | 10
+  ...middleware.ts |     100 |    63.63 |     100 |     100 | 3-12
+  ...middleware.ts |   63.15 |    11.11 |   33.33 |   63.15 | 19-25,29-30
+  ...middleware.ts |   13.33 |        0 |      25 |   13.33 | 7-61
+ src/routes        |   75.21 |    28.57 |    12.5 |   77.19 |
+  index.ts         |       0 |        0 |       0 |       0 | 6-16
+  nitro.routes.ts  |     100 |      100 |     100 |     100 |
+  ...nts.routes.ts |       0 |        0 |       0 |       0 | 2-17
+  v1.routes.ts     |   92.95 |    85.71 |   33.33 |   92.95 | 28-33,38
+  ...oks.routes.ts |     100 |      100 |     100 |     100 |
+ src/utils         |   51.47 |    12.12 |   17.64 |   51.47 |
+  ...er-helpers.ts |   23.07 |        0 |       0 |   23.07 | 18-81
+  logger.ts        |       0 |      100 |       0 |       0 | 2-9
+  metrics.ts       |   85.71 |      100 |       0 |   85.71 | 28,32
+  response.ts      |      85 |    30.76 |      60 |      85 | 20-24
+-------------------|---------|----------|---------|---------|-------------------
+Test Suites: 1 failed, 11 passed, 12 total
+Tests:       2 failed, 16 passed, 18 total
 Snapshots:   0 total
-Time:        13.352 s
+Time:        57.508 s
 Ran all test suites.
+[jest.global-teardown] Stopping container 617269fe7017662576dbbea8f63d6214c98f5099790a05b804ce0096038cf0ad
+617269fe7017662576dbbea8f63d6214c98f5099790a05b804ce0096038cf0ad
+617269fe7017662576dbbea8f63d6214c98f5099790a05b804ce0096038cf0ad
 Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path C:\dev\projects\TelePayGate\packages\api
+npm error workspace telepaygate-api@0.1.0
+npm error location C:\dev\projects\TelePayGate\packages\api
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c dotenv -e .env.test -- jest --passWithNoTests --forceExit --coverage

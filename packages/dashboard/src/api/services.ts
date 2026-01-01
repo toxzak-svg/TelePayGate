@@ -74,6 +74,15 @@ export const userService = {
     return data.user;
   },
 
+  async login(apiKey: string): Promise<User> {
+    // Store the API key and fetch profile
+    // Note: This is a simplified login using API key directly
+    const { data } = await apiClient.get<{ success: boolean; user: User }>(
+      "/users/me",
+    );
+    return data.user;
+  },
+
   async register(appName: string, description?: string | null, webhookUrl?: string | null, captchaToken?: string | null): Promise<any> {
     const body: any = { appName, description, webhookUrl };
     if (captchaToken) body.captchaToken = captchaToken;

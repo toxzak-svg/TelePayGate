@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Router } from 'express';
 import PaymentController from '../controllers/payment.controller';
 import { ConversionController } from '../controllers/conversion.controller';
@@ -14,23 +13,9 @@ import webhookRoutes from './webhooks.routes';
 import AuthController from '../controllers/auth.controller';
 import CaptchaController from '../controllers/captcha.controller';
 import csrfProtect from '../middleware/csrf.middleware';
-=======
-import { Router } from "express";
-import PaymentController from "../controllers/payment.controller";
-import { ConversionController } from "../controllers/conversion.controller";
-import UserController from "../controllers/user.controller";
-import AdminController from "../controllers/admin.controller";
-import RateController from "../controllers/rate.controller";
-import { requireDashboardRole } from "../middleware/role.middleware";
-import FeeCollectionController from "../controllers/fee-collection.controller";
-import { authenticate } from "../middleware/auth.middleware";
-// import P2POrdersController from '../controllers/p2p-orders.controller';
-import webhookRoutes from "./webhooks.routes";
-import AuthController from "../controllers/auth.controller";
-import csrfProtect from "../middleware/csrf.middleware";
-import nitroRoutes from "./nitro.routes";
-import { getMetrics, getContentType } from "../utils/metrics";
->>>>>>> main
+import RateController from '../controllers/rate.controller';
+import nitroRoutes from './nitro.routes';
+import { getMetrics, getContentType } from '../utils/metrics';
 
 const router = Router();
 const conversionController = new ConversionController();
@@ -115,7 +100,6 @@ router.get(
 router.use("/nitro", nitroRoutes);
 
 // User routes
-<<<<<<< HEAD
 // Public registration: apply a stricter rate limiter to avoid abuse
 router.post(
   '/users/register',
@@ -125,16 +109,6 @@ router.post(
 router.get('/users/me', authenticate, UserController.getMe);
 router.post('/users/api-keys/regenerate', authenticate, UserController.regenerateApiKey);
 router.get('/users/stats', authenticate, UserController.getStats);
-=======
-router.post("/users/register", UserController.register);
-router.get("/users/me", authenticate, UserController.getMe);
-router.post(
-  "/users/api-keys/regenerate",
-  authenticate,
-  UserController.regenerateApiKey,
-);
-router.get("/users/stats", authenticate, UserController.getStats);
->>>>>>> main
 
 // Admin routes
 router.get(
@@ -187,28 +161,5 @@ router.get(
   authenticate,
   FeeCollectionController.getHistory,
 );
-
-// Temporary: Simple health check only
-router.get("/health", (req, res) => {
-  res.status(200).json({ success: true, message: "API is healthy" });
-});
-
-// User routes (commented while we build controller methods)
-// router.get('/users/me', authenticate, userController.getCurrentUser);
-// router.get('/users/me/balance', authenticate, userController.getBalance);
-// router.get('/users/me/transactions', authenticate, userController.getTransactions);
-
-// Admin routes (basic health check only for now)
-// router.get('/admin/stats', authenticate, requireAdmin, adminController.getStats);
-// router.get('/admin/users', authenticate, requireAdmin, adminController.getUsers);
-// router.get('/admin/users/:id', authenticate, requireAdmin, adminController.getUser);
-// router.put('/admin/users/:id', authenticate, requireAdmin, adminController.updateUser);
-// router.get('/admin/payments', authenticate, requireAdmin, adminController.getPayments);
-// router.get('/admin/conversions', authenticate, requireAdmin, adminController.getConversions);
-
-// Fee collection routes
-// router.get('/fees/stats', authenticate, requireAdmin, feeCollectionController.getFeeStats);
-// router.get('/fees/history', authenticate, requireAdmin, feeCollectionController.getFeeHistory);
-// router.post('/fees/collect', authenticate, requireAdmin, feeCollectionController.collectFees);
 
 export default router;

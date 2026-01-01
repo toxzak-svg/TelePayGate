@@ -1,5 +1,9 @@
 # Build dashboard and serve with nginx
 FROM node:22-alpine AS builder
+
+# Update system packages for security
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 COPY package*.json ./
 COPY packages/dashboard/package*.json ./packages/dashboard/
@@ -8,6 +12,10 @@ COPY packages/dashboard ./packages/dashboard
 RUN npm run -w "@tg-payment/dashboard" build || true
 
 FROM nginx:stable-alpine
+
+# Update system packages for security
+RUN apk update && apk upgrade --no-cache
+
 COPY --from=builder /app/packages/dashboard/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

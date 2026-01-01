@@ -1,22 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { userService, authService } from '../api/services';
-import { LoginRequest } from '../types';
+import { userService } from '../api/services';
 
 interface AuthContextType {
   user: User | null;
   apiKey: string | null;
-<<<<<<< HEAD
   login: (apiKey: string) => Promise<void>;
   register: (
     appName: string,
     description?: string | null,
     webhookUrl?: string | null,
     captchaToken?: string | null
-  ) => Promise<{ apiKey: string; apiSecret?: string }>; 
-=======
-  login: (credentials: LoginRequest) => Promise<void>;
->>>>>>> main
+  ) => Promise<{ apiKey: string; apiSecret?: string }>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -49,20 +44,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [apiKey]);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (apiKey: string) => {
     setIsLoading(true);
     try {
-      const response = await authService.login(credentials);
-      if (response.success && response.data.user.apiKey) {
-        localStorage.setItem('apiKey', response.data.user.apiKey);
-        setApiKey(response.data.user.apiKey);
+      localStorage.setItem('apiKey', apiKey);
+      setApiKey(apiKey);
 
-        // After login, fetch the full user profile
-        const profile = await userService.getProfile();
-        setUser(profile);
-      } else {
-        throw new Error(response.message || 'Login failed');
-      }
+      // After login, fetch full user profile
+      const profile = await userService.getProfile();
+      setUser(profile);
     } catch (error) {
       console.error('Login error:', error);
       throw error;

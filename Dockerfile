@@ -5,6 +5,9 @@
 # Build stage
 FROM node:22-alpine AS builder
 
+# Update system packages for security
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 
 # Copy package files
@@ -54,13 +57,17 @@ RUN if [ -d "/app/packages/dashboard/dist" ]; then \
 # =============================================================================
 FROM node:22-alpine
 
+# Update system packages for security
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 
 # Install only required system dependencies
 RUN apk add --no-cache postgresql-client tini
 
 # Install a small static file server for serving the dashboard build
-RUN npm i -g serve@14.2.0 || true
+# Use latest version to avoid known vulnerabilities
+RUN npm i -g serve@latest || true
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=512"

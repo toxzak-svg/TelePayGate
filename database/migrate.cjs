@@ -9,6 +9,11 @@ require('dotenv').config();
 const DB_URL = process.env.DATABASE_URL || 
   `postgresql://${process.env.DB_USER || 'tg_user'}:${process.env.DB_PASSWORD || 'tg_pass'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'telepaygate_dev'}`;
 
+if (process.env.DEBUG_MIGRATIONS === 'true') {
+  const parsed = new URL(DB_URL);
+  console.log(`[migrate.cjs] Using database: ${parsed.protocol}//${parsed.host}${parsed.pathname}`);
+}
+
 // SSL configuration for production databases (Railway, Render, etc.)
 const SSL_CONFIG = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('railway.app') || process.env.DATABASE_URL?.includes('render.com')
   ? { rejectUnauthorized: false } // Allow self-signed certs in production

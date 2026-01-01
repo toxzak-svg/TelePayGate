@@ -17,8 +17,8 @@ let AuthService:
     }
   | undefined;
 
+jest.setTimeout(60_000);
 beforeAll(async () => {
-  jest.setTimeout(60_000);
   // Optionally start Testcontainers fixture when requested
   if (process.env.USE_TESTCONTAINERS === "true") {
     const mod = await import("../fixtures/postgresFixture");
