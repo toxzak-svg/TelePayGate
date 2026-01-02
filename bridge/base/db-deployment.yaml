@@ -1,0 +1,48 @@
+#! db-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: db
+    namespace: telepaygate
+    labels:
+        com.docker.compose.project: telepaygate
+        com.docker.compose.service: db
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: telepaygate
+            com.docker.compose.service: db
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: telepaygate
+                com.docker.compose.service: db
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: telepaygate-postgres
+                  image: postgres:16
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: POSTGRES_DB
+                      value: "telepaygate_dev"
+                    - name: POSTGRES_PASSWORD
+                      value: "tg_pass"
+                    - name: POSTGRES_USER
+                      value: "tg_user"
+                  livenessProbe:
+                    exec:
+                        command:
+                            - /bin/sh
+                            - -c
+                            - pg_isready -U postgres
+                    periodSeconds: 5
+                    timeoutSeconds: 5
+                    failureThreshold: 5
+                  ports:
+                    - name: db-5432
+                      containerPort: 5432

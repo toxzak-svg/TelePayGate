@@ -1,0 +1,8 @@
+#! 0-telepaygate-namespace.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: telepaygate
+    labels:
+        com.docker.compose.project: telepaygate

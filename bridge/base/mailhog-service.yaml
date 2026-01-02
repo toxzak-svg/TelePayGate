@@ -1,0 +1,25 @@
+#! mailhog-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: mailhog-published
+    namespace: telepaygate
+    labels:
+        com.docker.compose.project: telepaygate
+        com.docker.compose.service: mailhog
+spec:
+    selector:
+        com.docker.compose.project: telepaygate
+        com.docker.compose.service: mailhog
+    ports:
+        - name: mailhog-1025
+          port: 1025
+          protocol: TCP
+          targetPort: mailhog-1025
+        - name: mailhog-8025
+          port: 8025
+          protocol: TCP
+          targetPort: mailhog-8025
+
+# check if there is at least one published port

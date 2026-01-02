@@ -1,0 +1,40 @@
+#! mailhog-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: mailhog
+    namespace: telepaygate
+    labels:
+        com.docker.compose.project: telepaygate
+        com.docker.compose.service: mailhog
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: telepaygate
+            com.docker.compose.service: mailhog
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: telepaygate
+                com.docker.compose.service: mailhog
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: telepaygate-mailhog
+                  image: mailhog/mailhog:latest
+                  imagePullPolicy: IfNotPresent
+                  livenessProbe:
+                    exec:
+                        command: ['curl -f http://localhost:8025/']
+                    periodSeconds: 5
+                    timeoutSeconds: 5
+                    failureThreshold: 5
+                  ports:
+                    - name: mailhog-1025
+                      containerPort: 1025
+                    - name: mailhog-8025
+                      containerPort: 8025

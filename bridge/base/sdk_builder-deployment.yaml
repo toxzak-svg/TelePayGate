@@ -1,0 +1,39 @@
+#! sdk_builder-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sdk-builder
+    namespace: telepaygate
+    labels:
+        com.docker.compose.project: telepaygate
+        com.docker.compose.service: sdk_builder
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: telepaygate
+            com.docker.compose.service: sdk_builder
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: telepaygate
+                com.docker.compose.service: sdk_builder
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: telepaygate-sdk-builder
+                  image: telepaygate-sdk_builder
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - sh
+                    - -c
+                    - npm run -w telepaygate-sdk build && sleep infinity
+                  env:
+                    - name: NODE_ENV
+                      value: "development"
+                  ports:
+                    - name: sdk-builde-3000
+                      containerPort: 3000

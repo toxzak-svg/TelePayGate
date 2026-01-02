@@ -1,0 +1,27 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - 0-telepaygate-namespace.yaml
+    - api-deployment.yaml
+    - api-expose.yaml
+    - api-service.yaml
+    - dashboard-deployment.yaml
+    - dashboard-expose.yaml
+    - dashboard-service.yaml
+    - dashboard_prod-deployment.yaml
+    - dashboard_prod-expose.yaml
+    - dashboard_prod-service.yaml
+    - db-deployment.yaml
+    - db-expose.yaml
+    - db-service.yaml
+    - default-network-policy.yaml
+    - mailhog-deployment.yaml
+    - mailhog-expose.yaml
+    - mailhog-service.yaml
+    - redis-deployment.yaml
+    - redis-expose.yaml
+    - redis-service.yaml
+    - sdk_builder-deployment.yaml
+    - sdk_builder-expose.yaml
