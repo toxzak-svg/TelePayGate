@@ -7,7 +7,7 @@ import { QueryClientProvider } from '@/components/query-client-provider';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: ['--font-geist-sans'],
+  variable: '--font-geist-sans',
 });
 
 export const metadata: Metadata = {
