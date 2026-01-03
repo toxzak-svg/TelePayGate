@@ -1,29 +1,30 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import * as React from 'react';
 import { useThemeStore, getAppliedTheme } from '@/lib/store/themeStore';
+import { useEffect } from 'react';
 
-const ThemeContext = createContext<{
+const ThemeContext = React.createContext<{
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 } | null>(null);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useThemeStore();
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    const appliedTheme = getAppliedTheme(theme);
-    root.classList.remove('light', 'dark');
-    root.classList.add(appliedTheme);
+    if (typeof window !== 'undefined') {
+      const root = window.document.documentElement;
+      const appliedTheme = getAppliedTheme(theme);
+      root.classList.remove('light', 'dark');
+      root.classList.add(appliedTheme);
+    }
   }, [theme]);
-
-  if (!mounted) return null;
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -33,7 +34,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 export const useTheme = () => {
-  const context = useContext(ThemeContext);
+  const context = React.useContext(ThemeContext);
   if (!context) throw new Error('useTheme must be used within ThemeProvider');
   return context;
 };
