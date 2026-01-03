@@ -1,6 +1,7 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { Inter } from 'next/font/google';
-import React from 'react';
+import * as React from 'react';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -10,11 +11,6 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-geist-sans',
 });
-
-export const metadata: Metadata = {
-  title: 'TelePayGate Dashboard',
-  description: 'Manage your Telegram Stars payments and TON conversions',
-};
 
 export default function RootLayout({
   children,

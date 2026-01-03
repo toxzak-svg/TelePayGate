@@ -26,12 +26,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
+  // During SSR, just render children without context
+  // This prevents the useContext error during prerendering
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 }
+
+export const useTheme = () => {
+  const context = React.useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within ThemeProvider');
+  return context;
+};
 
 export const useTheme = () => {
   const context = React.useContext(ThemeContext);
