@@ -16,6 +16,8 @@
   "scripts": {
     "build": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w telepaygate-sdk && npm run build -w @tg-payment/dashboard",
     "build:backend": "npm run build -w telepaygate-core && npm run build -w telepaygate-api",
+    "build:railway": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w telepaygate-sdk && (npm run build -w @tg-payment/dashboard || echo 'Dashboard build skipped')",
+    "build:workers": "npm run build -w telepaygate-core",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
     "test:prepare": "if [ -z \"$DATABASE_URL\" ]; then PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true; DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.cjs reset; else node database/migrate.cjs reset; fi",

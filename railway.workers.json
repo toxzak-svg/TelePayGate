@@ -1,0 +1,28 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npm ci --workspaces --include-workspace-root && npm run build:workers",
+    "watchPatterns": [
+      "/package.json",
+      "/packages/core/**",
+      "/src/trigger/**",
+      "/trigger.config.ts"
+    ]
+  },
+  "deploy": {
+    "startCommand": "npx trigger.dev@latest deploy && node -e \"console.log('Workers deployed to Trigger.dev')\"",
+    "restartPolicyType": "on-failure",
+    "restartPolicyMaxRetries": 3
+  },
+  "environments": {
+    "production": {
+      "build": {
+        "buildCommand": "npm ci --workspaces --include-workspace-root && npm run build:workers"
+      },
+      "deploy": {
+        "startCommand": "npx trigger.dev@latest deploy"
+      }
+    }
+  }
+}
