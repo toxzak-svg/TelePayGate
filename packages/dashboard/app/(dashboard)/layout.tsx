@@ -1,3 +1,5 @@
+'use client';
+
 import type { Metadata } from 'next';
 import { LayoutDashboard, CreditCard, ArrowRightLeft, Users, TrendingUp, Webhook, Settings, Zap, LogOut, User } from 'lucide-react';
 import Link from 'next/link';

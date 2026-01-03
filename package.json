@@ -10,10 +10,11 @@
   "workspaces": [
     "packages/api",
     "packages/core",
-    "packages/sdk"
+    "packages/sdk",
+    "packages/dashboard"
   ],
   "scripts": {
-    "build": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w telepaygate-sdk",
+    "build": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w telepaygate-sdk && npm run build -w @tg-payment/dashboard",
     "build:backend": "npm run build -w telepaygate-core && npm run build -w telepaygate-api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
@@ -75,6 +76,7 @@
     "@ton/ton": "^16.0.0",
     "@trigger.dev/sdk": "^4.1.1",
     "dotenv": "^17.2.3",
+    "next": "^16.1.1",
     "pg": "^8.11.3",
     "pg-promise": "^12.2.0",
     "tonweb": "^0.0.66"
