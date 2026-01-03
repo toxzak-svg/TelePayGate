@@ -8,17 +8,19 @@
     "node": ">=22.0.0"
   },
   "workspaces": [
-    "packages/*"
+    "packages/api",
+    "packages/core",
+    "packages/sdk"
   ],
   "scripts": {
-    "build": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w @tg-payment/dashboard && npm run build -w telepaygate-sdk",
+    "build": "npm run build -w telepaygate-core && npm run build -w telepaygate-api && npm run build -w telepaygate-sdk",
     "build:backend": "npm run build -w telepaygate-core && npm run build -w telepaygate-api",
     "test": "npm run test:prepare && npm run test:run",
     "test:run": "dotenv -e .env.test -- npm run test --workspaces --if-present",
     "test:prepare": "if [ -z \"$DATABASE_URL\" ]; then PGPASSWORD=tg_pass createdb -U tg_user -h localhost -p 5432 tg_payment_test || true; DATABASE_URL=postgresql://tg_user:tg_pass@localhost:5432/tg_payment_test node database/migrate.cjs reset; else node database/migrate.cjs reset; fi",
     "dev": "npm run dev --workspaces --if-present",
     "test:detect": "dotenv -e .env.test -- jest --detectOpenHandles --runInBand --forceExit",
-    "dev:all": "npm run docker:up && cd packages/dashboard && npm run dev",
+    "dev:all": "npm run docker:up",
     "dev:local": "DASHBOARD_LOCAL=true bash scripts/dev-up.sh",
     "clean": "bash ./scripts/clean.sh",
     "lint": "eslint . --ext .ts --fix",
@@ -38,12 +40,11 @@
     "trigger:dev": "npx trigger.dev@latest dev",
     "trigger:deploy": "npx trigger.dev@latest deploy",
     "prepare": "bash scripts/install-git-hooks.sh || true",
-    "test:ci": "npm run -w telepaygate-core test -- --detectOpenHandles && npm run -w telepaygate-api test -- --detectOpenHandles && npm run -w telepaygate-sdk test -- --detectOpenHandles && npm run -w @tg-payment/dashboard test",
+    "test:ci": "npm run -w telepaygate-core test -- --detectOpenHandles && npm run -w telepaygate-api test -- --detectOpenHandles && npm run -w telepaygate-sdk test -- --detectOpenHandles",
     "coverage:telepaygate-sdk": "npm run -w telepaygate-sdk test:coverage",
-    "coverage:dashboard": "npm run -w @tg-payment/dashboard test -- --coverage",
     "coverage:core": "npm run -w telepaygate-core test:coverage",
     "coverage:api": "npm run -w telepaygate-api test -- --coverage",
-    "coverage:all": "npm run coverage:telepaygate-sdk && npm run coverage:dashboard && npm run coverage:core && npm run coverage:api",
+    "coverage:all": "npm run coverage:telepaygate-sdk && npm run coverage:core && npm run coverage:api",
     "coverage:merge": "npx lcov-result-merger './packages/**/coverage/lcov.info' > coverage/lcov.info || true"
   },
   "devDependencies": {
