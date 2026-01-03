@@ -63,7 +63,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user && 'role' in user && user.role === 'admin';
 
   return (
     <div className="flex h-screen bg-background">
@@ -103,7 +103,9 @@ export default function DashboardLayout({
           <div className="flex items-center gap-3">
             <User className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{user?.email || 'User'}</p>
+              <p className="text-sm font-medium text-foreground">
+                {user && 'email' in user ? user.email : user?.appName || 'User'}
+              </p>
               <p className="text-xs text-muted-foreground">Dashboard</p>
             </div>
           </div>
