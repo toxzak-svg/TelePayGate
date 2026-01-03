@@ -37,7 +37,22 @@ function getQueryClient() {
   }
 }
 
-export function QueryClientProvider({ children }: { children: React.ReactNode }) {
+function QueryClientProviderInner({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   return <TanStackQueryClientProvider client={queryClient}>{children}</TanStackQueryClientProvider>;
+}
+
+export function QueryClientProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR, just render children without provider
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  return <QueryClientProviderInner>{children}</QueryClientProviderInner>;
 }

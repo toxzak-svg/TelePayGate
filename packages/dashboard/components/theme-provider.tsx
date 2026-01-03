@@ -9,15 +9,8 @@ const ThemeContext = React.createContext<{
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 } | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = React.useState(false);
-  
-  // Only access the store after mounting to avoid SSR issues
-  const { theme, setTheme } = mounted ? useThemeStore() : { theme: 'system' as const, setTheme: () => {} };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+function ThemeProviderInner({ children }: { children: React.ReactNode }) {
+  const { theme, setTheme } = useThemeStore();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,17 +21,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
-  // During SSR, just render children without context
-  // This prevents useContext error during prerendering
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // During SSR, just render children without context
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  return <ThemeProviderInner>{children}</ThemeProviderInner>;
 }
 
 export const useTheme = () => {
