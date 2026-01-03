@@ -1,10 +1,12 @@
 import * as React from 'react';
+import Link from 'next/link';
 import { useMe } from '@/lib/api/auth';
 import { usePaymentStats } from '@/lib/api/payments';
 import { useConversions } from '@/lib/api/conversions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, ArrowRightLeft, TrendingUp, Users, Zap, DollarSign, Activity } from 'lucide-react';
-import { formatCurrency, formatStars } from '@/lib/utils';
+import { formatCurrency, formatStars, formatDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { data: user } = useMe();
@@ -64,7 +66,7 @@ export default function DashboardPage() {
               <ArrowRightLeft className="h-8 w-8 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {paymentStats?.totalConversions || 0}
+                  {recentConversions?.length || 0}
                 </p>
                 <p className="text-sm text-muted-foreground">Conversions</p>
               </div>
@@ -79,7 +81,13 @@ export default function DashboardPage() {
               <TrendingUp className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold text-foreground">
-                  {paymentStats?.successRate ? `${(paymentStats.successRate * 100).toFixed(1)}%` : '0%'}
+                  {paymentStats && paymentStats.byStatus ?
+                    (() => {
+                      const completed = paymentStats.byStatus.completed || 0;
+                      const total = paymentStats.totalPayments || 1;
+                      return `${((completed / total) * 100).toFixed(1)}%`;
+                    })()
+                    : '0%'}
                 </p>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
               </div>
