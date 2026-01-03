@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import { usePayments } from '@/lib/api/payments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
