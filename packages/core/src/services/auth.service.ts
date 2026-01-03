@@ -8,8 +8,29 @@ import {
 } from "./kms.service";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || process.env.API_SECRET_KEY || "dev-secret";
+// SECURITY FIX: Validate JWT_SECRET is properly configured with minimum length requirements
+// Never fall back to weak or hardcoded secrets
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET || process.env.API_SECRET_KEY;
+  
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET or API_SECRET_KEY environment variable is required. " +
+      "Please set a secure secret (minimum 32 characters) before starting the application."
+    );
+  }
+  
+  if (secret.length < 32) {
+    throw new Error(
+      `JWT_SECRET must be at least 32 characters long for security. ` +
+      `Current length: ${secret.length}. Please use a stronger secret.`
+    );
+  }
+  
+  return secret;
+};
+
+const JWT_SECRET = getJwtSecret();
 
 export class AuthService {
   // Generate a random JTI for tokens
@@ -38,21 +59,13 @@ export class AuthService {
   }
 
   // Encrypt a secret using WALLET_ENCRYPTION_KEY (hex) with AES-256-GCM
+  // SECURITY FIX: Removed insecure base64 fallback - encryption must always succeed
   static async encryptSecret(plain: string): Promise<string> {
-    try {
-      return await kmsEncrypt(plain);
-    } catch (err) {
-      // Fallback to base64 plaintext on error (dev only)
-      return Buffer.from(plain, "utf8").toString("base64");
-    }
+    return await kmsEncrypt(plain);
   }
 
   static async decryptSecret(blob: string): Promise<string> {
-    try {
-      return await kmsDecrypt(blob);
-    } catch (err) {
-      return Buffer.from(blob, "base64").toString("utf8");
-    }
+    return await kmsDecrypt(blob);
   }
 
   // Request a magic link: sign a JWT, persist jti into magic_links, and attempt to email
@@ -239,8 +252,17 @@ export class AuthService {
   }
 
   // Create a session for a dashboard user and return session details
+  // SECURITY FIX: Invalidate old sessions before creating new one to prevent session fixation
   static async createSessionForUser(userId: string, meta?: any, ttlMs?: number) {
     const db = getDatabase();
+    
+    // SECURITY FIX: Revoke all existing sessions for this user to prevent session fixation
+    // This ensures that any pre-existing session cookies are invalidated
+    await db.none(
+      "UPDATE sessions SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+      [userId],
+    );
+    
     const sessionToken = AuthService.generatePendingToken();
     const csrfToken = AuthService.generatePendingToken();
     const expiresAt = new Date(Date.now() + (ttlMs || 24 * 60 * 60 * 1000));

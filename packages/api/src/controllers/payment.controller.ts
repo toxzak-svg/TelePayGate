@@ -21,6 +21,9 @@ export class PaymentController {
   /**
    * Handle Telegram payment webhook
    * POST /api/v1/payments/webhook
+   * SECURITY NOTE: Webhook endpoints should implement signature verification instead of CSRF
+   * TODO: Implement webhook signature verification using Telegram's webhook secret
+   * See: https://core.telegram.org/bots/webhooks#how-webhooks-are-delivered
    */
   static async handleTelegramWebhook(
     req: Request,
@@ -40,13 +43,41 @@ export class PaymentController {
         return;
       }
 
+      // SECURITY FIX: Validate X-User-Id header format (UUID) before processing
+      if (!validateUuid(userId)) {
+        respondError(
+          res,
+          "INVALID_USER_ID",
+          "X-User-Id must be a valid UUID",
+          400,
+        );
+        return;
+      }
+
       const normalizedUserId = PaymentController.normalizeUserId(userId);
       console.log(
         `[Webhook] Received x-user-id: ${userId}, normalized: ${normalizedUserId}`,
       );
 
       const db = getDatabase();
-      console.log(`[Webhook] Ensuring user exists: ${normalizedUserId}`);
+      
+      // SECURITY FIX: Check user exists in database before processing
+      const userExists = await db.oneOrNone(
+        "SELECT id FROM users WHERE id = $1",
+        [normalizedUserId],
+      );
+      
+      if (!userExists) {
+        respondError(
+          res,
+          "USER_NOT_FOUND",
+          "User not found. Please ensure the user is registered.",
+          404,
+        );
+        return;
+      }
+      
+      console.log(`[Webhook] User verified: ${normalizedUserId}`);
       await PaymentController.ensureUserExists(db, normalizedUserId);
       console.log(
         `[Webhook] User provisioning complete for: ${normalizedUserId}`,

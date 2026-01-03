@@ -17,11 +17,17 @@ export function initDatabase(connectionString: string): Database {
   const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
   const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
 
-  // SSL configuration for production databases (Railway, Render, etc.)
-  const sslConfig = process.env.NODE_ENV === 'production' || 
-    connectionString.includes('railway.app') || 
-    connectionString.includes('render.com')
-    ? { rejectUnauthorized: false } // Allow self-signed certs in production
+  // SECURITY FIX: Remove insecure rejectUnauthorized: false
+  // For production, use proper SSL certificate validation
+  // For local development with self-signed certs, use environment variable to explicitly opt-in
+  const sslConfig = (process.env.NODE_ENV === 'production' ||
+    connectionString.includes('railway.app') ||
+    connectionString.includes('render.com'))
+    ? {
+        // SECURITY FIX: Enable certificate validation by default
+        // Only disable if explicitly configured (NOT RECOMMENDED)
+        rejectUnauthorized: process.env.DB_SSL_ALLOW_UNAUTHORIZED === 'true' ? false : true,
+      }
     : false;
 
   db = pgp({
@@ -45,11 +51,17 @@ export function initPool(connectionString: string): Pool {
   const idleMs = parseInt(process.env.DB_IDLE_TIMEOUT || "30000", 10);
   const connTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000", 10);
 
-  // SSL configuration for production databases (Railway, Render, etc.)
-  const sslConfig = process.env.NODE_ENV === 'production' || 
-    connectionString.includes('railway.app') || 
-    connectionString.includes('render.com')
-    ? { rejectUnauthorized: false } // Allow self-signed certs in production
+  // SECURITY FIX: Remove insecure rejectUnauthorized: false
+  // For production, use proper SSL certificate validation
+  // For local development with self-signed certs, use environment variable to explicitly opt-in
+  const sslConfig = (process.env.NODE_ENV === 'production' ||
+    connectionString.includes('railway.app') ||
+    connectionString.includes('render.com'))
+    ? {
+        // SECURITY FIX: Enable certificate validation by default
+        // Only disable if explicitly configured (NOT RECOMMENDED)
+        rejectUnauthorized: process.env.DB_SSL_ALLOW_UNAUTHORIZED === 'true' ? false : true,
+      }
     : false;
 
   pool = new Pool({

@@ -79,9 +79,11 @@ export default class AuthController {
         sameSite: "lax",
         maxAge,
       });
+      // SECURITY FIX: Set httpOnly: true for CSRF token cookie to prevent XSS attacks
+      // The CSRF token should still be accessible via the session meta in the database
       if (result.csrf_token) {
         res.cookie("csrf_token", result.csrf_token, {
-          httpOnly: false,
+          httpOnly: true,
           secure: isProd,
           sameSite: "lax",
           maxAge,
@@ -104,8 +106,27 @@ export default class AuthController {
     const { email, password } = req.body;
     if (!email || !password)
       return sendBadRequest(res, "MISSING_PARAMS", "email and password required");
-    if (String(password).length < 8)
+    
+    // SECURITY FIX: Enforce complexity requirements for password strength
+    const passwordStr = String(password);
+    if (passwordStr.length < 8)
       return respondError(res, "WEAK_PASSWORD", "Password must be at least 8 characters", 400);
+    
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(passwordStr))
+      return respondError(res, "WEAK_PASSWORD", "Password must contain at least one uppercase letter", 400);
+    
+    // Check for lowercase letter
+    if (!/[a-z]/.test(passwordStr))
+      return respondError(res, "WEAK_PASSWORD", "Password must contain at least one lowercase letter", 400);
+    
+    // Check for number
+    if (!/[0-9]/.test(passwordStr))
+      return respondError(res, "WEAK_PASSWORD", "Password must contain at least one number", 400);
+    
+    // Check for special character
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordStr))
+      return respondError(res, "WEAK_PASSWORD", "Password must contain at least one special character", 400);
 
     try {
       const user = await AuthService.registerDashboardUserWithPassword(email, password);
@@ -115,7 +136,8 @@ export default class AuthController {
       const isProd = process.env.NODE_ENV === "production";
       const maxAge = session.expires_at ? Math.max(0, new Date(session.expires_at).getTime() - Date.now()) : 24 * 60 * 60 * 1000;
       res.cookie("session_id", session.session_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
-      res.cookie("csrf_token", session.csrf_token, { httpOnly: false, secure: isProd, sameSite: "lax", maxAge });
+      // SECURITY FIX: Set httpOnly: true for CSRF token cookie to prevent XSS attacks
+      res.cookie("csrf_token", session.csrf_token, { httpOnly: true, secure: isProd, sameSite: "lax", maxAge });
 
       return respondSuccess(res, { data: { user: { id: user.id, email: user.email, role: user.role } } }, 201);
     } catch (err: unknown) {
@@ -163,9 +185,10 @@ export default class AuthController {
         sameSite: "lax",
         maxAge,
       });
+      // SECURITY FIX: Set httpOnly: true for CSRF token cookie to prevent XSS attacks
       if (loginResult.csrf_token)
         res.cookie("csrf_token", loginResult.csrf_token as string, {
-          httpOnly: false,
+          httpOnly: true,
           secure: isProd,
           sameSite: "lax",
           maxAge,

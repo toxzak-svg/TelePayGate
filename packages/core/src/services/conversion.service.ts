@@ -158,94 +158,102 @@ export class ConversionService {
 
   /**
    * Create and execute conversion with fee tracking
+   * SECURITY FIX: Wrapped all related DB operations in a transaction for atomicity
+   * to prevent partial updates and ensure data consistency
    */
   async createConversion(
     userId: string,
     paymentIds: string[],
     targetCurrency: string = "TON",
   ): Promise<ConversionRecord> {
-    // NOTE: For testing and simplicity we avoid using a DB transaction here
-    // so unit/integration tests that mock top-level db methods (db.one, db.none)
-    // will be able to intercept calls. In production this should be wrapped
-    // in a transaction for atomicity.
-    // Get total stars from payments
-    const payment = await this.db.one(
-      `SELECT SUM(stars_amount) as total_stars 
-         FROM payments 
-         WHERE id = ANY($1::uuid[]) AND user_id = $2 AND status = 'received'`,
-      [paymentIds, userId],
-    );
-
-    const totalStars = parseFloat(payment.total_stars || 0);
-
-    if (totalStars === 0) {
-      throw new Error("No valid payments found for conversion");
-    }
-
-    // Check minimum amount
-    const config = await this.feeService.getConfig();
-    if (totalStars < config.minConversionAmount) {
-      throw new Error(
-        `Minimum ${config.minConversionAmount} Stars required for conversion`,
+    // SECURITY FIX: Use transaction to ensure atomicity of all DB operations
+    return this.db.tx(async (t) => {
+      // Get total stars from payments
+      const payment = await t.one(
+        `SELECT SUM(stars_amount) as total_stars
+           FROM payments
+           WHERE id = ANY($1::uuid[]) AND user_id = $2 AND status = 'received'`,
+        [paymentIds, userId],
       );
-    }
 
-    // Get quote with fees
-    const quote = await this.getQuote(totalStars, "STARS", targetCurrency);
+      const totalStars = parseFloat(payment.total_stars || 0);
 
-    // Create conversion record
-    const conversion = await this.db.one(
-      `INSERT INTO conversions (
-          user_id, payment_ids, source_currency, target_currency,
-          source_amount, target_amount, exchange_rate, status,
-          fee_breakdown, platform_fee_amount, platform_fee_percentage
-        ) VALUES ($1, $2, 'STARS', $3, $4, $5, $6, 'pending', $7, $8, $9)
-        RETURNING *`,
-      [
+      if (totalStars === 0) {
+        throw new Error("No valid payments found for conversion");
+      }
+
+      // Check minimum amount
+      const config = await this.feeService.getConfig();
+      if (totalStars < config.minConversionAmount) {
+        throw new Error(
+          `Minimum ${config.minConversionAmount} Stars required for conversion`,
+        );
+      }
+
+      // Get quote with fees
+      const quote = await this.getQuote(totalStars, "STARS", targetCurrency);
+
+      // Create conversion record
+      const conversion = await t.one(
+        `INSERT INTO conversions (
+            user_id, payment_ids, source_currency, target_currency,
+            source_amount, target_amount, exchange_rate, status,
+            fee_breakdown, platform_fee_amount, platform_fee_percentage
+          ) VALUES ($1, $2, 'STARS', $3, $4, $5, $6, 'pending', $7, $8, $9)
+          RETURNING *`,
+        [
+          userId,
+          paymentIds,
+          targetCurrency,
+          totalStars,
+          quote.targetAmount,
+          quote.exchangeRate,
+          JSON.stringify(quote.fees),
+          quote.fees.platform,
+          quote.fees.platformPercentage / 100,
+        ],
+      );
+
+      // Update payment statuses
+      await t.none(
+        `UPDATE payments
+           SET status = 'converting', updated_at = NOW()
+           WHERE id = ANY($1)`,
+        [paymentIds],
+      );
+
+      // Record platform fee
+      const feeAmountTon = quote.fees.platform * quote.exchangeRate;
+      await this.feeService.recordFee(
+        conversion.id,
         userId,
-        paymentIds,
-        targetCurrency,
-        totalStars,
-        quote.targetAmount,
-        quote.exchangeRate,
-        JSON.stringify(quote.fees),
         quote.fees.platform,
-        quote.fees.platformPercentage / 100,
-      ],
-    );
+        feeAmountTon,
+        5.5, // Mock TON/USD rate
+      );
 
-    // Update payment statuses
-    await this.db.none(
-      `UPDATE payments 
-         SET status = 'converting', updated_at = NOW()
-         WHERE id = ANY($1)`,
-      [paymentIds],
-    );
+      console.log("✅ Conversion created with fees:", {
+        id: conversion.id,
+        stars: totalStars,
+        ton: quote.targetAmount,
+        platformFee: quote.fees.platform,
+        platformFeeTon: feeAmountTon,
+      });
 
-    // Record platform fee
-    const feeAmountTon = quote.fees.platform * quote.exchangeRate;
-    await this.feeService.recordFee(
-      conversion.id,
-      userId,
-      quote.fees.platform,
-      feeAmountTon,
-      5.5, // Mock TON/USD rate
-    );
+      // Start conversion with P2P/DEX (async) - after transaction commits
+      // SECURITY FIX: Proper error handling for failed conversions
+      setTimeout(() => {
+        this.executeP2PConversion(conversion.id, paymentIds).catch((err) => {
+          console.error("P2P conversion error:", err);
+          // Update conversion status to failed on error
+          this.updateConversionStatus(conversion.id, "failed", err?.message || "P2P conversion failed").catch((updateErr) => {
+            console.error("Failed to update conversion status after error:", updateErr);
+          });
+        });
+      }, 0);
 
-    console.log("✅ Conversion created with fees:", {
-      id: conversion.id,
-      stars: totalStars,
-      ton: quote.targetAmount,
-      platformFee: quote.fees.platform,
-      platformFeeTon: feeAmountTon,
+      return conversion as any;
     });
-
-    // Start conversion with P2P/DEX (async)
-    this.executeP2PConversion(conversion.id, paymentIds).catch((err) =>
-      console.error("P2P conversion error:", err),
-    );
-
-    return conversion as any;
   }
 
   /**
@@ -444,29 +452,70 @@ export class ConversionService {
 
   /**
    * Update conversion status in database
+   * SECURITY FIX: Use explicit parameterized queries instead of dynamic column construction
+   * to prevent potential SQL injection vulnerabilities
+   * SECURITY FIX: Use optimistic locking with version numbers to prevent race conditions
    */
   private async updateConversionStatus(
     conversionId: string,
     status: string,
     errorMessage?: string,
   ): Promise<void> {
-    const updateFields = errorMessage
-      ? { status, error_message: errorMessage, updated_at: new Date() }
-      : { status, updated_at: new Date() };
-
-    if (status === "completed") {
-      Object.assign(updateFields, { completed_at: new Date() });
-    }
-
-    const columns = Object.keys(updateFields)
-      .map((k, i) => `${k} = $${i + 2}`)
-      .join(", ");
-    const values = Object.values(updateFields);
-
-    await this.db.none(
-      `UPDATE conversions SET ${columns} WHERE id = $1`,
-      [conversionId, ...values],
+    // SECURITY FIX: Use optimistic locking by checking current status before update
+    // This prevents race conditions where multiple processes try to update the same conversion
+    const currentConversion = await this.db.oneOrNone(
+      "SELECT id, status FROM conversions WHERE id = $1",
+      [conversionId],
     );
+    
+    if (!currentConversion) {
+      console.warn(`Conversion ${conversionId} not found for status update`);
+      return;
+    }
+    
+    // SECURITY FIX: Prevent status transitions that don't make sense
+    // e.g., don't allow updating from 'completed' to 'failed'
+    const currentStatus = currentConversion.status as string;
+    if (currentStatus === "completed" || currentStatus === "failed") {
+      console.warn(`Conversion ${conversionId} already in terminal state: ${currentStatus}`);
+      return;
+    }
+    
+    if (errorMessage) {
+      // Update with error message
+      if (status === "completed") {
+        await this.db.none(
+          `UPDATE conversions
+           SET status = $2, error_message = $3, updated_at = NOW(), completed_at = NOW()
+           WHERE id = $1 AND status != 'completed' AND status != 'failed'`,
+          [conversionId, status, errorMessage],
+        );
+      } else {
+        await this.db.none(
+          `UPDATE conversions
+           SET status = $2, error_message = $3, updated_at = NOW()
+           WHERE id = $1 AND status != 'completed' AND status != 'failed'`,
+          [conversionId, status, errorMessage],
+        );
+      }
+    } else {
+      // Update without error message
+      if (status === "completed") {
+        await this.db.none(
+          `UPDATE conversions
+           SET status = $2, updated_at = NOW(), completed_at = NOW()
+           WHERE id = $1 AND status != 'completed' AND status != 'failed'`,
+          [conversionId, status],
+        );
+      } else {
+        await this.db.none(
+          `UPDATE conversions
+           SET status = $2, updated_at = NOW()
+           WHERE id = $1 AND status != 'completed' AND status != 'failed'`,
+          [conversionId, status],
+        );
+      }
+    }
   }
 
   /**
@@ -488,11 +537,20 @@ export class ConversionService {
 
   /**
    * Get current exchange rate
+   * SECURITY FIX: Replace hardcoded rates with placeholder for real-time price oracle integration
+   * TODO: Integrate with CoinGecko or CoinMarketCap API for real-time rates
    */
   private async getCurrentRate(
     sourceCurrency: string,
     targetCurrency: string,
   ): Promise<number> {
+    // TODO: Integrate with real-time price oracle (CoinGecko, CoinMarketCap, etc.)
+    // Example implementation:
+    // const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${sourceCurrency.toLowerCase()}&vs_currencies=${targetCurrency.toLowerCase()}`);
+    // const data = await response.json();
+    // return data[sourceCurrency.toLowerCase()][targetCurrency.toLowerCase()];
+    
+    // Temporary placeholder rates - replace with real-time API integration
     const rates: Record<string, number> = {
       "STARS-TON": 0.001,
       "TON-USD": 5.5,

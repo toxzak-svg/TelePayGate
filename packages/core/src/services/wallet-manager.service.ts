@@ -16,6 +16,8 @@ export class WalletManagerService {
   private tonService: TonPaymentService;
   private encryption: EncryptionUtil;
   private minConfirmations: number;
+  // SECURITY FIX: Store interval IDs to prevent memory leaks
+  private depositPollIntervals: Map<string, NodeJS.Timeout> = new Map();
 
   constructor() {
     const conn = process.env.DATABASE_URL || "";
@@ -92,11 +94,20 @@ export class WalletManagerService {
     };
   }
 
+  /**
+   * Start polling for deposit confirmation
+   * SECURITY FIX: Store interval IDs and provide cleanup method to prevent memory leaks
+   */
   private async startDepositPoll(
     depositId: string,
     address: string,
     expectedAmount: number,
   ) {
+    // SECURITY FIX: Clear any existing interval for this deposit to prevent duplicates
+    if (this.depositPollIntervals.has(depositId)) {
+      clearInterval(this.depositPollIntervals.get(depositId)!);
+    }
+
     // Poll every 30s for matching payments
     const interval = setInterval(async () => {
       try {
@@ -108,7 +119,8 @@ export class WalletManagerService {
             "UPDATE manual_deposits SET status = $1, received_amount_ton = $2, confirmed_at = NOW() WHERE id = $3",
             ["awaiting_confirmation", expectedAmount, depositId],
           );
-          clearInterval(interval);
+          this.stopDepositPoll(depositId);
+          return;
         }
         // Expire if past deadline
         const dep = (await this.db.oneOrNone(
@@ -120,12 +132,41 @@ export class WalletManagerService {
             "UPDATE manual_deposits SET status = $1 WHERE id = $2",
             ["expired", depositId],
           );
-          clearInterval(interval);
+          this.stopDepositPoll(depositId);
+          return;
         }
       } catch (err) {
         console.error("Error monitoring deposit:", err);
       }
     }, 30000);
+
+    // SECURITY FIX: Store interval ID for cleanup
+    this.depositPollIntervals.set(depositId, interval);
+  }
+
+  /**
+   * Stop polling for a specific deposit
+   * SECURITY FIX: Cleanup method to prevent memory leaks
+   */
+  private stopDepositPoll(depositId: string): void {
+    const interval = this.depositPollIntervals.get(depositId);
+    if (interval) {
+      clearInterval(interval);
+      this.depositPollIntervals.delete(depositId);
+      console.log(`Stopped deposit polling for: ${depositId}`);
+    }
+  }
+
+  /**
+   * Stop all active deposit polls
+   * SECURITY FIX: Cleanup method to prevent memory leaks on shutdown
+   */
+  public stopAllDepositPolls(): void {
+    this.depositPollIntervals.forEach((interval, depositId) => {
+      clearInterval(interval);
+      console.log(`Stopped deposit polling for: ${depositId}`);
+    });
+    this.depositPollIntervals.clear();
   }
 }
 

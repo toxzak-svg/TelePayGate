@@ -18,12 +18,22 @@ export type KmsProvider = {
 };
 
 // In-memory provider using env key (AES-256-GCM) for local/dev.
+// SECURITY FIX: Never fall back to base64 encoding (not encryption)
+// Throw error if encryption key is not properly configured
 const envProvider: KmsProvider = {
   async encrypt(plaintext: string) {
-    const keyHex = process.env[ENV_KEY_NAME] || "";
-    if (!keyHex || keyHex.length < 64) {
-      // fallback: base64 encode plaintext (non-secure, dev only)
-      return Buffer.from(plaintext, "utf8").toString("base64");
+    const keyHex = process.env[ENV_KEY_NAME];
+    if (!keyHex) {
+      throw new Error(
+        `${ENV_KEY_NAME} environment variable is required for encryption. ` +
+        `Please set a 64-character hex string (32 bytes for AES-256-GCM).`
+      );
+    }
+    if (keyHex.length < 64) {
+      throw new Error(
+        `${ENV_KEY_NAME} must be at least 64 characters (32 bytes for AES-256-GCM). ` +
+        `Current length: ${keyHex.length}.`
+      );
     }
     const key = Buffer.from(keyHex, "hex");
     const iv = crypto.randomBytes(12);
@@ -36,9 +46,18 @@ const envProvider: KmsProvider = {
     return Buffer.concat([iv, tag, encrypted]).toString("base64");
   },
   async decrypt(blobBase64: string) {
-    const keyHex = process.env[ENV_KEY_NAME] || "";
-    if (!keyHex || keyHex.length < 64) {
-      return Buffer.from(blobBase64, "base64").toString("utf8");
+    const keyHex = process.env[ENV_KEY_NAME];
+    if (!keyHex) {
+      throw new Error(
+        `${ENV_KEY_NAME} environment variable is required for decryption. ` +
+        `Please set a 64-character hex string (32 bytes for AES-256-GCM).`
+      );
+    }
+    if (keyHex.length < 64) {
+      throw new Error(
+        `${ENV_KEY_NAME} must be at least 64 characters (32 bytes for AES-256-GCM). ` +
+        `Current length: ${keyHex.length}.`
+      );
     }
     const data = Buffer.from(blobBase64, "base64");
     const iv = data.slice(0, 12);
