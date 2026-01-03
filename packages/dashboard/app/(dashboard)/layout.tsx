@@ -7,10 +7,6 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store/authStore';
 
-export const metadata: Metadata = {
-  title: 'Dashboard',
-};
-
 const navItems = [
   {
     href: '/dashboard',

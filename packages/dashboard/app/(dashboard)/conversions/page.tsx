@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { useState } from 'react';
 import { useConversions, useCreateConversion, useEstimateConversion, useLockRate } from '@/lib/api/conversions';
 import { usePayments } from '@/lib/api/payments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useMe } from '@/lib/api/auth';
-import { usePaymentStats, useConversions } from '@/lib/api/payments';
-import { useConversions as useConversionsAPI } from '@/lib/api/conversions';
+import { usePaymentStats } from '@/lib/api/payments';
+import { useConversions } from '@/lib/api/conversions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, ArrowRightLeft, TrendingUp, Users, Zap, DollarSign, Activity } from 'lucide-react';
 import { formatCurrency, formatStars } from '@/lib/utils';
