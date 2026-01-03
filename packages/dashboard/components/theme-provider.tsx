@@ -1,17 +1,16 @@
 'use client';
 
-import * as React from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useThemeStore, getAppliedTheme } from '@/lib/store/themeStore';
-import { useEffect } from 'react';
 
-const ThemeContext = React.createContext<{
+const ThemeContext = createContext<{
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 } | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const { theme, setTheme } = useThemeStore();
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -34,7 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useTheme = () => {
-  const context = React.useContext(ThemeContext);
+  const context = useContext(ThemeContext);
   if (!context) throw new Error('useTheme must be used within ThemeProvider');
   return context;
 };
