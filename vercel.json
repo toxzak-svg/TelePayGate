@@ -30,7 +30,14 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "VITE_API_URL": "/api/v1"
+    "VITE_API_URL": "/api/v1",
+    "TELEGRAM_BOT_TOKEN": "8326012184:AAFKaLFNxDDTXLlxwvF4j_rH0i_66jzstb8",
+    "TELEGRAM_WEBHOOK_URL": "https://tele-pay-gate-api.vercel.app/api/webhooks/telegram",
+    "TELEGRAM_WEBHOOK_SECRET": "demo-webhook-secret-change-in-production",
+    "API_SECRET_KEY": "demo-api-secret-change-in-production",
+    "JWT_SECRET": "demo-jwt-secret-change-in-production",
+    "WALLET_ENCRYPTION_KEY": "demo-encryption-key-change-in-production-min-64-chars",
+    "API_URL": "https://tele-pay-gate-api.vercel.app"
   },
   "git": {
     "deploymentEnabled": {
