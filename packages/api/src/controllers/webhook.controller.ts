@@ -18,4 +18,23 @@ export class WebhookController {
       return respondError(res, "WEBHOOK_HANDLING_ERROR", message, 500);
     }
   }
+
+  static async handleTelegramWebhook(req: Request, res: Response) {
+    try {
+      const update = req.body;
+      console.log("Received Telegram webhook update:", JSON.stringify(update, null, 2));
+      
+      // For demo purposes, just acknowledge receipt
+      // In production, you would process the update here
+      return respondSuccess(
+        res,
+        { message: "Telegram webhook received", update_id: update?.update_id },
+        200,
+      );
+    } catch (error: unknown) {
+      console.error("Telegram webhook handling error:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      return respondError(res, "TELEGRAM_WEBHOOK_ERROR", message, 500);
+    }
+  }
 }

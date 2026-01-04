@@ -2,14 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "packages/dashboard/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "npm run build -w telepaygate-core && npm run build -w @tg-payment/dashboard",
-        "outputDirectory": "dist"
-      }
-    },
-    {
       "src": "packages/api/vercel.ts",
       "use": "@vercel/node"
     }
