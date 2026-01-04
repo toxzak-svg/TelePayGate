@@ -20,8 +20,12 @@ export function createServer(): Application {
   app.use(cors());
   app.use(compression());
   app.use(cookieParser());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  
+  // Skip body parsing for serverless-http (it handles it)
+  if (process.env.VERCEL !== '1') {
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+  }
 
   // Global rate limiting
   app.use(globalLimiter);

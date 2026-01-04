@@ -3,19 +3,23 @@ import serverless from "serverless-http";
 import createServer from "./src/server";
 
 let cachedHandler: any;
-let initialized = false;
-
-async function getHandler() {
-  if (!initialized) {
-    // Initialize app without database (database is lazy-loaded in connection.ts)
-    const app = createServer();
-    cachedHandler = serverless(app);
-    initialized = true;
-  }
-  return cachedHandler;
-}
 
 export default async (req: any, res: any) => {
-  const handler = await getHandler();
-  return handler(req, res);
+  if (!cachedHandler) {
+    const app = createServer();
+    cachedHandler = serverless(app, {
+      request: (request: any) => {
+        // Parse body if it exists
+        if (request.body && typeof request.body === 'string') {
+          try {
+            request.body = JSON.parse(request.body);
+          } catch (e) {
+            // Keep as is if not JSON
+          }
+        }
+        return request;
+      },
+    });
+  }
+  return cachedHandler(req, res);
 };

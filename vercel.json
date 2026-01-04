@@ -1,23 +1,14 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "packages/api/vercel.ts",
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/v1/(.*)",
-      "destination": "/packages/api/vercel.ts"
-    },
-    {
-      "source": "/health",
-      "destination": "/packages/api/vercel.ts"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/packages/dashboard/dist/index.html"
+      "src": "/(.*)",
+      "dest": "/packages/api/vercel.ts"
     }
   ],
   "env": {

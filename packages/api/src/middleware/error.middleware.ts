@@ -5,6 +5,9 @@ export function errorHandler(error: Error, req: Request, res: Response): void {
   // Log error
   ErrorHandler.logError(error);
 
+  // Get request ID safely
+  const requestId = req.headers?.["x-request-id"] as string | undefined;
+
   // Handle AppError from core
   if (error instanceof AppError) {
     const errorResponse = {
@@ -14,21 +17,39 @@ export function errorHandler(error: Error, req: Request, res: Response): void {
         message: error.message,
         details: error.details,
       },
-      requestId: req.headers["x-request-id"],
+      requestId,
       timestamp: new Date().toISOString(),
     };
 
-    res.status(error.statusCode).json(errorResponse);
+    const responseJson = JSON.stringify(errorResponse);
+    if (typeof (res as any).setHeader === 'function') {
+      (res as any).setHeader('Content-Type', 'application/json');
+    }
+    if (typeof (res as any).writeHead === 'function') {
+      (res as any).writeHead(error.statusCode);
+    }
+    if (typeof (res as any).end === 'function') {
+      (res as any).end(responseJson);
+    }
     return;
   }
 
   // Handle unknown errors
   const statusCode = ErrorHandler.getStatusCode(error);
   const errorResponse = ErrorHandler.formatError(error);
-
-  res.status(statusCode).json({
+  const responseJson = JSON.stringify({
     ...errorResponse,
-    requestId: req.headers["x-request-id"],
+    requestId,
     timestamp: new Date().toISOString(),
   });
+
+  if (typeof (res as any).setHeader === 'function') {
+    (res as any).setHeader('Content-Type', 'application/json');
+  }
+  if (typeof (res as any).writeHead === 'function') {
+    (res as any).writeHead(statusCode);
+  }
+  if (typeof (res as any).end === 'function') {
+    (res as any).end(responseJson);
+  }
 }

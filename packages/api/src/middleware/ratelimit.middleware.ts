@@ -23,6 +23,8 @@ function createRateLimiter(options?: {
     legacyHeaders: false,
     // Skip X-Forwarded-For validation in development
     validate: { xForwardedForHeader: false },
+    // Skip rate limiting in Vercel serverless environment
+    skip: (req) => process.env.VERCEL === '1',
   });
 }
 
