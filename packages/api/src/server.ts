@@ -27,8 +27,14 @@ export function createServer(): Application {
     app.use(express.urlencoded({ extended: true }));
   }
 
-  // Global rate limiting
-  app.use(globalLimiter);
+  // Global rate limiting (skip for webhooks)
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/v1/webhooks')) {
+      next(); // Skip rate limiting for webhooks
+    } else {
+      globalLimiter(req, res, next);
+    }
+  });
 
   // Attach response helpers
   app.use(responseMiddleware);
