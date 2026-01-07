@@ -30,31 +30,27 @@ spec:
                   args:
                     - node
                     - packages/api/dist/index.js
-                  env:
-                    - name: API_SECRET_KEY
-                      value: "your_random_secret_key_here"
-                    - name: DATABASE_URL
-                      value: "postgresql://tg_user:tg_pass@db:5432/telepaygate_dev"
-                    - name: EMAIL_SMTP_HOST
-                      value: "mailhog"
-                    - name: EMAIL_SMTP_PORT
-                      value: "1025"
-                    - name: EMAIL_SMTP_SECURE
-                      value: "false"
-                    - name: JWT_SECRET
-                      value: "your_jwt_secret_here"
-                    - name: NODE_ENV
-                      value: "development"
-                    - name: PORT
-                      value: "3000"
-                    - name: REDIS_URL
-                      value: "redis://redis:6379"
-                    - name: TELEGRAM_BOT_TOKEN
-                      value: "8341264832:AAHPf7vdr7UlQAgSq1m7De8OJ6SJy7n7BLE"
-                    - name: TON_API_ENDPOINT
-                      value: "https://toncenter.com/api/v2/jsonRPC"
-                    - name: TON_API_KEY
-                      value: "6f37711d5cbf2f7654a0fc575670edfa6270a2e6d48503a2bbdadc8770159677"
+                  envFrom:
+                    - configMapRef:
+                        name: telepaygate-config
+                    - secretRef:
+                        name: telepaygate-secret
                   ports:
                     - name: api-3000
                       containerPort: 3000
+                  livenessProbe:
+                    httpGet:
+                      path: /health
+                      port: 3000
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 3
+                  readinessProbe:
+                    httpGet:
+                      path: /health
+                      port: 3000
+                    initialDelaySeconds: 10
+                    periodSeconds: 5
+                    timeoutSeconds: 3
+                    failureThreshold: 3

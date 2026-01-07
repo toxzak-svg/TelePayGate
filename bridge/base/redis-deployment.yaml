@@ -36,3 +36,10 @@ spec:
                   ports:
                     - name: redis-6379
                       containerPort: 6379
+                  volumeMounts:
+                    - name: redis-storage
+                      mountPath: /data
+            volumes:
+                - name: redis-storage
+                  persistentVolumeClaim:
+                      claimName: redis-pvc

@@ -29,11 +29,20 @@ spec:
                   imagePullPolicy: IfNotPresent
                   env:
                     - name: POSTGRES_DB
-                      value: "telepaygate_dev"
+                      valueFrom:
+                        secretKeyRef:
+                          name: telepaygate-secret
+                          key: POSTGRES_DB
                     - name: POSTGRES_PASSWORD
-                      value: "tg_pass"
+                      valueFrom:
+                        secretKeyRef:
+                          name: telepaygate-secret
+                          key: POSTGRES_PASSWORD
                     - name: POSTGRES_USER
-                      value: "tg_user"
+                      valueFrom:
+                        secretKeyRef:
+                          name: telepaygate-secret
+                          key: POSTGRES_USER
                   livenessProbe:
                     exec:
                         command:
@@ -46,3 +55,10 @@ spec:
                   ports:
                     - name: db-5432
                       containerPort: 5432
+                  volumeMounts:
+                    - name: postgres-storage
+                      mountPath: /var/lib/postgresql/data
+            volumes:
+                - name: postgres-storage
+                  persistentVolumeClaim:
+                      claimName: postgres-pvc

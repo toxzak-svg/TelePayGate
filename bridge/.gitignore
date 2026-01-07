@@ -1,0 +1,32 @@
+# Kubernetes Secrets - Never commit these!
+secret.yaml
+secret-patch.yaml
+*.secret.yaml
+
+# Kustomize build artifacts
+kustomize-build/
+
+# Temporary files
+*.bak
+*.tmp
+
+# Local environment overrides
+*-local.yaml
+local-overlays/
+
+# Backup files
+*~
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log

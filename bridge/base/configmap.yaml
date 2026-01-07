@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telepaygate-config
+  namespace: telepaygate
+  labels:
+    app: telepaygate
+data:
+  # Server / Runtime Configuration
+  NODE_ENV: "development"
+  PORT: "3000"
+  API_URL: "http://localhost:3000"
+  
+  # Database Configuration
+  DATABASE_POOL_MIN: "2"
+  DATABASE_POOL_MAX: "10"
+  DB_IDLE_TIMEOUT: "30000"
+  DB_CONNECTION_TIMEOUT: "5000"
+  DB_SSL: "false"
+  DB_SSL_ALLOW_UNAUTHORIZED: "false"
+  
+  # Redis Configuration
+  REDIS_URL: "redis://redis:6379"
+  
+  # Telegram Configuration
+  TELEGRAM_PROVIDER_TOKEN: "STARS"
+  
+  # TON Blockchain Configuration
+  TON_API_URL: "https://toncenter.com/api/v2/jsonRPC"
+  TON_API_ENDPOINT: "https://tonx.space/api"
+  TON_MAINNET: "false"
+  TON_WORKCHAIN: "0"
+  TON_MIN_CONFIRMATIONS: "2"
+  
+  # P2P DEX Integration
+  DEDUST_API_URL: "https://api.dedust.io"
+  STONFI_API_URL: "https://api.ston.fi"
+  DEX_SLIPPAGE_TOLERANCE: "0.5"
+  DEX_SIMULATION_MODE: "true"
+  RUN_DEX_INTEGRATION_TESTS: "false"
+  DEDUST_TEST_POOL_ID: "EQD_test_pool"
+  
+  # NitroSwaps Integration
+  NITRO_FEATURE_ENABLED: "false"
+  NITRO_API_URL: "https://api.nitro.com"
+  
+  # Conversion Settings
+  MIN_CONVERSION_STARS: "100"
+  RATE_LOCK_DURATION_SECONDS: "300"
+  MAX_PENDING_CONVERSIONS: "10"
+  P2P_POOL_REFRESH_INTERVAL: "30"
+  
+  # Exchange Rate Providers
+  DEXSCREENER_API_URL: "https://api.dexscreener.com/latest/dex/tokens"
+  RATE_SIMULATION_MODE: "false"
+  
+  # Fiat Settlement Connectors
+  FIAT_GATEWAY_PROVIDER: "stub"
+  COINLIST_BASE_URL: "https://trade-api.coinlist.co"
+  
+  # CAPTCHA Configuration
+  CAPTCHA_ENABLED: "false"
+  CAPTCHA_PROVIDER: "hcaptcha"
+  
+  # Rate Limiting
+  REGISTER_RATE_LIMIT_WINDOW_MS: "3600000"
+  REGISTER_RATE_LIMIT_MAX: "10"
+  
+  # Email / SMTP Configuration
+  EMAIL_SMTP_HOST: "mailhog"
+  EMAIL_SMTP_PORT: "1025"
+  EMAIL_SMTP_SECURE: "false"
+  EMAIL_FROM: "no-reply@telepaygate.local"
+  
+  # Dashboard Configuration
+  DASHBOARD_URL: "http://localhost:5173"
+  
+  # Feature Flags
+  FEATURE_PASSWORDLESS_AUTH: "true"
+  ENABLE_RATE_LOCKING: "true"
+  ENABLE_WEBHOOKS: "true"
+  FRAGMENT_ENABLED: "false"
+  FRAGMENT_API_URL: "https://fragment.com/api"
+  
+  # Background Workers
+  DEPOSIT_POLL_INTERVAL_MS: "30000"
+  SETTLEMENT_BATCH_SIZE: "25"
+  SETTLEMENT_INTERVAL_MS: "60000"
+  SETTLEMENT_TON_USD_RATE: "5.5"
+  
+  # Logging
+  LOG_LEVEL: "info"
+  
+  # Testing
+  USE_TESTCONTAINERS: "false"
+  EXPOSE_TEST_TOKENS: "false"
+  MAILHOG_API_URL: "http://mailhog:8025/api/v2/messages"
+  TEST_MAGIC_EMAIL: "dev-admin@example.com"
+  
+  # Monitoring
+  MONITORING_WEBHOOK_URL: "https://your-monitoring-service.com/webhook"
+  
+  # AWS Configuration
+  AWS_REGION: "us-east-1"
+  AWS_DEFAULT_REGION: "us-east-1"
+  
+  # Trigger.dev Configuration
+  TRIGGER_API_URL: "https://api.trigger.dev"
+  
+  # Render.com Deployment
+  API_HEALTH_CHECK_URL: "https://your-api.onrender.com/health"
+  
+  # Example Integration
+  TELEPAYGATE_API_URL: "http://localhost:3000"
+  WEBAPP_NAME: "TelePayGate Store"

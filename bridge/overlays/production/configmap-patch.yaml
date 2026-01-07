@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telepaygate-config
+data:
+  # Server / Runtime Configuration
+  NODE_ENV: "production"
+  API_URL: "https://api.yourdomain.com"
+  
+  # Database Configuration
+  DB_SSL: "true"
+  DB_SSL_ALLOW_UNAUTHORIZED: "false"
+  
+  # TON Blockchain Configuration
+  TON_MAINNET: "true"
+  
+  # P2P DEX Integration
+  DEX_SIMULATION_MODE: "false"
+  
+  # Exchange Rate Providers
+  RATE_SIMULATION_MODE: "false"
+  
+  # CAPTCHA Configuration
+  CAPTCHA_ENABLED: "true"
+  
+  # Email / SMTP Configuration
+  EMAIL_SMTP_HOST: "smtp.yourdomain.com"
+  EMAIL_SMTP_PORT: "587"
+  EMAIL_SMTP_SECURE: "true"
+  EMAIL_FROM: "no-reply@yourdomain.com"
+  
+  # Dashboard Configuration
+  DASHBOARD_URL: "https://dashboard.yourdomain.com"
+  
+  # Logging
+  LOG_LEVEL: "warn"
+  
+  # Monitoring
+  MONITORING_WEBHOOK_URL: "https://your-monitoring-service.com/webhook"
