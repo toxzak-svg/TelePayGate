@@ -25,6 +25,7 @@ export { FeeCollectionService } from "./services/fee-collection.service";
 export { RateAggregatorService } from "./services/rate.aggregator";
 export { PaymentService } from "./services/payment.service";
 export { WebhookService } from "./services/webhook.service";
+export { RiskEngineService } from "./services/risk-engine.service";
 export { ReconciliationService } from "./services/reconciliation.service";
 export { WithdrawalService } from "./services/withdrawal.service";
 export { StarsP2PService } from "./services/stars-p2p.service";
