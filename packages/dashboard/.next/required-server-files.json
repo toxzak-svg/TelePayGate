@@ -184,7 +184,6 @@
       "swcTraceProfiling": false,
       "forceSwcTransforms": false,
       "largePageDataBytes": 128000,
-      "turbo": {},
       "typedEnv": false,
       "parallelServerCompiles": false,
       "parallelServerBuildTraces": false,

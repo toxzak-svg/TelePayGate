@@ -215,7 +215,7 @@ export class RiskEngineService {
         return;
       }
 
-      const balance = await this.tonService.getBalance(walletAddress);
+      const balance = await this.tonService.getBalance();
       this.treasuryBalanceTon = balance;
 
       // Convert to USD (use fixed rate or fetch from oracle)
